@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">MeetMe</string>
+    <string name="menu_settings">Settings</string>
+    <string name="title_activity_create_meeting">CreateMeetingActivity</string>
+    <string name="create_meeting_purpose">עניין</string>
+    <string name="create_meeting_date">תאריך:</string>
+    <string name="create_meeting_time">שעה</string>
+    <string name="create_meeting_location">מיקום</string>
+    <string name="create_meeting_cDesc">מפה</string>
+    <string name="create_meeting_add_participants_button">הוספה</string>
+    <string name="create_meeting_participants">3 משתתפים</string>
+    <string name="create_meeting_share_locations_time">שיתוף מיקום</string>
+    <string name="create_meeting_create_button">צור פגישה</string>
+    <string name="hello_world">Hello world!</string>
+    <string name="title_activity_date_picker">DatePickerActivity</string>
+    <string name="title_activity_main">MainActivity</string>
+    <string name="main_no_scheduled_meeting">אין פגישה מתוכננת</string>
+    <string name="action_settings"/>
+
+</resources>
