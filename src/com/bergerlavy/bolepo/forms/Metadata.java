@@ -5,6 +5,8 @@ import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.Locale;
 
+import com.bergerlavy.bolepo.dals.Participant;
+
 public class Metadata {
 
 	private Participant mMeetingCreator;

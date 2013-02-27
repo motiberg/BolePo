@@ -10,6 +10,12 @@ import android.view.View;
 import android.widget.EditText;
 
 import com.bergerlavy.bolepo.R;
+import com.bergerlavy.bolepo.dals.DAL;
+import com.bergerlavy.bolepo.dals.Meeting;
+import com.bergerlavy.bolepo.dals.Participant;
+import com.bergerlavy.bolepo.dals.SDAL;
+import com.bergerlavy.bolepo.dals.ServerResponse;
+import com.bergerlavy.bolepo.dals.ServerResponseStatus;
 import com.google.android.gcm.GCMRegistrar;
 
 
@@ -53,7 +59,7 @@ public class MeetingCreationActivity extends Activity {
 		if (regId.equals("")) {
 			
 			/* register the device, passing the SENDER_ID as received when signed up for GCM */
-			GCMRegistrar.register(this, MeetMeConstants.SENDER_ID);
+			GCMRegistrar.register(this, BolePoConstants.SENDER_ID);
 			
 		} else {
 			//"Already registered"
@@ -73,9 +79,10 @@ public class MeetingCreationActivity extends Activity {
 	 * @param view
 	 */
 	public void createMeeting(View view) {
-		CreatingMeetingData cmData = new CreatingMeetingData(
+		Meeting meeting = new Meeting(
 				mPurpose.getText().toString(), 
 				mDate.getText().toString(), 
+				"creator@gmail.com",
 				mTime.getText().toString(), 
 				mLocation.getText().toString(), 
 				mShareLocationTime.getText().toString(),
@@ -83,13 +90,25 @@ public class MeetingCreationActivity extends Activity {
 				);
 
 		/* checking if the input is valid according to decided rules */
-		if (FormsSupport.createMeetingInputValidation(cmData)) {
+		if (FormsSupport.createMeetingInputValidation(meeting)) {
 
+			ServerResponse servResp = SDAL.serverCreateMeeting(meeting);
+			
 			/* checking if the sending of the meeting data to the server SUCCEEDED */
-			if (FormsSupport.uploadCreatingMeetingData(cmData, new Metadata(new Participant("")))) {
-
+			if (servResp.getStatus() == ServerResponseStatus.OK) {
+				if (servResp.hasData()) {
+					
+					/* this casting is safe because if the analyzing for meeting creation returned OK,
+					 * that means that the response has data and its a hash value of the type String */
+					String hash = (String) servResp.getData();
+					
+					/* checking if the meetings has been successfully inserted to the DB */
+					if (DAL.createMeeting(meeting, hash)) {
+						//TODO switch to the main activity, so the user could see the meeting he created.
+					}
+				}
 			} else {
-				/* sending of the meeting data to the server FAILED */
+				/* server returned some error */
 
 			}
 		} else {
