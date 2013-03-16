@@ -9,8 +9,11 @@ public class Participant {
 	private String mShareLocationStatus;
 	private String mHash;
 	
-	public Participant(String name) {
+	public Participant(String name, String Credentials, String RSVP, String ShareLocationStatus) {
 		mName = name;
+		mCredentials = Credentials;
+		mRSVP = RSVP;
+		mShareLocationStatus = ShareLocationStatus;
 	}
 	
 	public String getName() {
@@ -35,5 +38,13 @@ public class Participant {
 	
 	public String getHash() {
 		return mHash;
+	}
+	
+	public void setMeetingID(long id) {
+		mMeetingID = id;
+	}
+	
+	public void setHash(String hash) {
+		mHash = hash;
 	}
 }

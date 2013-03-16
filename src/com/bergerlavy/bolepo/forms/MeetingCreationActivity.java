@@ -8,12 +8,15 @@ import android.os.Bundle;
 import android.view.Menu;
 import android.view.View;
 import android.widget.EditText;
+import android.widget.Toast;
 
+import com.bergerlavy.bolepo.BolePoConstants;
 import com.bergerlavy.bolepo.R;
 import com.bergerlavy.bolepo.dals.DAL;
 import com.bergerlavy.bolepo.dals.Meeting;
 import com.bergerlavy.bolepo.dals.Participant;
 import com.bergerlavy.bolepo.dals.SDAL;
+import com.bergerlavy.bolepo.dals.SRDataForMeetingManaging;
 import com.bergerlavy.bolepo.dals.ServerResponse;
 import com.bergerlavy.bolepo.dals.ServerResponseStatus;
 import com.google.android.gcm.GCMRegistrar;
@@ -38,6 +41,8 @@ public class MeetingCreationActivity extends Activity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_meeting_creation);
 
+		DAL.setContext(this);
+		
 		mPurpose = (EditText) findViewById(R.id.create_meeting_purpose_edittext);
 		mDate = (EditText) findViewById(R.id.create_meeting_date_edittext);
 		mTime = (EditText) findViewById(R.id.create_meeting_time_edittext);
@@ -82,8 +87,8 @@ public class MeetingCreationActivity extends Activity {
 		Meeting meeting = new Meeting(
 				mPurpose.getText().toString(), 
 				mDate.getText().toString(), 
-				"creator@gmail.com",
 				mTime.getText().toString(), 
+				"creator@gmail.com",
 				mLocation.getText().toString(), 
 				mShareLocationTime.getText().toString(),
 				mParticipants
@@ -91,20 +96,22 @@ public class MeetingCreationActivity extends Activity {
 
 		/* checking if the input is valid according to decided rules */
 		if (FormsSupport.createMeetingInputValidation(meeting)) {
-
+			//Toast.makeText(this, "Pass Validation", Toast.LENGTH_LONG).show();
 			ServerResponse servResp = SDAL.serverCreateMeeting(meeting);
 			
 			/* checking if the sending of the meeting data to the server SUCCEEDED */
-			if (servResp.getStatus() == ServerResponseStatus.OK) {
+			if (servResp != null && servResp.getStatus() == ServerResponseStatus.OK) {
+				
 				if (servResp.hasData()) {
 					
 					/* this casting is safe because if the analyzing for meeting creation returned OK,
 					 * that means that the response has data and its a hash value of the type String */
-					String hash = (String) servResp.getData();
+					SRDataForMeetingManaging creationData = (SRDataForMeetingManaging) servResp.getData();
 					
 					/* checking if the meetings has been successfully inserted to the DB */
-					if (DAL.createMeeting(meeting, hash)) {
-						//TODO switch to the main activity, so the user could see the meeting he created.
+					if (DAL.createMeeting(meeting, creationData)) {
+						Toast.makeText(this, "INSERTED WELL", Toast.LENGTH_LONG).show();
+//						//TODO switch to the main activity, so the user could see the meeting he created.
 					}
 				}
 			} else {

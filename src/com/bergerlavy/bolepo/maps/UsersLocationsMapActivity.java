@@ -6,7 +6,7 @@ import android.view.Menu;
 
 import com.bergerlavy.bolepo.R;
 
-public class UsersLocationsMapActivity extends Activity {
+public class UsersLocationsMapActivity extends Activity  {
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {

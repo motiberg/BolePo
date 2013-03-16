@@ -1,5 +1,6 @@
 package com.bergerlavy.bolepo.dals;
 
+import java.util.ArrayList;
 import java.util.List;
 
 
@@ -8,6 +9,7 @@ public class Meeting {
 	private String mName;
 	private String mDate;
 	private String mTime;
+	private String mHash;
 	private String mCreator;
 	private String mLocation;
 	private String mShareLocationTime;
@@ -20,7 +22,9 @@ public class Meeting {
 		mCreator = creator;
 		mLocation = location;
 		mShareLocationTime = shareLocationTime;
-		mParticipants.addAll(participants);
+		mParticipants = new ArrayList<Participant>();
+		if (participants != null)
+			mParticipants.addAll(participants);
 	}
 
 	public String getName() {
@@ -59,6 +63,14 @@ public class Meeting {
 	
 	public int getParticipantsNum() {
 		return mParticipants.size();
+	}
+	
+	public String getHash() {
+		return mHash;
+	}
+	
+	public void setHash(String hash) {
+		mHash = hash;
 	}
 	
 }
