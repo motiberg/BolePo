@@ -5,9 +5,26 @@
     android:versionName="1.0" >
 
     <uses-sdk
-        android:minSdkVersion="8"
+        android:minSdkVersion="11"
         android:targetSdkVersion="17" />
 
+    <!-- Enables to receive maps information from the server -->
+    <permission
+        android:name="com.bergerlavy.bolepo.permission.MAPS_RECEIVE"
+        android:protectionLevel="signature" />
+    
+    <!-- prevent other Android applications from registering and receiving the Android application's messages -->
+    <permission
+        android:name="com.bergerlavy.bolepo.permission.C2D_MESSAGE"
+        android:protectionLevel="signature" />
+    
+    <!-- Needed to use the maps -->
+    <uses-permission android:name="com.bergerlavy.bolepo.permission.MAPS_RECEIVE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="com.google.android.providers.gsf.permission.READ_GSERVICES" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    
     <!-- can register and receive messages -->
     <uses-permission android:name="com.google.android.c2dm.permission.RECEIVE" />
 
@@ -19,11 +36,6 @@
 
     <!-- can keep the processor from sleeping when a message is received -->
     <uses-permission android:name="android.permission.WAKE_LOCK" />
-
-    <!-- prevent other Android applications from registering and receiving the Android application's messages -->
-    <permission
-        android:name="com.bergerlavy.bolepo.permission.C2D_MESSAGE"
-        android:protectionLevel="signature" />
 
     <uses-permission android:name="com.bergerlavy.bolepo.permission.C2D_MESSAGE" />
 
@@ -46,6 +58,11 @@
         <activity android:name="com.bergerlavy.bolepo.forms.AddParticipantsActivity" >
         </activity>
         <activity android:name="com.bergerlavy.bolepo.maps.MeetingLocationSelectionActivity" >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
         </activity>
         <activity android:name="com.bergerlavy.bolepo.MeetingDataActivity" >
         </activity>
@@ -58,11 +75,7 @@
         </activity>
         <activity android:name="com.bergerlavy.bolepo.forms.MeetingCreationActivity" 
             android:label="@string/app_name" >
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
+            
         </activity>
         <activity
             android:name="com.bergerlavy.bolepo.LoginActivity"
@@ -70,6 +83,11 @@
             android:windowSoftInputMode="adjustResize|stateVisible" >
         </activity>
         <uses-library android:name="com.google.android.maps" />
+        
+        <!-- Key for the google maps -->
+        <meta-data
+            android:name="com.google.android.maps.v2.API_KEY"
+            android:value="AIzaSyAe_3jYYhX1Icr34vD9mLoWG2tBgrn_PEQ" />
     </application>
 
 </manifest>

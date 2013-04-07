@@ -12,5 +12,8 @@ public final class Manifest {
         /**  prevent other Android applications from registering and receiving the Android application's messages 
          */
         public static final String C2D_MESSAGE="com.bergerlavy.bolepo.permission.C2D_MESSAGE";
+        /**  Enables to receive maps information from the server 
+         */
+        public static final String MAPS_RECEIVE="com.bergerlavy.bolepo.permission.MAPS_RECEIVE";
     }
 }
