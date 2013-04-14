@@ -1,0 +1,4 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android" >
+    <item android:id="@+id/add_participants_invite_item" android:title="@string/add_participants_menu_invite"></item>
+
+</menu>

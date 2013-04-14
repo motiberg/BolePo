@@ -1,0 +1,43 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:context=".RemoveMeetingActivity" >
+
+    <TextView
+        android:id="@+id/remove_meeting_message"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="horizontal" >
+
+        <Button
+            android:id="@+id/remove_meeting_confirm_remove"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:onClick="remove"
+            android:text="@string/remove_meeting_confirm_removal" />
+        
+        <Button
+            android:id="@+id/remove_meeting_pass_ownship"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:onClick="remove"
+            android:text="@string/remove_meeting_pass_ownship" />
+        
+        <Button
+            android:id="@+id/remove_meeting_cancel_remove"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:onClick="remove"
+            android:text="@string/remove_meeting_cancel_removal" />
+    </LinearLayout>
+
+</LinearLayout>
