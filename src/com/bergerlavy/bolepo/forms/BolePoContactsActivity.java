@@ -119,6 +119,7 @@ public class BolePoContactsActivity extends ListActivity {
 	protected void onListItemClick(ListView l, View v, int position, long id) {
 		TextView phone = (TextView) v.findViewById(R.id.item_bolepo_contact_phone);
 		Toast.makeText(this, "position = " + position, Toast.LENGTH_LONG).show();
+		
 		if (!mSelectedContacts.contains(phone.getText().toString())) {
 			mSelectedContacts.add(phone.getText().toString());
 			mAllContacts.get(position).select();

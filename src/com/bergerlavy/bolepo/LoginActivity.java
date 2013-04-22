@@ -1,7 +1,6 @@
 package com.bergerlavy.bolepo;
 
 import android.app.Activity;
-import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.View;
 import android.view.ViewGroup.LayoutParams;
@@ -25,10 +24,7 @@ public class LoginActivity extends Activity {
 	}
 	
 	public void login(View view) {
-		SharedPreferences genePreferences = getSharedPreferences(MainActivity.GENERAL_PREFERENCES, MODE_PRIVATE);
-		SharedPreferences.Editor editor = genePreferences.edit();
-		editor.putString(MainActivity.DEVICE_USER_NAME, mPhone.getText().toString());
-		editor.commit();
+		BolePoMisc.setDevicePhoneNumber(this, mPhone.getText().toString());
 		finish();
 	}
 

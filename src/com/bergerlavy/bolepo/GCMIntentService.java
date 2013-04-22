@@ -4,7 +4,6 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.support.v4.app.NotificationCompat;
 import android.widget.Toast;
 
@@ -32,10 +31,7 @@ public class GCMIntentService extends com.google.android.gcm.GCMBaseIntentServic
 		Toast.makeText(context, "gcm register", Toast.LENGTH_LONG).show();
 		
 		/* store registration ID on shared preferences */
-    	SharedPreferences generalPrefs = getSharedPreferences(MainActivity.GENERAL_PREFERENCES, MODE_PRIVATE);
-    	SharedPreferences.Editor editor = generalPrefs.edit();
-    	editor.putString(MainActivity.GCM_REGISTRATION_ID, regId);
-    	editor.commit();
+    	BolePoMisc.setGcmRegId(this, regId);
 		
 		/* notify server about the registered ID */
 		SDAL.regGCM(regId);
@@ -51,10 +47,7 @@ public class GCMIntentService extends com.google.android.gcm.GCMBaseIntentServic
 		Toast.makeText(context, "gcm unregister", Toast.LENGTH_LONG).show();
 		
 		/* get old registration ID out of shared preferences */
-    	SharedPreferences generalPrefs = getSharedPreferences(MainActivity.GENERAL_PREFERENCES, MODE_PRIVATE);
-    	SharedPreferences.Editor editor = generalPrefs.edit();
-    	editor.remove(MainActivity.GCM_REGISTRATION_ID);
-    	editor.commit();
+    	BolePoMisc.removeGcmId(this);
 
     	/* notify server about the unregistered ID */
     	SDAL.unregGCM(regId);

@@ -16,12 +16,13 @@ import android.content.Context;
 import android.location.Location;
 
 import com.bergerlavy.bolepo.BolePoConstants;
-import com.bergerlavy.bolepo.MainActivity;
+import com.bergerlavy.bolepo.BolePoMisc;
 import com.bergerlavy.bolepo.forms.FormsSupport;
 
 public class SDAL {
 
 	private static Context mContext;
+	private static HttpClient mHttpClient = new DefaultHttpClient();
 
 	public static void setContext(Context context) {
 		mContext = context;
@@ -32,176 +33,117 @@ public class SDAL {
 	}
 
 	public static ServerResponse retrieveMeeting(String meetingHash) {
-		HttpClient httpclient = new DefaultHttpClient();
-		HttpPost httppost = new HttpPost(BolePoConstants.BolePoServerBaseUrl + BolePoConstants.MeetingsManagingServletRelativeUrl);
-		httppost.getParams().setParameter(CoreProtocolPNames.USER_AGENT, "BolePo user-agent");
-		ServerResponse serverResponse = null;
-		try {
-
-			List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>(3);
-			nameValuePairs.add(new BasicNameValuePair("action", Action.RETRIEVE.getActionString()));
-			nameValuePairs.add(new BasicNameValuePair("actionmaker", mContext.getSharedPreferences(MainActivity.GENERAL_PREFERENCES, Context.MODE_PRIVATE).getString(MainActivity.DEVICE_USER_NAME, "")));
-			nameValuePairs.add(new BasicNameValuePair("hash", meetingHash));
-
-			httppost.setEntity(new UrlEncodedFormEntity(nameValuePairs));
-
-			/* Execute HTTP Post Request */
-			HttpResponse response = httpclient.execute(httppost);
-
-			/* analyzing the server response to the meeting retrieval request */
-			serverResponse = new AnalyzeServerResponse().analyze(response, Action.RETRIEVE);
-		}
-		catch (Exception e) {
-			e.printStackTrace();
-		}
-		return serverResponse;
+		return executeServerMeetingCommand(Action.RETRIEVE, meetingHash);
 	}
 
 	public static ServerResponse createMeeting(Meeting m) {
-		HttpClient httpclient = new DefaultHttpClient();
-		HttpPost httppost = new HttpPost(BolePoConstants.BolePoServerBaseUrl + BolePoConstants.MeetingsManagingServletRelativeUrl);
-		httppost.getParams().setParameter(CoreProtocolPNames.USER_AGENT, "BolePo user-agent");
-		ServerResponse serverResponse = null;
-		try {
-
-			List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>(8 + m.getParticipantsNum());
-			nameValuePairs.add(new BasicNameValuePair("action", Action.CREATE.getActionString()));
-			nameValuePairs.add(new BasicNameValuePair("actionmaker", mContext.getSharedPreferences(MainActivity.GENERAL_PREFERENCES, Context.MODE_PRIVATE).getString(MainActivity.DEVICE_USER_NAME, "")));
-			nameValuePairs.add(new BasicNameValuePair("name", m.getName()));
-			nameValuePairs.add(new BasicNameValuePair("date", m.getDate()));
-			nameValuePairs.add(new BasicNameValuePair("time", m.getTime()));
-			nameValuePairs.add(new BasicNameValuePair("location", m.getLocation()));
-			nameValuePairs.add(new BasicNameValuePair("sharelocationtime", m.getShareLocationTime()));
-			int participantsNum = m.getParticipantsNum();
-			nameValuePairs.add(new BasicNameValuePair("participantsnumber", Integer.toString(participantsNum)));
-//			nameValuePairs.add(new BasicNameValuePair("participant_0", mContext.getSharedPreferences(MainActivity.GENERAL_PREFERENCES, Context.MODE_PRIVATE).getString(MainActivity.DEVICE_USER_NAME, "")));
-			int counter = 0;
-			List<String> parts = m.getParticipants();
-			for (String s : parts) {
-				nameValuePairs.add(new BasicNameValuePair("participant_" + counter++, FormsSupport.chopeNonDigitsFromPhoneNumber(s)));
-			}
-//			for (int i = 1 ; i <= participantsNum ; i++) {
-//				nameValuePairs.add(new BasicNameValuePair("participant_" + i, m.getParticipant(i - 1)));
-//			}
-			httppost.setEntity(new UrlEncodedFormEntity(nameValuePairs));
-
-			/* Execute HTTP Post Request */
-			HttpResponse response = httpclient.execute(httppost);
-
-			/* analyzing the server response to the meeting creation request */
-			serverResponse = new AnalyzeServerResponse().analyze(response, Action.CREATE);
-		}
-		catch (Exception e) {
-			e.printStackTrace();
-		}
-		return serverResponse;
-		
+		return executeServerMeetingCommand(Action.CREATE, m);
 	}
 
 	public static ServerResponse editMeeting(Meeting m) {
-		HttpClient httpclient = new DefaultHttpClient();
-		HttpPost httppost = new HttpPost(BolePoConstants.BolePoServerBaseUrl + BolePoConstants.MeetingsManagingServletRelativeUrl);
-		httppost.getParams().setParameter(CoreProtocolPNames.USER_AGENT, "BolePo user-agent");
-		ServerResponse serverResponse = null;
-		try {
-
-			/* Adding the meeting data to the HTTP request */
-			List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>(10 + m.getParticipantsNum());
-			nameValuePairs.add(new BasicNameValuePair("action", Action.MODIFY.getActionString()));
-			nameValuePairs.add(new BasicNameValuePair("actionmaker",  mContext.getSharedPreferences(MainActivity.GENERAL_PREFERENCES, Context.MODE_PRIVATE).getString(MainActivity.DEVICE_USER_NAME, "")));
-			nameValuePairs.add(new BasicNameValuePair("hash", m.getHash()));
-			nameValuePairs.add(new BasicNameValuePair("name", m.getName()));
-			nameValuePairs.add(new BasicNameValuePair("date", m.getDate()));
-			nameValuePairs.add(new BasicNameValuePair("time", m.getTime()));
-			nameValuePairs.add(new BasicNameValuePair("location", m.getLocation()));
-			nameValuePairs.add(new BasicNameValuePair("sharelocationtime", m.getShareLocationTime()));
-			int participantsNum = m.getParticipantsNum();
-			nameValuePairs.add(new BasicNameValuePair("participantsnumber", Integer.toString(participantsNum)));
-			nameValuePairs.add(new BasicNameValuePair("participant_0", mContext.getSharedPreferences(MainActivity.GENERAL_PREFERENCES, Context.MODE_PRIVATE).getString(MainActivity.DEVICE_USER_NAME, "")));
-			for (int i = 1 ; i <= participantsNum ; i++) {
-				//TODO make sure the getParticipant returns here HASH value.
-				//notich that this function returns participant name for the createMeeting function.
-				nameValuePairs.add(new BasicNameValuePair("participant_" + i, m.getParticipant(i - 1)));
-			}
-			httppost.setEntity(new UrlEncodedFormEntity(nameValuePairs));
-
-			//* Execute HTTP Post Request */
-			HttpResponse response = httpclient.execute(httppost);
-
-			/* analyzing the server response to the meeting modification request */
-			serverResponse = new AnalyzeServerResponse().analyze(response, Action.MODIFY);
-		}
-		catch (Exception e) { 
-			e.printStackTrace();
-		}
-		return serverResponse;
+		return executeServerMeetingCommand(Action.MODIFY, m);
 	}
 
 	public static ServerResponse removeMeeting(String meetingHash) {
-		HttpClient httpclient = new DefaultHttpClient();
-		HttpPost httppost = new HttpPost(BolePoConstants.BolePoServerBaseUrl + BolePoConstants.MeetingsManagingServletRelativeUrl);
-		httppost.getParams().setParameter(CoreProtocolPNames.USER_AGENT, "BolePo user-agent");
-		ServerResponse serverResponse = null;
-		try {
+		return executeServerMeetingCommand(Action.REMOVE, meetingHash);
+	}
+	
+	public static ServerResponse regGCM(String regId) {
+		return executeServerGcmCommand(Action.GCM_REGISTRATION, regId);
+	}
 
-			/* Adding the meeting data to the HTTP request */
-			List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>(3);
-			nameValuePairs.add(new BasicNameValuePair("action", Action.REMOVE.getActionString()));
-			nameValuePairs.add(new BasicNameValuePair("actionmaker", mContext.getSharedPreferences(MainActivity.GENERAL_PREFERENCES, Context.MODE_PRIVATE).getString(MainActivity.DEVICE_USER_NAME, "")));
-			nameValuePairs.add(new BasicNameValuePair("hash", meetingHash));
-			httppost.setEntity(new UrlEncodedFormEntity(nameValuePairs));
-
-			/* Execute HTTP Post Request */
-			HttpResponse response = httpclient.execute(httppost);
-
-			/* analyzing the server response to the meeting removal request */
-			serverResponse = new AnalyzeServerResponse().analyze(response, Action.REMOVE);
-		}
-		catch (Exception e) { }
-		return serverResponse;
+	public static ServerResponse unregGCM(String regId) {
+		return executeServerGcmCommand(Action.GCM_UNREGISTRATION, regId);
 	}
 
 	public static void sendDeviceLocation(String meetingHash, Location l) {
-		HttpClient httpclient = new DefaultHttpClient();
 		HttpPost httppost = new HttpPost(BolePoConstants.BolePoServerBaseUrl + BolePoConstants.GpsServletRelativeUrl);
 		httppost.getParams().setParameter(CoreProtocolPNames.USER_AGENT, "BolePo user-agent");
 		try {
 
 			/* Adding the meeting data to the HTTP request */
 			List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>(4);
-			nameValuePairs.add(new BasicNameValuePair("user", mContext.getSharedPreferences(MainActivity.GENERAL_PREFERENCES, Context.MODE_PRIVATE).getString(MainActivity.DEVICE_USER_NAME, "")));
+			nameValuePairs.add(new BasicNameValuePair("user", BolePoMisc.getDevicePhoneNumber(mContext)));
 			nameValuePairs.add(new BasicNameValuePair("lat", l.getLatitude() + ""));
 			nameValuePairs.add(new BasicNameValuePair("lon", l.getLongitude() + ""));
 			httppost.setEntity(new UrlEncodedFormEntity(nameValuePairs));
 
 			/* Execute HTTP Post Request */
-			httpclient.execute(httppost);
+			mHttpClient.execute(httppost);
 		}
 		catch (Exception e) { 
 			e.printStackTrace();
 		}
 
 	}
+	
+	private static ServerResponse executeServerMeetingCommand(Action action, Object data) {
+		HttpPost httppost = new HttpPost(BolePoConstants.BolePoServerBaseUrl + BolePoConstants.MeetingsManagingServletRelativeUrl);
+		httppost.getParams().setParameter(CoreProtocolPNames.USER_AGENT, "BolePo user-agent");
 
-	public static ServerResponse regGCM(String regId) {
-		HttpClient httpclient = new DefaultHttpClient();
+		ServerResponse serverResponse = null;
+		Meeting meeting = null;
+		String meetingHash = null;
+
+		/* adding default parameters that should be in every server request for meetings handling */
+		List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>();
+		nameValuePairs.add(new BasicNameValuePair("action", action.getActionString()));
+		nameValuePairs.add(new BasicNameValuePair("actionmaker", BolePoMisc.getDevicePhoneNumber(mContext)));
+
+		switch (action) {
+		case CREATE:
+			meeting = (Meeting) data;
+			nameValuePairs = fillMeetingData(meeting, nameValuePairs);
+			break;
+		case MODIFY:
+			meeting = (Meeting) data;
+			nameValuePairs.add(new BasicNameValuePair("hash", meeting.getHash()));
+			nameValuePairs = fillMeetingData(meeting, nameValuePairs);
+			break;
+		case REMOVE:
+			meetingHash = (String) data;
+			nameValuePairs.add(new BasicNameValuePair("hash", meetingHash));
+			break;
+		case RETRIEVE:
+			meetingHash = (String) data;
+			nameValuePairs.add(new BasicNameValuePair("hash", meetingHash));
+			break;
+		default:
+			break;
+		}
+		try {
+			httppost.setEntity(new UrlEncodedFormEntity(nameValuePairs));
+
+			/* Execute HTTP Post Request */
+			HttpResponse response = mHttpClient.execute(httppost);
+
+			/* analyzing the server response to the meeting retrieval request */
+			serverResponse = new AnalyzeServerResponse().analyze(response, action);
+			
+			mHttpClient = new DefaultHttpClient();
+		}
+		catch (Exception e) {
+			e.printStackTrace();
+		}
+		return serverResponse;
+	}
+	
+	private static ServerResponse executeServerGcmCommand(Action action, String regId) {
 		HttpPost httppost = new HttpPost(BolePoConstants.BolePoServerBaseUrl + BolePoConstants.GcmServletRelativeUrl);
 		httppost.getParams().setParameter(CoreProtocolPNames.USER_AGENT, "BolePo user-agent");
 		ServerResponse serverResponse = null;
+		
+		List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>(3);
+		nameValuePairs.add(new BasicNameValuePair("action", action.getActionString()));
+		nameValuePairs.add(new BasicNameValuePair("userphone", BolePoMisc.getDevicePhoneNumber(mContext)));
+		nameValuePairs.add(new BasicNameValuePair("gcmid", regId));
+		
 		try {
-
-			/* Adding the meeting data to the HTTP request */
-			List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>(3);
-			nameValuePairs.add(new BasicNameValuePair("action", Action.GCM_REGISTRATION.getActionString()));
-			nameValuePairs.add(new BasicNameValuePair("user", mContext.getSharedPreferences(MainActivity.GENERAL_PREFERENCES, Context.MODE_PRIVATE).getString(MainActivity.DEVICE_USER_NAME, "")));
-			nameValuePairs.add(new BasicNameValuePair("gcmid", regId));
 			httppost.setEntity(new UrlEncodedFormEntity(nameValuePairs));
 
-
-
 			/* Execute HTTP Post Request */
-			HttpResponse response = httpclient.execute(httppost);
-			serverResponse = new AnalyzeServerResponse().analyze(response, Action.GCM_REGISTRATION);
+			HttpResponse response = mHttpClient.execute(httppost);
+			serverResponse = new AnalyzeServerResponse().analyze(response, action);
 		}
 		catch (Exception e) { 
 			e.printStackTrace();
@@ -209,28 +151,20 @@ public class SDAL {
 		return serverResponse;
 	}
 
-	public static ServerResponse unregGCM(String regId) {
-		HttpClient httpclient = new DefaultHttpClient();
-		HttpPost httppost = new HttpPost(BolePoConstants.BolePoServerBaseUrl + BolePoConstants.GcmServletRelativeUrl);
-		httppost.getParams().setParameter(CoreProtocolPNames.USER_AGENT, "BolePo user-agent");
-		ServerResponse serverResponse = null;
-		try {
-
-			/* Adding the meeting data to the HTTP request */
-			List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>(3);
-			nameValuePairs.add(new BasicNameValuePair("action", Action.GCM_UNREGISTRATION.getActionString()));
-			nameValuePairs.add(new BasicNameValuePair("user", mContext.getSharedPreferences(MainActivity.GENERAL_PREFERENCES, Context.MODE_PRIVATE).getString(MainActivity.DEVICE_USER_NAME, "")));
-			nameValuePairs.add(new BasicNameValuePair("gcmid", regId));
-			httppost.setEntity(new UrlEncodedFormEntity(nameValuePairs));
-
-			/* Execute HTTP Post Request */
-			HttpResponse response = httpclient.execute(httppost);
-			serverResponse = new AnalyzeServerResponse().analyze(response, Action.GCM_UNREGISTRATION);
+	private static List<NameValuePair> fillMeetingData(Meeting meeting, List<NameValuePair> nameValuePairs) {
+		nameValuePairs.add(new BasicNameValuePair("name", meeting.getName()));
+		nameValuePairs.add(new BasicNameValuePair("date", meeting.getDate()));
+		nameValuePairs.add(new BasicNameValuePair("time", meeting.getTime()));
+		nameValuePairs.add(new BasicNameValuePair("location", meeting.getLocation()));
+		nameValuePairs.add(new BasicNameValuePair("sharelocationtime", meeting.getShareLocationTime()));
+		int participantsNum = meeting.getParticipantsNum();
+		nameValuePairs.add(new BasicNameValuePair("participantsnumber", Integer.toString(participantsNum)));
+		int counter = 0;
+		List<String> parts = meeting.getParticipants();
+		for (String s : parts) {
+			nameValuePairs.add(new BasicNameValuePair("participant_" + counter++, FormsSupport.chopeNonDigitsFromPhoneNumber(s)));
 		}
-		catch (Exception e) { 
-			e.printStackTrace();
-		}
-		return serverResponse;
+		return nameValuePairs;
 	}
 
 }

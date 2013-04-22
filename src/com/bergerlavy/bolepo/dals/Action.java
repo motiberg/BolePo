@@ -1,5 +1,7 @@
 package com.bergerlavy.bolepo.dals;
 
+/* every change in the string of an ENUM element obligates a corresponding change in the server software */
+
 public enum Action {
 	CREATE ("create"),
 	MODIFY ("modify"),
@@ -10,7 +12,7 @@ public enum Action {
 	
 	private final String mStr;
 	
-	Action(String str) {
+	private Action(String str) {
 		mStr = str;
 	}
 	

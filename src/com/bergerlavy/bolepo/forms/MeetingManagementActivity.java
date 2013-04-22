@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import android.app.Activity;
-import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -18,6 +17,7 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.bergerlavy.bolepo.BolePoMisc;
 import com.bergerlavy.bolepo.MainActivity;
 import com.bergerlavy.bolepo.R;
 import com.bergerlavy.bolepo.TimePickerActivity;
@@ -192,12 +192,12 @@ public class MeetingManagementActivity extends Activity {
 	 * @param view
 	 */
 	public void commitAction(View view) {
-		mParticipants.add(getSharedPreferences(MainActivity.GENERAL_PREFERENCES, Context.MODE_PRIVATE).getString(MainActivity.DEVICE_USER_NAME, ""));
+		mParticipants.add(BolePoMisc.getDevicePhoneNumber(this));
 		final Meeting meeting = new Meeting(
 				mName.getText().toString(), 
 				mDate.getText().toString(), 
 				mTime.getText().toString(), 
-				getSharedPreferences(MainActivity.GENERAL_PREFERENCES, MODE_PRIVATE).getString(MainActivity.DEVICE_USER_NAME, ""),
+				BolePoMisc.getDevicePhoneNumber(this),
 				mLocation.getText().toString(), 
 				mShareLocationTime.getText().toString(),
 				mParticipants

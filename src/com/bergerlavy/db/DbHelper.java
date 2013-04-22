@@ -17,12 +17,13 @@ public class DbHelper extends SQLiteOpenHelper {
 					DbContract.Meetings.COLUMN_NAME_MEETING_TIME + " TIME NOT NULL" + "," +
 					DbContract.Meetings.COLUMN_NAME_MEETING_LOCATION + " TEXT NOT NULL" + "," +
 					DbContract.Meetings.COLUMN_NAME_MEETING_SHARE_LOCATION_TIME + " TIME NOT NULL" + "," +
-					DbContract.Meetings.COLUMN_NAME_MEETING_CREATOR + " TEXT NOT NULL" + "," +
+					DbContract.Meetings.COLUMN_NAME_MEETING_MANAGER + " TEXT NOT NULL" + "," +
 					DbContract.Meetings.COLUMN_NAME_MEETING_HASH + " TEXT NOT NULL" + " )";
 	
 	private static final String SQL_CREATE_PARTICIPANTS_TABLE = 
 			"CREATE TABLE " + DbContract.Participants.TABLE_NAME + " (" +
 					DbContract.Participants._ID + " INTEGER PRIMARY KEY AUTOINCREMENT," +
+					DbContract.Participants.COLUMN_NAME_PARTICIPANT_PHONE + " TEXT NOT NULL" + "," +
 					DbContract.Participants.COLUMN_NAME_PARTICIPANT_NAME + " TEXT NOT NULL" + "," +
 					DbContract.Participants.COLUMN_NAME_PARTICIPANT_CREDENTIALS + " TEXT NOT NULL" + "," +
 					DbContract.Participants.COLUMN_NAME_PARTICIPANT_RSVP + " TEXT NOT NULL" + "," +

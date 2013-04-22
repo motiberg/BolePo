@@ -2,6 +2,7 @@ package com.bergerlavy.bolepo.dals;
 
 public class Participant {
 
+	private String mPhone;
 	private String mName;
 	private long mMeetingID;
 	private String mCredentials;
@@ -10,11 +11,16 @@ public class Participant {
 	private String mHash;
 	
 	private Participant(Builder builder) {
+		mPhone = builder.phone;
 		mName = builder.name;
 		mCredentials = builder.credentials;
 		mRSVP = builder.rsvp;
 		mHash = builder.hash;
 //		mShareLocationStatus = ShareLocationStatus;
+	}
+	
+	public String getPhone() {
+		return mPhone;
 	}
 	
 	public String getName() {
@@ -52,36 +58,41 @@ public class Participant {
 	public static class Builder {
 		
 		/* Required */
-		private String name;
+		private String phone;
 
 		/* Optional */
-		private String credentials = "read";
+		private String name;
+		private String credentials = Credentials.READ.getCredentials();
 		private String rsvp = "unknown";
 		private String hash;
 		
-		public Builder(String name, String hash) {
-			this.name = name;
-			this.hash = hash;
+		public Builder(String phone) {
+			this.phone = phone;
+		}
+		
+		public Builder setName(String name) {
+			if (name != null)
+				this.name = name;
+			return this;
 		}
 		
 		public Builder setCredentials(String credentials) {
-			if (credentials == null)
-				return this;
-			this.credentials = credentials;
+			if (credentials != null)
+				this.credentials = credentials;
 			return this;
 		}
 		
 		public Builder setRsvp(String rsvp) {
-			if (rsvp == null)
-				return this;
-			this.rsvp = rsvp;
+			if (rsvp != null)
+				this.rsvp = rsvp;
 			return this;
 		}
 		
-//		public Builder setHash(String hash) {
-//			this.hash = hash;
-//			return this;
-//		}
+		public Builder setHash(String hash) {
+			if (hash != null)
+				this.hash = hash;
+			return this;
+		}
 		
 		public Participant build() {
 			return new Participant(this);

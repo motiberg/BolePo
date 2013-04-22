@@ -1,7 +1,6 @@
 package com.bergerlavy.bolepo;
 
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.support.v4.widget.CursorAdapter;
 import android.view.LayoutInflater;
@@ -13,14 +12,11 @@ import com.bergerlavy.db.DbContract;
 
 public class AcceptedMeetingsAdapter extends CursorAdapter {
 
-	//private DbHelper mDbHelper;
-	private String mDeviceUserName;
-
+	private Context mContext;
+	
 	public AcceptedMeetingsAdapter(Context context, Cursor c) {
 		super(context, c, 0);
-		//mDbHelper = new DbHelper(context);
-		SharedPreferences generalPrefs = context.getSharedPreferences(MainActivity.GENERAL_PREFERENCES, Context.MODE_PRIVATE);
-		mDeviceUserName = generalPrefs.getString(MainActivity.DEVICE_USER_NAME, "");
+		mContext = context;
 	}
 
 	@Override
@@ -36,10 +32,12 @@ public class AcceptedMeetingsAdapter extends CursorAdapter {
 		meetingWhere.setText(cursor.getString(cursor.getColumnIndex(DbContract.Meetings.COLUMN_NAME_MEETING_LOCATION)));
 		
 		TextView meetingCreator = (TextView) view.findViewById(R.id.item_am_meeting_creator);
-		meetingCreator.setText(cursor.getString(cursor.getColumnIndex(DbContract.Meetings.COLUMN_NAME_MEETING_CREATOR)));
+		meetingCreator.setText(cursor.getString(cursor.getColumnIndex(DbContract.Meetings.COLUMN_NAME_MEETING_MANAGER)));
 		
-		if (!mDeviceUserName.equals("") && mDeviceUserName.equals(meetingCreator.getText().toString())) {
-			meetingCreator.setText(mDeviceUserName + " (You)");
+		String devicePhoneNumber = BolePoMisc.getDevicePhoneNumber(mContext);
+		
+		if (!devicePhoneNumber.equals("") && devicePhoneNumber.equals(meetingCreator.getText().toString())) {
+			meetingCreator.setText(devicePhoneNumber + " (You)");
 		}
 	}
 

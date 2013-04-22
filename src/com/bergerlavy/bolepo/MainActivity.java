@@ -4,7 +4,6 @@ import android.app.ListActivity;
 import android.app.NotificationManager;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
@@ -21,6 +20,7 @@ import com.bergerlavy.bolepo.dals.DAL;
 import com.bergerlavy.bolepo.dals.SDAL;
 import com.bergerlavy.bolepo.forms.MeetingManagementActivity;
 import com.bergerlavy.bolepo.forms.RefreshMeetingsListListener;
+import com.bergerlavy.bolepo.forms.RemoveMeetingActivity;
 import com.bergerlavy.bolepo.services.ShareLocationsService;
 import com.bergerlavy.db.DbContract;
 import com.bergerlavy.db.DbHelper;
@@ -28,14 +28,8 @@ import com.google.android.gcm.GCMRegistrar;
 
 public class MainActivity extends ListActivity implements RefreshMeetingsListListener {
 
-	private static final String NOT_REGISTERED = "not registered";
-	public static final String GENERAL_PREFERENCES = "GENERAL_PREFERENCES";
-	public static final String DEVICE_USER_NAME = "DEVICE_USER_NAME";
-	public static final String INITIALIZED = "INITIALIZED";
-	public static final String GCM_REGISTRATION_ID = "GCM_REGISTRATION_ID";
 	private DbHelper mDbHelper;
 	private AcceptedMeetingsAdapter mAdapter;
-	private SharedPreferences mGeneralPrefs;
 
 	public static final String EXTRA_MEETING_ID = "EXTRA_MEETING_ID";
 	public static final String EXTRA_MEETING_CREATION = "EXTRA_MEETING_CREATION";
@@ -71,9 +65,7 @@ public class MainActivity extends ListActivity implements RefreshMeetingsListLis
 		DAL.setContext(this);
 		SDAL.setContext(this);
 
-		mGeneralPrefs = getSharedPreferences(GENERAL_PREFERENCES, MODE_PRIVATE);
-
-		if (mGeneralPrefs.getString(DEVICE_USER_NAME, "").equals("")) {
+		if (BolePoMisc.getDevicePhoneNumber(this).equals("")) {
 			Intent intent = new Intent(this, LoginActivity.class);
 			startActivity(intent);
 		}
@@ -86,8 +78,7 @@ public class MainActivity extends ListActivity implements RefreshMeetingsListLis
 	protected void onResume() {
 		super.onResume();
 
-		if (!mGeneralPrefs.getString(DEVICE_USER_NAME, "").equals("")) {
-//			if (!mGeneralPrefs.getBoolean(INITIALIZED, false)) 
+		if (!BolePoMisc.getDevicePhoneNumber(this).equals("")) {
 				firstInit();
 			mAdapter.changeCursor(createAcceptedMeetingsCursor());
 		}
@@ -101,20 +92,18 @@ public class MainActivity extends ListActivity implements RefreshMeetingsListLis
 		registerForContextMenu(getListView());
 
 		MeetingManagementActivity.registerForMeetingsUpdate(this);
+		RemoveMeetingActivity.registerForMeetingsUpdate(this);
 
 		startService(new Intent(this, ShareLocationsService.class));
-		
-//		SharedPreferences.Editor editor = mGeneralPrefs.edit();
-//		editor.putBoolean(INITIALIZED, true);
-//		editor.commit();
 	}
 
 	private Cursor createAcceptedMeetingsCursor() {
 		SQLiteDatabase readableDB = mDbHelper.getReadableDatabase();
 		Cursor meetings = null;
+		String bla = BolePoMisc.getDevicePhoneNumber(this);
 		Cursor c = readableDB.query(DbContract.Participants.TABLE_NAME,
 				new String[] { DbContract.Participants._ID, DbContract.Participants.COLUMN_NAME_PARTICIPANT_MEETING_ID }, 
-				DbContract.Participants.COLUMN_NAME_PARTICIPANT_NAME + " = '" + mGeneralPrefs.getString(DEVICE_USER_NAME, "") + "'",
+				DbContract.Participants.COLUMN_NAME_PARTICIPANT_PHONE + " = '" + BolePoMisc.getDevicePhoneNumber(this) + "'",
 				null, null, null, null);
 		String selectionStr = "";
 		if (c != null && c.moveToFirst()) {
@@ -199,9 +188,12 @@ public class MainActivity extends ListActivity implements RefreshMeetingsListLis
 			intent.putExtra(EXTRA_MEETING_ID, info.id);
 			break;
 		case R.id.accepted_meetings_cm_item_delete:
-			if (DAL.amIMeetingCreator(info.id)) {
-				
-			}
+			intent = new Intent(this, RemoveMeetingActivity.class);
+			intent.putExtra(EXTRA_MEETING_ID, info.id);
+			if (DAL.amIMeetingCreator(info.id))
+				intent.putExtra(EXTRA_MEETING_CREATOR_REMOVAL, true);
+			else intent.putExtra(EXTRA_MEETING_CREATOR_REMOVAL, false);
+			break;
 		}
 		startActivity(intent);
 		return super.onContextItemSelected(item);
