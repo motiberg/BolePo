@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.support.v4.app.NotificationCompat;
 import android.widget.Toast;
 
+import com.bergerlavy.bolepo.dals.DAL;
 import com.bergerlavy.bolepo.dals.Meeting;
 import com.bergerlavy.bolepo.dals.SDAL;
 import com.bergerlavy.bolepo.dals.SRDataForMeetingManaging;
@@ -69,22 +70,28 @@ public class GCMIntentService extends com.google.android.gcm.GCMBaseIntentServic
 				
 				SRDataForMeetingManaging serverData = servResp.getData();
 				m = serverData.getMeeting();
+				
+				if (DAL.createMeeting(m, serverData)) {
+					Intent refreshListIntent = new Intent();
+					refreshListIntent.setAction("com.bergerlavy.bolepo.refresh");
+					sendBroadcast(refreshListIntent); 
+				}
+				
+				NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+				NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(this);
+
+				mBuilder.setContentTitle("Bolepo")
+				        .setContentText(m.getCreator() + " invites you to " + m.getName())
+				        .setSmallIcon(R.drawable.ic_launcher);
+
+				Intent notificationIntent = new Intent(this.getApplicationContext(), MainActivity.class);
+				PendingIntent contentIntent = PendingIntent.getActivity(this.getApplicationContext(), 0, notificationIntent, 0);
+				mBuilder.setContentIntent(contentIntent);
+
+				mNotificationManager.notify(NEW_MEETING_NOTIFICATION_ID, mBuilder.build());
 			}
 		}
-		
-		NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-		NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(this);
 
-		mBuilder.setContentTitle("Bolepo")
-		        .setContentText(m.getCreator() + " invites you to " + m.getName())
-		        .setSmallIcon(R.drawable.ic_launcher);
-
-		Intent notificationIntent = new Intent(this.getApplicationContext(), MainActivity.class);
-		PendingIntent contentIntent = PendingIntent.getActivity(this.getApplicationContext(), 0, notificationIntent, 0);
-		mBuilder.setContentIntent(contentIntent);
-
-		mNotificationManager.notify(NEW_MEETING_NOTIFICATION_ID, mBuilder.build());
-		
 	}
 
 	/**

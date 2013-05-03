@@ -23,13 +23,19 @@
     </style>
 
     <style name="FormRowStyle" parent="AppTheme">
-        <item name="android:background">#1B84E0</item>
+        <item name="android:layout_marginTop">8dp</item>
         <item name="android:paddingRight">6dp</item>
         <item name="android:paddingLeft">6dp</item>
+        <item name="android:paddingTop">6dp</item>
+        <item name="android:paddingBottom">4dp</item>
     </style>
 
     <style name="FormLabelStyle" parent="AppTheme">
-        <item name="android:gravity">right</item>
+        <item name="android:gravity">left</item>
+        <item name="android:layout_gravity">center_vertical</item>
+        <item name="android:textColor">@android:color/white</item>
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">wrap_content</item>
     </style>
 
     <style name="LoginFormContainer">

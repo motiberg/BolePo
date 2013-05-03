@@ -46,10 +46,6 @@ public class DAL {
 		return p;
 	}
 
-	public static List<Meeting> getAllMeetingsData(String hash) {
-		return null;
-	}
-
 	public static List<Participant> getMeetingParticipants(long meetingID) {
 		List<Participant> parts = new ArrayList<Participant>();
 		SQLiteDatabase readableDB = mDbHelper.getReadableDatabase();
@@ -189,6 +185,33 @@ public class DAL {
 		writableDb.close();
 
 		return deleteRes == 1;
+	}
+
+	public static boolean attendAMeeting(long meetingId) {
+		return meetingAttending(meetingId, RSVP.YES);
+	}
+	
+	public static boolean unattendAMeeting(long meetingId) {
+		return meetingAttending(meetingId, RSVP.NO);
+	}
+
+	private static boolean meetingAttending(long meetignId, RSVP attend) {
+		SQLiteDatabase writableDb = mDbHelper.getWritableDatabase();
+
+		/* updating only the rsvp attending status of the device's user */
+		ContentValues values = new ContentValues();
+		values.put(DbContract.Participants.COLUMN_NAME_PARTICIPANT_RSVP, attend.getRsvp());
+
+		/* updating the local data-base with the new status of the device's user */
+		int updateRes = writableDb.update(DbContract.Participants.TABLE_NAME,
+				values,
+				DbContract.Participants.COLUMN_NAME_PARTICIPANT_MEETING_ID + " = " + meetignId + " and " +
+						DbContract.Participants.COLUMN_NAME_PARTICIPANT_PHONE + " = '" + BolePoMisc.getDevicePhoneNumber(mContext) + "'",
+						null);
+
+		writableDb.close();
+
+		return updateRes == 1;
 	}
 
 	/**

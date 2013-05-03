@@ -18,6 +18,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.bergerlavy.bolepo.BolePoMisc;
+import com.bergerlavy.bolepo.DatePickerActivity;
 import com.bergerlavy.bolepo.MainActivity;
 import com.bergerlavy.bolepo.R;
 import com.bergerlavy.bolepo.TimePickerActivity;
@@ -39,9 +40,9 @@ public class MeetingManagementActivity extends Activity {
 
 	private EditText mName;
 	private EditText mDate;
-	private EditText mTime;
-	private EditText mLocation;
-	private EditText mShareLocationTime;
+	private TextView mTime;
+	private TextView mLocation;
+	private TextView mShareLocationTime;
 	//TODO put value in mParticipantsHashes
 	private List<String> mParticipants;
 	private Button mCommitActionButton;
@@ -50,16 +51,17 @@ public class MeetingManagementActivity extends Activity {
 	private Action mAction;
 	private String mModifiedMeetingHash;
 	private long mModifiedMeetingID;
-	
+
 	private static RefreshMeetingsListListener mRefreshMeetingsListListener;
 
 	/***********************************************************/
 	/********************** REQUEST CODES **********************/
 	/***********************************************************/
-	public static final int RQ_MEETING_LOCATION = 1;
-	public static final int RQ_MEETING_TIME = 2;
-	public static final int RQ_MEETING_PARTICIPANTS = 3;
-	public static final int RQ_MEETING_SHARETIME = 4;
+	private static final int RQ_MEETING_LOCATION = 1;
+	private static final int RQ_MEETING_TIME = 2;
+	private static final int RQ_MEETING_PARTICIPANTS = 3;
+	private static final int RQ_MEETING_SHARETIME = 4;
+	private static final int RQ_MEETING_DATE = 5;
 
 	/***********************************************************/
 	/************************* EXTRAS **************************/
@@ -72,13 +74,13 @@ public class MeetingManagementActivity extends Activity {
 		setContentView(R.layout.activity_meeting_management);
 
 		mParticipants = new ArrayList<String>();
-		mParticipantsCount = (TextView) findViewById(R.id.create_meeting_participants_textview);
+		mParticipantsCount = (TextView) findViewById(R.id.meeting_management_participants_textview);
 
-		mName = (EditText) findViewById(R.id.create_meeting_purpose_edittext);
-		mDate = (EditText) findViewById(R.id.create_meeting_date_edittext);
-		mTime = (EditText) findViewById(R.id.create_meeting_time_edittext);
-		mLocation = (EditText) findViewById(R.id.create_meeting_location_edittext);
-		mShareLocationTime = (EditText) findViewById(R.id.create_meeting_share_locations_time_edittext);
+		mName = (EditText) findViewById(R.id.meeting_management_purpose_edittext);
+		mDate = (EditText) findViewById(R.id.meeting_management_date_edittext);
+		mTime = (TextView) findViewById(R.id.meeting_management_time_edittext);
+		mLocation = (TextView) findViewById(R.id.meeting_management_location_edittext);
+		mShareLocationTime = (TextView) findViewById(R.id.meeting_management_share_locations_time_edittext);
 		mCommitActionButton = (Button) findViewById(R.id.meeting_managment_commit_action_button);
 
 		mTime.setOnClickListener(new OnClickListener() {
@@ -89,9 +91,9 @@ public class MeetingManagementActivity extends Activity {
 				startActivityForResult(intent, RQ_MEETING_TIME);
 			}
 		});
-		
+
 		mShareLocationTime.setOnClickListener(new OnClickListener() {
-			
+
 			@Override
 			public void onClick(View v) {
 				Intent intent = new Intent(MeetingManagementActivity.this, TimePickerActivity.class);
@@ -99,6 +101,15 @@ public class MeetingManagementActivity extends Activity {
 			}
 		});
 
+		mDate.setOnClickListener(new OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				Intent intent = new Intent(MeetingManagementActivity.this, DatePickerActivity.class);
+				startActivityForResult(intent, RQ_MEETING_DATE);
+			}
+		});
+		
 		Bundle extras = getIntent().getExtras();
 
 		/* extracting the which operation the user intending to make */
@@ -111,6 +122,8 @@ public class MeetingManagementActivity extends Activity {
 
 		/* checking whether the activity started for modifying an existing meeting */
 		if (mAction == Action.MODIFY) {
+
+			/* setting the primary button to have a title that matches the modification mode */
 			mCommitActionButton.setText(getResources().getString(R.string.meeting_managment_modify_button_text));
 
 			DbHelper dbHelper = new DbHelper(this);
@@ -118,7 +131,7 @@ public class MeetingManagementActivity extends Activity {
 
 			mModifiedMeetingID = extras.getLong(MainActivity.EXTRA_MEETING_ID);
 
-			/* getting meeting's details by its ID (local dababase ID) */
+			/* getting meeting's details by its ID (local data-base ID) */
 			Cursor c = readableDB.query(DbContract.Meetings.TABLE_NAME, null, DbContract.Meetings._ID + " = " + mModifiedMeetingID, null, null, null, null);
 			if (c != null) {
 				c.moveToFirst();
@@ -133,27 +146,34 @@ public class MeetingManagementActivity extends Activity {
 				c.close();
 			}
 
-			Cursor p = readableDB.query(DbContract.Participants.TABLE_NAME, new String[] { DbContract.Participants._ID, DbContract.Participants.COLUMN_NAME_PARTICIPANT_NAME },
+			Cursor p = readableDB.query(DbContract.Participants.TABLE_NAME,
+					new String[] { DbContract.Participants._ID, DbContract.Participants.COLUMN_NAME_PARTICIPANT_PHONE },
 					DbContract.Participants.COLUMN_NAME_PARTICIPANT_MEETING_ID + " = '" + mModifiedMeetingHash + "'",
 					null, null, null, null);
 
-			if (p != null && p.moveToFirst()) {
-				while (!p.isAfterLast()) {
-					mParticipants.add(p.getString(p.getColumnIndex(DbContract.Participants.COLUMN_NAME_PARTICIPANT_NAME)));
-					p.moveToNext();
-				}
+			if (p != null) {
+				if (p.moveToFirst())
+					while (!p.isAfterLast()) {
+						mParticipants.add(p.getString(p.getColumnIndex(DbContract.Participants.COLUMN_NAME_PARTICIPANT_PHONE)));
+						p.moveToNext();
+					}
 				p.close();
 			}
 
-			if (mParticipants.size() == 0)
-				mParticipantsCount.setText(R.string.create_meeting_no_participants);
-			else mParticipantsCount.setText(mParticipants.size() + " " + getString(R.string.create_meeting_participants));
+			/* setting the participants count label */
+//			if (mParticipants.size() == 0)
+//				mParticipantsCount.setText(R.string.meeting_management_no_participants);
+//			else mParticipantsCount.setText(mParticipants.size() + " " + getString(R.string.meeting_management_participants));
 
 			readableDB.close();
 		}
 		if (mAction == Action.CREATE) {
+			
+			/* setting the primary button to have a title that matches the creation mode */
 			mCommitActionButton.setText(getResources().getString(R.string.meeting_managment_create_button_text));
-			mParticipantsCount.setText(R.string.create_meeting_no_participants);
+			
+			/* setting the participants count label */
+//			mParticipantsCount.setText(R.string.meeting_management_no_participants);
 		}
 	}
 
@@ -171,17 +191,22 @@ public class MeetingManagementActivity extends Activity {
 					String[] participants = data.getStringArrayExtra(AddParticipantsActivity.EXTRA_PARTICIPANTS);
 					if (participants != null) {
 						if (participants.length > 0) {
-							mParticipantsCount.setText(participants.length + " " + getString(R.string.create_meeting_participants));
+//							mParticipantsCount.setText(participants.length + " " + getString(R.string.meeting_management_participants));
 							mParticipants.clear();
 							for (String s : participants)
 								mParticipants.add(s);
 						}
-						else mParticipantsCount.setText(R.string.create_meeting_no_participants);
+//						else mParticipantsCount.setText(R.string.meeting_management_no_participants);
 					}
 				}
 			}
 			if (requestCode == RQ_MEETING_SHARETIME) {
 				mShareLocationTime.setText(Misc.pumpStrToDoubleCharacters(data.getIntExtra(TimePickerActivity.EXTRA_HOUR, 0) + "") + ":" + Misc.pumpStrToDoubleCharacters(data.getIntExtra(TimePickerActivity.EXTRA_MINUTES, 0) + ""));
+			}
+			if (requestCode == RQ_MEETING_DATE) {
+				mDate.setText(Misc.pumpStrToDoubleCharacters(data.getIntExtra(DatePickerActivity.EXTRA_DAY, 0) + "") + "/" + 
+						Misc.pumpStrToDoubleCharacters(data.getIntExtra(DatePickerActivity.EXTRA_MONTH, 0) + "") + "/" + 
+						data.getIntExtra(DatePickerActivity.EXTRA_YEAR, 0));
 			}
 		}
 		super.onActivityResult(requestCode, resultCode, data);
@@ -198,7 +223,8 @@ public class MeetingManagementActivity extends Activity {
 				mDate.getText().toString(), 
 				mTime.getText().toString(), 
 				BolePoMisc.getDevicePhoneNumber(this),
-				mLocation.getText().toString(), 
+//				mLocation.getText().toString(),
+				"dfdfdf",
 				mShareLocationTime.getText().toString(),
 				mParticipants
 				);
@@ -279,46 +305,6 @@ public class MeetingManagementActivity extends Activity {
 	}
 
 	@Override
-	protected void onPause() {
-		// TODO Auto-generated method stub
-		super.onPause();
-	}
-
-
-
-	@Override
-	protected void onRestart() {
-		// TODO Auto-generated method stub
-		super.onRestart();
-	}
-
-
-
-	@Override
-	protected void onResume() {
-		// TODO Auto-generated method stub
-		super.onResume();
-	}
-
-
-
-	@Override
-	protected void onStart() {
-		// TODO Auto-generated method stub
-		super.onStart();
-	}
-
-
-
-	@Override
-	protected void onStop() {
-		// TODO Auto-generated method stub
-		super.onStop();
-	}
-
-
-
-	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		// Inflate the menu; this adds items to the action bar if it is present.
 		getMenuInflater().inflate(R.menu.activity_meeting_managing, menu);
@@ -373,7 +359,7 @@ public class MeetingManagementActivity extends Activity {
 		}
 
 	}
-	
+
 	public static void registerForMeetingsUpdate(RefreshMeetingsListListener l) {
 		mRefreshMeetingsListListener = l;
 	}

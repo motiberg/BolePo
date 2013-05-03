@@ -48,6 +48,14 @@ public class SDAL {
 		return executeServerMeetingCommand(Action.REMOVE, meetingHash);
 	}
 	
+	public static ServerResponse attendAMeeting(String meetingHash) {
+		return executeServerMeetingCommand(Action.ATTEND, meetingHash);
+	}
+	
+	public static ServerResponse unattendAMeeting(String meetingHash) {
+		return executeServerMeetingCommand(Action.UNATTEND, meetingHash);
+	}
+	
 	public static ServerResponse regGCM(String regId) {
 		return executeServerGcmCommand(Action.GCM_REGISTRATION, regId);
 	}
@@ -74,7 +82,6 @@ public class SDAL {
 		catch (Exception e) { 
 			e.printStackTrace();
 		}
-
 	}
 	
 	private static ServerResponse executeServerMeetingCommand(Action action, Object data) {
@@ -107,6 +114,16 @@ public class SDAL {
 		case RETRIEVE:
 			meetingHash = (String) data;
 			nameValuePairs.add(new BasicNameValuePair("hash", meetingHash));
+			break;
+		case ATTEND:
+			meetingHash = (String) data;
+			nameValuePairs.add(new BasicNameValuePair("hash", meetingHash));
+			nameValuePairs.add(new BasicNameValuePair("user", BolePoMisc.getDevicePhoneNumber(mContext)));
+			break;
+		case UNATTEND:
+			meetingHash = (String) data;
+			nameValuePairs.add(new BasicNameValuePair("hash", meetingHash));
+			nameValuePairs.add(new BasicNameValuePair("user", BolePoMisc.getDevicePhoneNumber(mContext)));
 			break;
 		default:
 			break;

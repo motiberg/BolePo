@@ -20,4 +20,6 @@ public class BolePoConstants {
 	public static final int ACTION_CREATE_INDEX = 1;
 	public static final int ACTION_MODIFY_INDEX = 2;
 	public static final int ACTION_REMOVE_INDEX = 3;
+	
+	public static final String ACTION_BOLEPO_REFRESH_LISTS = "com.bergerlavy.bolepo.refresh";
 }

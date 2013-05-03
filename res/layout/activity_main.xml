@@ -4,16 +4,27 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     tools:context=".MainActivity" >
-
+    
+ 	<TextView android:id="@+id/main_accepted_header"
+        android:background="#FF0000"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/main_accepted_header_label" />
+ 	
     <ListView
-        android:id="@android:id/list"
+        android:id="@+id/main_accepted_list"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+    
+    <TextView android:id="@+id/main_accepted_not_approved_yet_header"
+        android:background="#FF0000"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/main_not_approved_yet_header_label" />
+    
+    <ListView
+        android:id="@+id/main_not_approved_yet_list"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
-
-    <TextView
-        android:id="@android:id/empty"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:text="@string/no_meetings" />
 
 </LinearLayout>

@@ -11,8 +11,8 @@ public class GCMBroadcastReceiver extends android.content.BroadcastReceiver {
 
 	@Override
 	public void onReceive(Context context, Intent intent) {
-		GCMIS.runIntentInService(context, intent);
-        setResult(Activity.RESULT_OK, null, null);
+//		GCMIS.runIntentInService(context, intent);
+//        setResult(Activity.RESULT_OK, null, null);
 	}
 
 }

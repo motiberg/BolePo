@@ -1,181 +1,187 @@
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    style="@style/FormStyle"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:paddingLeft="8dp"
-    android:paddingRight="8dp"
-    tools:context=".CreateMeetingActivity" >
-
-    <!-- Meeting's Purpose -->
+    android:layout_height="match_parent" >
 
     <LinearLayout
-        style="@style/FormRowStyle"
+        style="@style/FormStyle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="6dp"
-        android:orientation="horizontal"
-        android:paddingTop="6dp" >
+        android:orientation="vertical"
+        android:paddingLeft="8dp"
+        android:paddingRight="8dp" >
 
-        <EditText
-            android:id="@+id/create_meeting_purpose_edittext"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="5"
-            android:inputType="text" />
+        <!-- Meeting's Name -->
 
-        <TextView
-            android:id="@+id/create_meeting_purpose_textview"
-            style="@style/FormLabelStyle"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="@string/create_meeting_purpose" />
+        <LinearLayout
+            style="@style/FormRowStyle"
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+            android:background="@drawable/rounded_view"
+            android:orientation="horizontal" >
+
+            <TextView
+                android:id="@+id/meeting_management_name_textview"
+                style="@style/FormLabelStyle"
+                android:layout_weight="1"
+                android:text="@string/meeting_management_name" />
+
+            <EditText
+                android:id="@+id/meeting_management_purpose_edittext"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="5"
+                android:inputType="text" />
+        </LinearLayout>
+
+        <!-- Meeting's Date -->
+
+        <LinearLayout
+            style="@style/FormRowStyle"
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+            android:background="@drawable/rounded_view"
+            android:orientation="horizontal" >
+
+            <TextView
+                android:id="@+id/meeting_management_date_textview"
+                style="@style/FormLabelStyle"
+                android:layout_weight="1"
+                android:text="@string/meeting_management_date" />
+
+            <EditText
+                android:id="@+id/meeting_management_date_edittext"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="5"
+                android:inputType="date" />
+        </LinearLayout>
+
+        <!-- Meeting's Time -->
+
+        <LinearLayout
+            style="@style/FormRowStyle"
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+            android:background="@drawable/rounded_view"
+            android:orientation="horizontal" >
+
+            <TextView
+                android:id="@+id/meeting_management_time_textview"
+                style="@style/FormLabelStyle"
+                android:layout_weight="1"
+                android:text="@string/meeting_management_time" />
+
+            <TextView
+                android:id="@+id/meeting_management_time_edittext"
+                style="@style/FormLabelStyle"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="5"
+                android:gravity="center"
+                android:textIsSelectable="true" />
+        </LinearLayout>
+
+        <!-- Meeting's Location -->
+
+        <LinearLayout
+            style="@style/FormRowStyle"
+            android:layout_width="match_parent"
+            android:layout_height="70dp"
+            android:background="@drawable/rounded_view"
+            android:orientation="horizontal" >
+
+            <TextView
+                android:id="@+id/meeting_management_location_textview"
+                style="@style/FormLabelStyle"
+                android:layout_weight="2"
+                android:text="@string/meeting_management_location" />
+
+            <TextView
+                android:id="@+id/meeting_management_location_edittext"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_gravity="center_vertical"
+                android:layout_weight="7"
+                android:textIsSelectable="true" />
+
+            <ImageButton
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:layout_weight="2"
+                android:contentDescription="@string/meeting_management_cDesc"
+                android:onClick="setLocation"
+                android:src="@android:drawable/ic_dialog_map" />
+        </LinearLayout>
+
+        <!-- Meeting's Share Location Time -->
+
+        <LinearLayout
+            style="@style/FormRowStyle"
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+            android:background="@drawable/rounded_view"
+            android:orientation="horizontal" >
+
+            <TextView
+                android:id="@+id/meeting_management_share_locations_time_textview"
+                style="@style/FormLabelStyle"
+                android:layout_weight="2"
+                android:text="@string/meeting_management_share_locations_time" />
+
+            <TextView
+                android:id="@+id/meeting_management_share_locations_time_edittext"
+                style="@style/FormLabelStyle"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="7"
+                android:gravity="center"
+                android:textIsSelectable="true" />
+        </LinearLayout>
+
+        <!-- Meeting's Participants -->
+
+        <LinearLayout
+            style="@style/FormRowStyle"
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+            android:background="@drawable/rounded_view"
+            android:orientation="horizontal"
+            android:paddingBottom="6dp" >
+
+            <TextView
+                android:id="@+id/meeting_management_participants_textview"
+                style="@style/FormLabelStyle"
+                android:layout_weight="1"
+                android:text="@string/meeting_management_participants" />
+
+            <Button
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="2"
+                android:background="@drawable/rounded_button"
+                android:onClick="setParticipants"
+                android:text="@string/meeting_management_add_participants_button" />
+        </LinearLayout>
+
+        <LinearLayout
+            style="@style/FormRowStyle"
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+            android:background="@drawable/rounded_view"
+            android:orientation="vertical"
+            android:paddingBottom="6dp" >
+
+            <Button
+                android:id="@+id/meeting_managment_commit_action_button"
+                android:paddingLeft="20dp"
+                android:paddingRight="20dp"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_gravity="center"
+                android:background="@drawable/rounded_button"
+                android:onClick="commitAction" />
+        </LinearLayout>
     </LinearLayout>
 
-    <!-- Meeting's Date -->
-
-    <LinearLayout
-        style="@style/FormRowStyle"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal" >
-
-        <EditText
-            android:id="@+id/create_meeting_date_edittext"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="5"
-            android:inputType="date" />
-
-        <TextView
-            android:id="@+id/create_meeting_date_textview"
-            style="@style/FormLabelStyle"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="@string/create_meeting_date" />
-    </LinearLayout>
-
-    <!-- Meeting's Time -->
-
-    <LinearLayout
-        style="@style/FormRowStyle"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal" >
-
-        <EditText
-            android:id="@+id/create_meeting_time_edittext"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="5"
-            android:inputType="time" />
-
-        <TextView
-            android:id="@+id/create_meeting_time_textview"
-            style="@style/FormLabelStyle"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="@string/create_meeting_time" />
-    </LinearLayout>
-
-    <!-- Meeting's Location -->
-
-    <LinearLayout
-        style="@style/FormRowStyle"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal" >
-
-        <ImageButton
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:contentDescription="@string/create_meeting_cDesc"
-            android:onClick="setLocation"
-            android:src="@android:drawable/ic_dialog_map" />
-
-        <EditText
-            android:id="@+id/create_meeting_location_edittext"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="4"
-            android:inputType="text" />
-
-        <TextView
-            android:id="@+id/create_meeting_location_textview"
-            style="@style/FormLabelStyle"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1" />
-    </LinearLayout>
-
-    <!-- Meeting's Participants -->
-
-    <LinearLayout
-        style="@style/FormRowStyle"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="4dp"
-        android:orientation="horizontal" >
-
-        <TextView
-            android:id="@+id/create_meeting_participants_textview"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="6dp"
-            android:layout_marginTop="6dp"
-            android:layout_weight="1"
-            android:gravity="center_horizontal"
-            android:text="@string/create_meeting_participants" />
-
-        <Button
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="6dp"
-            android:layout_marginLeft="6dp"
-            android:layout_marginTop="6dp"
-            android:layout_weight="1"
-            android:background="#FFFFFF"
-            android:drawableRight="@drawable/add_participants"
-            android:onClick="setParticipants"
-            android:text="@string/create_meeting_add_participants_button" />
-    </LinearLayout>
-
-    <!-- Meeting's Share Location Time -->
-
-    <LinearLayout
-        style="@style/FormRowStyle"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="4dp"
-        android:orientation="horizontal" >
-
-        <EditText
-            android:id="@+id/create_meeting_share_locations_time_edittext"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
-            android:layout_weight="4"
-            android:inputType="time" />
-
-        <TextView
-            android:id="@+id/create_meeting_share_locations_time_textview"
-            style="@style/FormLabelStyle"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="2"
-            android:text="@string/create_meeting_share_locations_time" />
-    </LinearLayout>
-
-    <Button
-        android:id="@+id/meeting_managment_commit_action_button"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="40dp"
-        android:onClick="commitAction" />
-
-</LinearLayout>
+</ScrollView>

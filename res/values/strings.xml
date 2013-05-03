@@ -4,15 +4,15 @@
     <string name="app_name">BolePo</string>
     <string name="main_menu_settings">Settings</string>
     <string name="title_activity_create_meeting">CreateMeetingActivity</string>
-    <string name="create_meeting_purpose">עניין</string>
-    <string name="create_meeting_date">תאריך:</string>
-    <string name="create_meeting_time">שעה</string>
-    <string name="create_meeting_location">מיקום</string>
-    <string name="create_meeting_cDesc">מפה</string>
-    <string name="create_meeting_add_participants_button">הוספה</string>
-    <string name="create_meeting_participants">Participants</string>
-    <string name="create_meeting_share_locations_time">שיתוף מיקום</string>
-    <string name="create_meeting_create_button">צור פגישה</string>
+    <string name="meeting_management_name">Name:</string>
+    <string name="meeting_management_date">Date:</string>
+    <string name="meeting_management_time">Time:</string>
+    <string name="meeting_management_location">Where:</string>
+    <string name="meeting_management_cDesc">מפה</string>
+    <string name="meeting_management_add_participants_button">Invite !</string>
+    <string name="meeting_management_participants">Participants:</string>
+    <string name="meeting_management_share_locations_time">Sharing:</string>
+    <string name="meeting_management_create_button">Create !</string>
     <string name="hello_world">Hello world!</string>
     <string name="title_activity_date_picker">DatePickerActivity</string>
     <string name="title_activity_main">MainActivity</string>
@@ -26,8 +26,8 @@
     <string name="item_am_meeting_date_and_time">When:</string>
     <string name="item_am_meeting_location">Where:</string>
     <string name="item_am_meeting_creator">Creator:</string>
-    <string name="accepted_meetings_cm_item_edit_title">Edit</string>
-    <string name="accepted_meetings_cm_item_delete_title">Delete</string>
+    <string name="accepted_meetings_root_participant_cm_item_edit_title">Edit</string>
+    <string name="accepted_meetings_root_participant_cm_item_delete_title">Delete</string>
     <string name="meeting_managment_create_button_text">Create !</string>
     <string name="meeting_managment_modify_button_text">Modify !</string>
     <string name="title_activity_gps">GPSActivity</string>
@@ -42,10 +42,16 @@
     <string name="add_participants_menu_invite">Invite</string>
     <string name="main_menu_register">Register GCM</string>
     <string name="main_menu_unregister">Unregister GCM</string>
-    <string name="create_meeting_no_participants">No Participants</string>
+    <string name="meeting_management_no_participants">No Participants</string>
     <string name="title_activity_remove_meeting">RemoveMeetingActivity</string>
     <string name="remove_meeting_confirm_removal">Remove</string>
     <string name="remove_meeting_cancel_removal">Cancel</string>
     <string name="remove_meeting_pass_ownship">Pass Ownship</string>
+    <string name="main_not_approved_yet_header_label">Waiting For Approval</string>
+    <string name="main_accepted_header_label">Accepted Meetings</string>
+    <string name="date_picker_save_and_close_button">Save And Close</string>
+    <string name="accepted_meetings_regular_participant_cm_item_view_title">View</string>
+    <string name="accepted_meetings_regular_participant_cm_item_delete_title">Delete</string>
+    <string name="accepted_meetings_root_participant_cm_item_view_title">View</string>
 
 </resources>

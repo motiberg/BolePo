@@ -126,6 +126,7 @@ public class RemoveMeetingActivity extends Activity {
 			if (resultCode == RESULT_CANCELED) {
 				//TODO user didn't select a future manager, consider what to do in this case 
 			}
+			finish();
 		}
 		super.onActivityResult(requestCode, resultCode, data);
 	}
