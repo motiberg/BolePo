@@ -1,5 +1,8 @@
 package com.bergerlavy.bolepo;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
@@ -9,6 +12,7 @@ import android.widget.Toast;
 
 import com.bergerlavy.bolepo.dals.DAL;
 import com.bergerlavy.bolepo.dals.Meeting;
+import com.bergerlavy.bolepo.dals.Participant;
 import com.bergerlavy.bolepo.dals.SDAL;
 import com.bergerlavy.bolepo.dals.SRDataForMeetingManaging;
 import com.bergerlavy.bolepo.dals.ServerResponse;
@@ -61,37 +65,50 @@ public class GCMIntentService extends com.google.android.gcm.GCMBaseIntentServic
 	@Override
 	protected void onMessage(Context context, Intent intent) {
 
-		String meetingHash = intent.getStringExtra("meeting_hash");
+		String messageType = intent.getStringExtra(BolePoConstants.GCM_DATA.MESSAGE_TYPE.toString());
+		List<Participant> participants = new ArrayList<Participant>();
+		NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+		NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this).setContentTitle("Bolepo");
 		
-		ServerResponse servResp = SDAL.retrieveMeeting(meetingHash);
-		Meeting m = null;
-		if (servResp != null && servResp.getStatus() == ServerResponseStatus.OK) {
-			if (servResp.hasData()) {
-				
-				SRDataForMeetingManaging serverData = servResp.getData();
-				m = serverData.getMeeting();
-				
-				if (DAL.createMeeting(m, serverData)) {
-					Intent refreshListIntent = new Intent();
-					refreshListIntent.setAction("com.bergerlavy.bolepo.refresh");
-					sendBroadcast(refreshListIntent); 
-				}
-				
-				NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-				NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(this);
-
-				mBuilder.setContentTitle("Bolepo")
-				        .setContentText(m.getCreator() + " invites you to " + m.getName())
+		switch (BolePoConstants.GCM_NOTIFICATION.getEnum(messageType)) {
+		case MEETING_CANCLED:
+			break;
+		case NEW_MANAGER:
+			break;
+		case NEW_MEETING:
+			String participantsCount = intent.getStringExtra(BolePoConstants.GCM_DATA.MEETING_PARTICIPANTS_COUNT.toString());
+			int particpantsCountInt = Integer.parseInt(participantsCount);
+			for (int i = 0 ; i < particpantsCountInt ; i++) 
+				participants.add(parseParticipantData(intent.getStringExtra(BolePoConstants.GCM_DATA.PARTICIPANT_DATA.toString() + i)));
+			Meeting meeting = new Meeting(intent.getStringExtra(BolePoConstants.GCM_DATA.MEETING_NAME.toString()),
+					intent.getStringExtra(BolePoConstants.GCM_DATA.MEETING_DATE.toString()),
+					intent.getStringExtra(BolePoConstants.GCM_DATA.MEETING_TIME.toString()),
+					intent.getStringExtra(BolePoConstants.GCM_DATA.MEETING_MANAGER.toString()),
+					intent.getStringExtra(BolePoConstants.GCM_DATA.MEETING_LOCATION.toString()),
+					intent.getStringExtra(BolePoConstants.GCM_DATA.MEETING_SHARE_LOCATION_TIME.toString()),
+					null);
+			if (DAL.createMeeting(meeting, participants)) {
+				Intent refreshListIntent = new Intent();
+				refreshListIntent.setAction("com.bergerlavy.bolepo.refresh");
+				sendBroadcast(refreshListIntent); 
+			
+				notificationBuilder.setContentText(meeting.getCreator() + " invites you to " + meeting.getName())
 				        .setSmallIcon(R.drawable.ic_launcher);
 
 				Intent notificationIntent = new Intent(this.getApplicationContext(), MainActivity.class);
 				PendingIntent contentIntent = PendingIntent.getActivity(this.getApplicationContext(), 0, notificationIntent, 0);
-				mBuilder.setContentIntent(contentIntent);
+				notificationBuilder.setContentIntent(contentIntent);
 
-				mNotificationManager.notify(NEW_MEETING_NOTIFICATION_ID, mBuilder.build());
+				mNotificationManager.notify(NEW_MEETING_NOTIFICATION_ID, notificationBuilder.build());
 			}
+			participants.clear();
+			break;
+		case UPDATED_MEETING:
+			break;
+		default:
+			break;
+		
 		}
-
 	}
 
 	/**
@@ -103,6 +120,11 @@ public class GCMIntentService extends com.google.android.gcm.GCMBaseIntentServic
 	protected void onError(Context context, String errorId) {
 		Toast.makeText(context, "gcm error", Toast.LENGTH_LONG).show();
 
+	}
+	
+	private Participant parseParticipantData(String participant) {
+		String[] data = participant.split("::");
+		return new Participant.Builder(data[0]).setName(data[1]).setCredentials(data[2]).setRsvp(data[3]).setHash(data[4]).build();
 	}
 
 }

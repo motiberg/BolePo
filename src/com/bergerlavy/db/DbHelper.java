@@ -27,7 +27,7 @@ public class DbHelper extends SQLiteOpenHelper {
 					DbContract.Participants.COLUMN_NAME_PARTICIPANT_NAME + " TEXT NOT NULL" + "," +
 					DbContract.Participants.COLUMN_NAME_PARTICIPANT_CREDENTIALS + " TEXT NOT NULL" + "," +
 					DbContract.Participants.COLUMN_NAME_PARTICIPANT_RSVP + " TEXT NOT NULL" + "," +
-					DbContract.Participants.COLUMN_NAME_PARTICIPANT_SHARE_LOCATION_STATUS + " TEXT NOT NULL" + "," +
+//					DbContract.Participants.COLUMN_NAME_PARTICIPANT_SHARE_LOCATION_STATUS + " TEXT NOT NULL" + "," +
 					DbContract.Participants.COLUMN_NAME_PARTICIPANT_HASH + " TEXT NOT NULL" + "," + 
 					DbContract.Participants.COLUMN_NAME_PARTICIPANT_MEETING_ID + " INTEGER NOT NULL" + ", " +
 					"FOREIGN KEY(" + DbContract.Participants.COLUMN_NAME_PARTICIPANT_MEETING_ID + ") " +

@@ -75,11 +75,10 @@ public class DAL {
 	public static boolean createMeeting(Meeting m, SRDataForMeetingManaging serverData) {
 		SQLiteDatabase writableDB = mDbHelper.getWritableDatabase();
 
-		/* inserting the meeting into the meetings table */
-
 		ContentValues values = meetingToValues(m);
 		values.put(DbContract.Meetings.COLUMN_NAME_MEETING_HASH, serverData.getMeetingHash());
 
+		/* inserting the meeting into the meetings table */
 		long meetingID = writableDB.insert(DbContract.Meetings.TABLE_NAME, "null", values);
 		writableDB.close();
 
@@ -89,7 +88,27 @@ public class DAL {
 
 		/* inserting the participants into the participants table */
 
-		if (insertParticipants(meetingID, m, serverData) == m.getParticipantsNum())
+		if (insertParticipants(meetingID, serverData) == m.getParticipantsNum())
+			return true;
+		return false;
+	}
+	
+	public static boolean createMeeting(Meeting m, List<Participant> participants) {
+		SQLiteDatabase writableDB = mDbHelper.getWritableDatabase();
+
+		ContentValues values = meetingToValues(m);
+
+		/* inserting the meeting into the meetings table */
+		long meetingID = writableDB.insert(DbContract.Meetings.TABLE_NAME, "null", values);
+		writableDB.close();
+
+		/* checking whether an error occurred during the insert to the database */
+		if (meetingID == -1)
+			return false;
+
+		/* inserting the participants into the participants table */
+
+		if (insertParticipants(meetingID, participants) == m.getParticipantsNum())
 			return true;
 		return false;
 	}
@@ -111,7 +130,7 @@ public class DAL {
 
 		/* inserting the new participants into the participants table */
 
-		if (insertParticipants(id, newMeeting, serverData) == newMeeting.getParticipantsNum() + 1)
+		if (insertParticipants(id, serverData) == newMeeting.getParticipantsNum() + 1)
 			return true;
 		return false;
 	}
@@ -238,18 +257,21 @@ public class DAL {
 	 * @param serverData the hash values calculated on the participants data by the server.
 	 * @return the number of successfully added participants.
 	 */
-	private static int insertParticipants(long id, Meeting m, SRDataForMeetingManaging serverData) {
-		List<Participant> participants = serverData.getParticipants();
+	private static int insertParticipants(long id, SRDataForMeetingManaging serverData) {
+		return insertParticipants(id, serverData.getParticipants());
+	}
+	
+	private static int insertParticipants(long id, List<Participant> participants) {
 		int count = 0;
 		for (Participant p : participants) {
-			long res = insertParticipant(id, m, p);
+			long res = insertParticipant(id, p);
 			if (res != -1)
 				count++;
 		}
 		return count;
 	}
 
-	private static long insertParticipant(long id, Meeting m, Participant p) {
+	private static long insertParticipant(long id, Participant p) {
 		SQLiteDatabase writableDB = mDbHelper.getWritableDatabase();
 		ContentValues values = new ContentValues();
 		String bla = p.getPhone();
@@ -259,7 +281,7 @@ public class DAL {
 		values.put(DbContract.Participants.COLUMN_NAME_PARTICIPANT_MEETING_ID, id);
 		values.put(DbContract.Participants.COLUMN_NAME_PARTICIPANT_CREDENTIALS, p.getCredentials());
 		values.put(DbContract.Participants.COLUMN_NAME_PARTICIPANT_RSVP, p.getRSVP());
-		values.put(DbContract.Participants.COLUMN_NAME_PARTICIPANT_SHARE_LOCATION_STATUS, m.getShareLocationTime());
+//		values.put(DbContract.Participants.COLUMN_NAME_PARTICIPANT_SHARE_LOCATION_STATUS, m.getShareLocationTime());
 		values.put(DbContract.Participants.COLUMN_NAME_PARTICIPANT_HASH, p.getHash());
 		long res = writableDB.insert(DbContract.Participants.TABLE_NAME, "null", values);
 		writableDB.close();

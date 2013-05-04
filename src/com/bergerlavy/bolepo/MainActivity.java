@@ -137,7 +137,7 @@ public class MainActivity extends Activity implements RefreshMeetingsListListene
 		Cursor c = readableDb.query(DbContract.Participants.TABLE_NAME,
 				new String[] { DbContract.Participants._ID, DbContract.Participants.COLUMN_NAME_PARTICIPANT_MEETING_ID },
 				DbContract.Participants.COLUMN_NAME_PARTICIPANT_PHONE + " = '" + BolePoMisc.getDevicePhoneNumber(this) + "' and " +
-						DbContract.Participants.COLUMN_NAME_PARTICIPANT_RSVP + " = '" + RSVP.MAYBE.getRsvp() + "'",
+						DbContract.Participants.COLUMN_NAME_PARTICIPANT_RSVP + " = '" + RSVP.UNKNOWN.getRsvp() + "'",
 						null, null, null, null);
 		String selectionStr = "";
 		if (c != null) {
@@ -153,6 +153,8 @@ public class MainActivity extends Activity implements RefreshMeetingsListListene
 			selectionStr = selectionStr.substring(0, selectionStr.length() - 4);
 
 		/* getting all the meetings records that the user of this device accepted */
+		if (selectionStr.equals(""))
+			selectionStr = "0 == 1";
 		notApprovedMeetingsCursor = readableDb.query(DbContract.Meetings.TABLE_NAME, null, selectionStr, null, null, null, null);
 		if (notApprovedMeetingsCursor != null)
 			notApprovedMeetingsCursor.moveToFirst();

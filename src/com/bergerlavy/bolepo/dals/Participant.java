@@ -4,7 +4,7 @@ public class Participant {
 
 	private String mPhone;
 	private String mName;
-	private long mMeetingID;
+//	private long mMeetingID;
 	private String mCredentials;
 	private String mRSVP;
 //	private String mShareLocationStatus;
@@ -27,9 +27,9 @@ public class Participant {
 		return mName;
 	}
 	
-	public long getMeetingID() {
-		return mMeetingID;
-	}
+//	public long getMeetingID() {
+//		return mMeetingID;
+//	}
 	
 	public String getCredentials() {
 		return mCredentials;

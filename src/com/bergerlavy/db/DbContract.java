@@ -24,7 +24,7 @@ private DbContract() {}
 		public static final String COLUMN_NAME_PARTICIPANT_MEETING_ID = "participantmeetingid";
 		public static final String COLUMN_NAME_PARTICIPANT_CREDENTIALS = "participantcredentials";
 		public static final String COLUMN_NAME_PARTICIPANT_RSVP = "participantrsvp";
-		public static final String COLUMN_NAME_PARTICIPANT_SHARE_LOCATION_STATUS = "participantsharelocstatus";
+//		public static final String COLUMN_NAME_PARTICIPANT_SHARE_LOCATION_STATUS = "participantsharelocstatus";
 		public static final String COLUMN_NAME_PARTICIPANT_HASH = "participanthash";
 	}
 }
