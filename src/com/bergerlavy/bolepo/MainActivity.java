@@ -6,8 +6,6 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
@@ -20,16 +18,14 @@ import android.widget.AdapterView.AdapterContextMenuInfo;
 import android.widget.ListView;
 import android.widget.Toast;
 
-import com.bergerlavy.bolepo.dals.Credentials;
+import com.bergerlavy.bolepo.BolePoConstants.Credentials;
 import com.bergerlavy.bolepo.dals.DAL;
-import com.bergerlavy.bolepo.dals.RSVP;
 import com.bergerlavy.bolepo.dals.SDAL;
 import com.bergerlavy.bolepo.forms.MeetingManagementActivity;
 import com.bergerlavy.bolepo.forms.RefreshMeetingsListListener;
 import com.bergerlavy.bolepo.forms.RemoveMeetingActivity;
+import com.bergerlavy.bolepo.services.ContactsService;
 import com.bergerlavy.bolepo.services.ShareLocationsService;
-import com.bergerlavy.db.DbContract;
-import com.bergerlavy.db.DbHelper;
 import com.google.android.gcm.GCMRegistrar;
 
 public class MainActivity extends Activity implements RefreshMeetingsListListener {
@@ -37,7 +33,6 @@ public class MainActivity extends Activity implements RefreshMeetingsListListene
 	private ListView mAcceptedList;
 	private ListView mNotApprovedYetList;
 
-	private DbHelper mDbHelper;
 	private AcceptedMeetingsAdapter mAcceptedAdapter;
 	//TODO change the type to NotApprovedYetMeetingsAdapter
 	private AcceptedMeetingsAdapter mNotApprovedYetAdapter;
@@ -54,10 +49,17 @@ public class MainActivity extends Activity implements RefreshMeetingsListListene
 
 		DAL.setContext(this);
 		SDAL.setContext(this);
+		
+		/* starting the contacts service to check which of the contacts stored in this device 
+		 * are registered to the application */
+		Intent contactsServiceIntent = new Intent(this, ContactsService.class);
+		startService(contactsServiceIntent);
 
 		mAcceptedList = (ListView) findViewById(R.id.main_accepted_list);
 		mNotApprovedYetList = (ListView) findViewById(R.id.main_not_approved_yet_list);
 
+		/* checking if it is the first time the application starts by checking if the user entered 
+		 * the device phone number */
 		if (BolePoMisc.getDevicePhoneNumber(this).equals("")) {
 			Intent intent = new Intent(this, LoginActivity.class);
 			startActivity(intent);
@@ -73,8 +75,8 @@ public class MainActivity extends Activity implements RefreshMeetingsListListene
 
 		if (!BolePoMisc.getDevicePhoneNumber(this).equals("")) {
 			firstInit();
-			mAcceptedAdapter.changeCursor(createAcceptedMeetingsCursor());
-			mNotApprovedYetAdapter.changeCursor(createWaitingForApprovalMeetingsCursor());
+			mAcceptedAdapter.changeCursor(DAL.createAcceptedMeetingsCursor());
+			mNotApprovedYetAdapter.changeCursor(DAL.createWaitingForApprovalMeetingsCursor());
 
 			IntentFilter intentFilter = new IntentFilter();
 			intentFilter.addAction("com.bergerlavy.bolepo.refresh");
@@ -84,13 +86,12 @@ public class MainActivity extends Activity implements RefreshMeetingsListListene
 	}
 
 	private void firstInit() {
-		mDbHelper = new DbHelper(this);
 
-		mAcceptedAdapter = new AcceptedMeetingsAdapter(this, createAcceptedMeetingsCursor());
+		mAcceptedAdapter = new AcceptedMeetingsAdapter(this, DAL.createAcceptedMeetingsCursor());
 		mAcceptedList.setAdapter(mAcceptedAdapter);
 		registerForContextMenu(mAcceptedList);
 
-		mNotApprovedYetAdapter = new AcceptedMeetingsAdapter(this, createWaitingForApprovalMeetingsCursor());
+		mNotApprovedYetAdapter = new AcceptedMeetingsAdapter(this, DAL.createWaitingForApprovalMeetingsCursor());
 		mNotApprovedYetList.setAdapter(mNotApprovedYetAdapter);
 		registerForContextMenu(mNotApprovedYetList);
 
@@ -99,70 +100,6 @@ public class MainActivity extends Activity implements RefreshMeetingsListListene
 
 		startService(new Intent(this, ShareLocationsService.class));
 	}
-
-	private Cursor createAcceptedMeetingsCursor() {
-		SQLiteDatabase readableDb = mDbHelper.getReadableDatabase();
-		Cursor acceptedMeetingsCursor = null;
-		/* getting all the meetings IDs that the user of this device accepted (created meetings are automatically marked as accepted) */
-		Cursor c = readableDb.query(DbContract.Participants.TABLE_NAME,
-				new String[] { DbContract.Participants._ID, DbContract.Participants.COLUMN_NAME_PARTICIPANT_MEETING_ID }, 
-				DbContract.Participants.COLUMN_NAME_PARTICIPANT_PHONE + " = '" + BolePoMisc.getDevicePhoneNumber(this) + "' and " +
-						DbContract.Participants.COLUMN_NAME_PARTICIPANT_RSVP + " = '" + RSVP.YES.getRsvp() + "'",
-						null, null, null, null);
-		String selectionStr = "";
-		if (c != null) {
-			if (c.moveToFirst()) 
-				while (!c.isAfterLast()) {
-					selectionStr += DbContract.Meetings._ID + " = " + c.getInt(c.getColumnIndex(DbContract.Participants.COLUMN_NAME_PARTICIPANT_MEETING_ID)) + " or ";
-					c.moveToNext();
-				}
-			c.close();
-		}
-		/* removing the last ' or ' */
-		if (selectionStr.length() > 4)
-			selectionStr = selectionStr.substring(0, selectionStr.length() - 4);
-
-		/* getting all the meetings records that the user of this device accepted */
-		acceptedMeetingsCursor = readableDb.query(DbContract.Meetings.TABLE_NAME, null, selectionStr, null, null, null, null);
-		if (acceptedMeetingsCursor != null)
-			acceptedMeetingsCursor.moveToFirst();
-
-		readableDb.close();
-		return acceptedMeetingsCursor;
-	}
-
-	private Cursor createWaitingForApprovalMeetingsCursor() {
-		SQLiteDatabase readableDb = mDbHelper.getReadableDatabase();
-		Cursor notApprovedMeetingsCursor = null;
-		Cursor c = readableDb.query(DbContract.Participants.TABLE_NAME,
-				new String[] { DbContract.Participants._ID, DbContract.Participants.COLUMN_NAME_PARTICIPANT_MEETING_ID },
-				DbContract.Participants.COLUMN_NAME_PARTICIPANT_PHONE + " = '" + BolePoMisc.getDevicePhoneNumber(this) + "' and " +
-						DbContract.Participants.COLUMN_NAME_PARTICIPANT_RSVP + " = '" + RSVP.UNKNOWN.getRsvp() + "'",
-						null, null, null, null);
-		String selectionStr = "";
-		if (c != null) {
-			if (c.moveToFirst())
-				while (!c.isAfterLast()) {
-					selectionStr += DbContract.Meetings._ID + " = " + c.getInt(c.getColumnIndex(DbContract.Participants.COLUMN_NAME_PARTICIPANT_MEETING_ID)) + " or ";
-					c.moveToNext();
-				}
-			c.close();
-		}
-		/* removing the last ' or ' */
-		if (selectionStr.length() > 4)
-			selectionStr = selectionStr.substring(0, selectionStr.length() - 4);
-
-		/* getting all the meetings records that the user of this device accepted */
-		if (selectionStr.equals(""))
-			selectionStr = "0 == 1";
-		notApprovedMeetingsCursor = readableDb.query(DbContract.Meetings.TABLE_NAME, null, selectionStr, null, null, null, null);
-		if (notApprovedMeetingsCursor != null)
-			notApprovedMeetingsCursor.moveToFirst();
-
-		readableDb.close();
-		return notApprovedMeetingsCursor;
-	}
-
 
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
@@ -250,31 +187,17 @@ public class MainActivity extends Activity implements RefreshMeetingsListListene
 	public void onCreateContextMenu(ContextMenu menu, View v, ContextMenuInfo menuInfo) {
 		super.onCreateContextMenu(menu, v, menuInfo);
 		MenuInflater inflater = getMenuInflater();
-
 		AdapterContextMenuInfo info = (AdapterContextMenuInfo) menuInfo;
-		SQLiteDatabase readableDb = mDbHelper.getReadableDatabase();
-		Cursor c = readableDb.query(DbContract.Participants.TABLE_NAME,
-				new String[] { DbContract.Participants._ID, DbContract.Participants.COLUMN_NAME_PARTICIPANT_CREDENTIALS },
-				DbContract.Participants.COLUMN_NAME_PARTICIPANT_MEETING_ID + " = " + info.id + " and " + DbContract.Participants.COLUMN_NAME_PARTICIPANT_PHONE + " = '" + BolePoMisc.getDevicePhoneNumber(this) + "'",
-				null, null, null, null);
-		if (c != null) {
-			if (c.moveToFirst()) {
-				if (Credentials.ROOT.getCredentials().equalsIgnoreCase(c.getString(c.getColumnIndex(DbContract.Participants.COLUMN_NAME_PARTICIPANT_CREDENTIALS)))) {
-					inflater.inflate(R.menu.accepted_meetings_root_participant_context_menu, menu);
-				}
-				else {
-					inflater.inflate(R.menu.accepted_meetings_regular_participant_context_menu, menu);
-				}
-			}
-		}
-		readableDb.close();
-
+		
+		if (DAL.getMyCredentials(info.id) == Credentials.MANAGER)
+			inflater.inflate(R.menu.accepted_meetings_root_participant_context_menu, menu);	
+		else inflater.inflate(R.menu.accepted_meetings_regular_participant_context_menu, menu);
 	}
 
 	@Override
 	public void onUpdate() {
-		mAcceptedAdapter.changeCursor(createAcceptedMeetingsCursor());
-		mNotApprovedYetAdapter.changeCursor(createWaitingForApprovalMeetingsCursor());
+		mAcceptedAdapter.changeCursor(DAL.createAcceptedMeetingsCursor());
+		mNotApprovedYetAdapter.changeCursor(DAL.createWaitingForApprovalMeetingsCursor());
 	}
 
 	private class MyBroadcastReceiver extends BroadcastReceiver {

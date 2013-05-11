@@ -2,8 +2,6 @@ package com.bergerlavy.bolepo.forms;
 
 import android.app.Activity;
 import android.content.Intent;
-import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.view.Menu;
@@ -15,17 +13,14 @@ import android.widget.TextView;
 import com.bergerlavy.bolepo.MainActivity;
 import com.bergerlavy.bolepo.R;
 import com.bergerlavy.bolepo.dals.DAL;
+import com.bergerlavy.bolepo.dals.Meeting;
 import com.bergerlavy.bolepo.dals.SDAL;
 import com.bergerlavy.bolepo.dals.ServerResponse;
-import com.bergerlavy.bolepo.dals.ServerResponseStatus;
-import com.bergerlavy.db.DbContract;
-import com.bergerlavy.db.DbHelper;
 
 public class RemoveMeetingActivity extends Activity {
 
-	private DbHelper mDbHelper;
 	private long mMeetingIdToRemove;
-	private String mMeetingCreator;
+	private String mMeetingManager;
 	private static RefreshMeetingsListListener mRefreshMeetingsListListener;
 
 	public static final String EXTRA_REMOVE_MEETING_CHOOSE_CONTACT = "EXTRA_REMOVE_MEETING_CHOOSE_CONTACT";
@@ -60,9 +55,6 @@ public class RemoveMeetingActivity extends Activity {
 		}
 
 		messageTV.setText(message);
-
-		mDbHelper = new DbHelper(this);
-
 	}
 
 	@Override
@@ -75,24 +67,10 @@ public class RemoveMeetingActivity extends Activity {
 	public void remove(View view) {
 		switch (view.getId()) {
 		case R.id.remove_meeting_confirm_remove:
-			String meetingHash = null;
-			SQLiteDatabase readableDb = mDbHelper.getReadableDatabase();
+			Meeting meeting = DAL.getMeetingById(mMeetingIdToRemove);
+			mMeetingManager = meeting.getManager();
 
-			Cursor c = readableDb.query(DbContract.Meetings.TABLE_NAME,
-					new String[] { DbContract.Meetings._ID, DbContract.Meetings.COLUMN_NAME_MEETING_HASH, DbContract.Meetings.COLUMN_NAME_MEETING_MANAGER },
-					DbContract.Meetings._ID + " = " + mMeetingIdToRemove,
-					null, null, null, null);
-
-			if (c != null) {
-				if (c.moveToFirst()) {
-					meetingHash = c.getString(c.getColumnIndex(DbContract.Meetings.COLUMN_NAME_MEETING_HASH));
-					mMeetingCreator = c.getString(c.getColumnIndex(DbContract.Meetings.COLUMN_NAME_MEETING_MANAGER));
-				}
-				c.close();
-			}
-			readableDb.close();
-
-			new MeetingRemovalTask().execute(meetingHash);
+			new MeetingRemovalTask().execute(meeting.getHash());
 
 			setResult(RESULT_OK);
 			finish();
@@ -120,7 +98,7 @@ public class RemoveMeetingActivity extends Activity {
 					String contactPhone = data.getStringExtra(AddParticipantsActivity.EXTRA_CONTACT_TO_MANAGE);
 					//TODO server side update for those changes
 					DAL.changeMeetingManager(mMeetingIdToRemove, DAL.getParticipantByPhoneNumber(contactPhone));
-					DAL.removeParticipant(mMeetingIdToRemove, DAL.getParticipantByPhoneNumber(mMeetingCreator));
+					DAL.removeParticipant(mMeetingIdToRemove, DAL.getParticipantByPhoneNumber(mMeetingManager));
 				}
 			}
 			if (resultCode == RESULT_CANCELED) {
@@ -142,7 +120,7 @@ public class RemoveMeetingActivity extends Activity {
 			boolean shouldUpdate = false;
 			ServerResponse servResp = SDAL.removeMeeting(params[0]);
 
-			if (servResp != null && servResp.getStatus() == ServerResponseStatus.OK) {
+			if (servResp.isOK()) {
 				if (DAL.removeMeeting(mMeetingIdToRemove))
 					shouldUpdate = true;
 			}

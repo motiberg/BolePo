@@ -1,5 +1,7 @@
 package com.bergerlavy.bolepo.dals;
 
+import com.bergerlavy.bolepo.BolePoConstants.Credentials;
+
 public class Participant {
 
 	private String mPhone;
@@ -62,8 +64,8 @@ public class Participant {
 
 		/* Optional */
 		private String name;
-		private String credentials = Credentials.READ.getCredentials();
-		private String rsvp = "unknown";
+		private String credentials = Credentials.REGULAR.toString();
+		private String rsvp = RSVP.UNKNOWN.toString();
 		private String hash;
 		
 		public Builder(String phone) {

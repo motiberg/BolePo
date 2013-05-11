@@ -6,16 +6,10 @@ public class BolePoContact {
 	private String mPhone;
 	private boolean mSelected;
 	
-	public BolePoContact(String name, String phone) {
-		mName = name;
-		mPhone = phone;
-		mSelected = false;
-	}
-	
-	public BolePoContact(String name, String phone, boolean selected) {
-		mName = name;
-		mPhone = phone;
-		mSelected = selected;
+	private BolePoContact(Builder builder) {
+		mName = builder.mName;
+		mPhone = builder.mPhone;
+		mSelected = builder.mSelected;
 	}
 
 	public String getName() {
@@ -36,5 +30,28 @@ public class BolePoContact {
 	
 	public boolean isSelected() {
 		return mSelected;
+	}
+	
+	public static class Builder {
+		/* required */
+		private final String mName;
+		private final String mPhone;
+		
+		/* optional */
+		private boolean mSelected;
+		
+		public Builder(String name, String phone) {
+			mName = name;
+			mPhone = phone;
+		}
+		
+		public Builder select() {
+			mSelected = true;
+			return this;
+		}
+		
+		public BolePoContact build() {
+			return new BolePoContact(this);
+		}
 	}
 }

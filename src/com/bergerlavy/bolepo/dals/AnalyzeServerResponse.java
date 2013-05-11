@@ -14,10 +14,12 @@ import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
+import com.bergerlavy.bolepo.BolePoConstants.ServerResponseStatus;
+
 public class AnalyzeServerResponse {
 
 	private Action mActionAnalyzed;
-	
+
 	private String mAction;
 	private String mState;
 	private String mDescription;
@@ -28,22 +30,72 @@ public class AnalyzeServerResponse {
 	protected String mTime;
 	protected String mDate;
 	protected String mName;
-	protected List<Participant> mParticipants;
 	protected String mParticipantHash;
 	protected String mParticipantCredentials;
 	protected String mParticipantRSVP;
 	protected String mParticipantPhone;
 	protected String mParticipantName;
 	protected String mDelivered;
-
 	protected String mTotal;
-
 	protected String mFailDelivered;
+	protected String mPhone;
+
+	protected List<Participant> mParticipants;
+	protected List<String> mPhones;
 
 	public ServerResponse analyze(HttpResponse response, Action action) {
 		mActionAnalyzed = action;
 		action.getActionString();
-		ServerResponse srvResp = null;
+		ServerResponse serverResponse = null;
+
+		DefaultHandler handlerForStatusOnly = new DefaultHandler() {
+
+			boolean action = false;
+			boolean state = false;
+			boolean desc = false;
+
+			public void startElement(String uri, String localName,String qName, 
+					Attributes attributes) throws SAXException {
+				//TODO remove syso
+				System.out.println("Start Element :" + qName);
+
+				if (qName.equalsIgnoreCase("action")) {
+					action = true;
+				}
+
+				if (qName.equalsIgnoreCase("state")) {
+					state = true;
+				}
+
+				if (qName.equalsIgnoreCase("desc")) {
+					desc = true;
+				}
+			}
+
+			public void endElement(String uri, String localName,
+					String qName) throws SAXException {
+				//TODO remove syso
+				System.out.println("End Element :" + qName);
+			}
+
+			public void characters(char ch[], int start, int length) throws SAXException {
+				if (action) {
+					mAction = new String(ch, start, length);
+					action = false;
+				}
+
+				if (state) {
+					mState = new String(ch, start, length);
+					state = false;
+				}
+
+				if (desc) {
+					mDescription = new String(ch, start, length);
+					desc = false;
+				}
+			}
+		};
+
 		try {
 			InputStream inputStream = response.getEntity().getContent();
 			SAXParserFactory factory = SAXParserFactory.newInstance();
@@ -89,35 +141,35 @@ public class AnalyzeServerResponse {
 						if (qName.equalsIgnoreCase("mhash")) {
 							meetinghash = true;
 						}
-						
+
 						if (qName.equalsIgnoreCase("phone")) {
 							participantphone = true;
 						}
-						
+
 						if (qName.equalsIgnoreCase("name")) {
 							participantname = true;
 						}
-						
+
 						if (qName.equalsIgnoreCase("rsvp")) {
 							participantrsvp = true;
 						}
-						
+
 						if (qName.equalsIgnoreCase("credentials")) {
 							participantcredentials = true;
 						}
-						
+
 						if (qName.equalsIgnoreCase("phash")) {
 							participanthash = true;
 						}
-						
+
 						if (qName.equalsIgnoreCase("delivered")) {
 							delivered = true;
 						}
-						
+
 						if (qName.equalsIgnoreCase("faildelivered")) {
 							faildelivered = true;
 						}
-						
+
 						if (qName.equalsIgnoreCase("total")) {
 							total = true;
 						}
@@ -160,46 +212,46 @@ public class AnalyzeServerResponse {
 							mHash = new String(ch, start, length);
 							meetinghash = false;
 						}
-						
+
 						if (participantphone) {
 							mParticipantPhone = new String(ch, start, length);
 							participantphone = false;
 						}
-						
+
 						if (participantname) {
 							mParticipantName = new String(ch, start, length);
 							participantname = false;
 						}
-						
+
 						if (participantrsvp) {
 							mParticipantRSVP = new String(ch, start, length);
 							participantrsvp = false;
 						}
-						
+
 						if (participantcredentials) {
 							mParticipantCredentials = new String(ch, start, length);
 							participantcredentials = false;
 						}
-						
+
 						if (participanthash) {
 							mParticipantHash = new String(ch, start, length);
 							participanthash = false;
 						}
-						
+
 						if (delivered) {
 							mDelivered = new String(ch, start, length);
 							//TODO remove syso
 							System.out.println("Delivered :" + mDelivered);
 							delivered = false;
 						}
-						
+
 						if (faildelivered) {
 							mFailDelivered = new String(ch, start, length);
 							//TODO remove syso
 							System.out.println("Fail Delivered :" + mFailDelivered);
 							faildelivered = false;
 						}
-						
+
 						if (total) {
 							mTotal = new String(ch, start, length);
 							//TODO remove syso
@@ -210,16 +262,26 @@ public class AnalyzeServerResponse {
 				};
 				break;
 			case MODIFY:
+				mParticipants = new ArrayList<Participant>();
 				handler = new DefaultHandler() {
 
 					boolean action = false;
 					boolean state = false;
 					boolean desc = false;
 					boolean hash = false;
+					boolean participantphone = false;
+					boolean participantname = false;
+					boolean participanthash = false;
+					boolean participantrsvp = false;
+					boolean participantcredentials = false;
+					boolean delivered = false;
+					boolean faildelivered = false;
+					boolean total = false;
 
 					public void startElement(String uri, String localName,String qName, 
 							Attributes attributes) throws SAXException {
-
+						//TODO remove syso
+						System.out.println("Start Element :" + qName);
 						if (qName.equalsIgnoreCase("action")) {
 							action = true;
 						}
@@ -235,10 +297,55 @@ public class AnalyzeServerResponse {
 						if (qName.equalsIgnoreCase("hash")) {
 							hash = true;
 						}
+
+						if (qName.equalsIgnoreCase("phone")) {
+							participantphone = true;
+						}
+
+						if (qName.equalsIgnoreCase("name")) {
+							participantname = true;
+						}
+
+						if (qName.equalsIgnoreCase("rsvp")) {
+							participantrsvp = true;
+						}
+
+						if (qName.equalsIgnoreCase("credentials")) {
+							participantcredentials = true;
+						}
+
+						if (qName.equalsIgnoreCase("phash")) {
+							participanthash = true;
+						}
+
+						if (qName.equalsIgnoreCase("delivered")) {
+							delivered = true;
+						}
+
+						if (qName.equalsIgnoreCase("faildelivered")) {
+							faildelivered = true;
+						}
+
+						if (qName.equalsIgnoreCase("total")) {
+							total = true;
+						}
 					}
 
 					public void endElement(String uri, String localName,
 							String qName) throws SAXException {
+						//TODO remove syso
+						System.out.println("End Element :" + qName);
+						if (qName.equalsIgnoreCase("participant")) {
+							mParticipants.add(new Participant.Builder(mParticipantPhone)
+							.setCredentials(mParticipantCredentials)
+							.setRsvp(mParticipantRSVP)
+							.setHash(mParticipantHash)
+							.build());
+							mParticipantPhone = null;
+							mParticipantCredentials = null;
+							mParticipantRSVP = null;
+							mParticipantHash = null;
+						}
 					}
 
 					public void characters(char ch[], int start, int length) throws SAXException {
@@ -259,65 +366,61 @@ public class AnalyzeServerResponse {
 
 						if (hash) {
 							mHash = new String(ch, start, length);
+							//TODO remove syso
+							System.out.println("Meeting Hash :" + mHash);
 							hash = false;
+						}
+
+						if (participantphone) {
+							mParticipantPhone = new String(ch, start, length);
+							participantphone = false;
+						}
+
+						if (participantname) {
+							mParticipantName = new String(ch, start, length);
+							participantname = false;
+						}
+
+						if (participantrsvp) {
+							mParticipantRSVP = new String(ch, start, length);
+							participantrsvp = false;
+						}
+
+						if (participantcredentials) {
+							mParticipantCredentials = new String(ch, start, length);
+							participantcredentials = false;
+						}
+
+						if (participanthash) {
+							mParticipantHash = new String(ch, start, length);
+							participanthash = false;
+						}
+
+						if (delivered) {
+							mDelivered = new String(ch, start, length);
+							//TODO remove syso
+							System.out.println("Delivered :" + mDelivered);
+							delivered = false;
+						}
+
+						if (faildelivered) {
+							mFailDelivered = new String(ch, start, length);
+							//TODO remove syso
+							System.out.println("Fail Delivered :" + mFailDelivered);
+							faildelivered = false;
+						}
+
+						if (total) {
+							mTotal = new String(ch, start, length);
+							//TODO remove syso
+							System.out.println("Total :" + mTotal);
+							total = false;
 						}
 					}
 				};
 				break;
 			case REMOVE:
-				handler = new DefaultHandler() {
-
-					boolean action = false;
-					boolean state = false;
-					boolean desc = false;
-
-					public void startElement(String uri, String localName,String qName, 
-							Attributes attributes) throws SAXException {
-						//TODO remove syso
-						System.out.println("Start Element :" + qName);
-						
-						if (qName.equalsIgnoreCase("action")) {
-							action = true;
-						}
-
-						if (qName.equalsIgnoreCase("state")) {
-							state = true;
-						}
-
-						if (qName.equalsIgnoreCase("desc")) {
-							desc = true;
-						}
-					}
-
-					public void endElement(String uri, String localName,
-							String qName) throws SAXException {
-						//TODO remove syso
-						System.out.println("End Element :" + qName);
-					}
-
-					public void characters(char ch[], int start, int length) throws SAXException {
-						if (action) {
-							mAction = new String(ch, start, length);
-							//TODO remove syso
-							System.out.println("Element :" + mAction);
-							action = false;
-						}
-
-						if (state) {
-							mState = new String(ch, start, length);
-							//TODO remove syso
-							System.out.println("Element :" + mState);
-							state = false;
-						}
-
-						if (desc) {
-							mDescription = new String(ch, start, length);
-							//TODO remove syso
-							System.out.println("Element :" + mDescription);
-							desc = false;
-						}
-					}
-				};
+				handler = handlerForStatusOnly;
 				break;
 			case RETRIEVE:
 				mParticipants = new ArrayList<Participant>();
@@ -336,9 +439,9 @@ public class AnalyzeServerResponse {
 					boolean partrsvp = false;
 					boolean partcredentials = false;
 					boolean parthash = false;
-					
+
 					boolean here = false;
-					
+
 
 					public void startElement(String uri, String localName,String qName, 
 							Attributes attributes) throws SAXException {
@@ -380,23 +483,23 @@ public class AnalyzeServerResponse {
 						if (qName.equalsIgnoreCase("sharelocationtime")) {
 							sharelocationtime = true;
 						}
-						
+
 						if (qName.equalsIgnoreCase("participantname")) {
 							partname = true;
 						}
-						
+
 						if (qName.equalsIgnoreCase("rsvp")) {
 							partrsvp = true;
 						}
-						
+
 						if (qName.equalsIgnoreCase("credentials")) {
 							partcredentials = true;
 						}
-						
+
 						if (qName.equalsIgnoreCase("participanthash")) {
 							parthash = true;
 						}
-						
+
 						if (qName.equalsIgnoreCase("here")) {
 							here = true;
 						}
@@ -406,7 +509,7 @@ public class AnalyzeServerResponse {
 							String qName) throws SAXException {
 						//TODO remove syso
 						System.out.println("End Element :" + qName);
-						
+
 						if (qName.equalsIgnoreCase("participant")) {
 							mParticipants.add(new Participant.Builder(mParticipantPhone)
 							.setCredentials(mParticipantCredentials)
@@ -465,27 +568,27 @@ public class AnalyzeServerResponse {
 							mShareLocationTime = new String(ch, start, length);
 							sharelocationtime = false;
 						}
-						
+
 						if (partname) {
 							mParticipantPhone = new String(ch, start, length);
 							partname = false;
 						}
-						
+
 						if (partrsvp) {
 							mParticipantRSVP = new String(ch, start, length);
 							partrsvp = false;
 						}
-						
+
 						if (partcredentials) {
 							mParticipantCredentials = new String(ch, start, length);
 							partcredentials = false;
 						}
-						
+
 						if (parthash) {
 							mParticipantHash = new String(ch, start, length);
 							parthash = false;
 						}
-						
+
 						if (here) {
 							System.out.println(new String(ch, start, length));
 							here = false;
@@ -495,11 +598,19 @@ public class AnalyzeServerResponse {
 				};
 				break;
 			case GCM_REGISTRATION:
+				handler = handlerForStatusOnly;
+				break;
+			case GCM_UNREGISTRATION:
+				handler = handlerForStatusOnly;
+				break;
+			case GCM_CHECK_REGISTRATION:
+				mPhones = new ArrayList<String>();
 				handler = new DefaultHandler() {
 
 					boolean action = false;
 					boolean state = false;
 					boolean desc = false;
+					boolean phone = false;
 
 					public void startElement(String uri, String localName,String qName, 
 							Attributes attributes) throws SAXException {
@@ -517,12 +628,21 @@ public class AnalyzeServerResponse {
 						if (qName.equalsIgnoreCase("desc")) {
 							desc = true;
 						}
+
+						if (qName.equalsIgnoreCase("phone")) {
+							phone = true;
+						}
 					}
 
 					public void endElement(String uri, String localName,
 							String qName) throws SAXException {
 						//TODO remove syso
 						System.out.println("End Element :" + qName);
+						if (qName.equalsIgnoreCase("contact")) {
+							if (mPhone != null)
+								mPhones.add(mPhone);
+							mPhone = null;
+						}
 					}
 
 					public void characters(char ch[], int start, int length) throws SAXException {
@@ -540,91 +660,71 @@ public class AnalyzeServerResponse {
 							mDescription = new String(ch, start, length);
 							desc = false;
 						}
-					}
-				};
-				break;
-			case GCM_UNREGISTRATION:
-				handler = new DefaultHandler() {
 
-					boolean action = false;
-					boolean state = false;
-					boolean desc = false;
-
-					public void startElement(String uri, String localName,String qName, 
-							Attributes attributes) throws SAXException {
-
-						if (qName.equalsIgnoreCase("action")) {
-							action = true;
-						}
-
-						if (qName.equalsIgnoreCase("state")) {
-							state = true;
-						}
-
-						if (qName.equalsIgnoreCase("desc")) {
-							desc = true;
-						}
-					}
-
-					public void endElement(String uri, String localName,
-							String qName) throws SAXException {
-					}
-
-					public void characters(char ch[], int start, int length) throws SAXException {
-						if (action) {
-							mAction = new String(ch, start, length);
-							action = false;
-						}
-
-						if (state) {
-							mState = new String(ch, start, length);
-							state = false;
-						}
-
-						if (desc) {
-							mDescription = new String(ch, start, length);
-							desc = false;
+						if (phone) {
+							mPhone = new String(ch, start, length);
+							System.out.println("Phone = " + mPhone);
+							phone = false;
 						}
 					}
 				};
 				break;
-
+			case ATTEND:
+				break;
+			case UNATTEND:
+				break;
 			}
 
 			saxParser.parse(inputStream, handler);
 
-			if (mState.equalsIgnoreCase("ok") && isActionConsistent(mAction)) {
-				SRDataForMeetingManaging data = null;
+			ServerResponseStatus status = ServerResponseStatus.getEnum(mState);
+
+			if (isActionConsistent(mAction)) {
 				switch (action) {
 				case CREATE:
+					serverResponse = new SRMeetingCreation.Builder(status, mDescription)
+					.setMeetingHash(mHash)
+					.setParticipants(mParticipants)
+					.build();
+					break;
 				case MODIFY:
-					data = new SRDataForMeetingManaging.Builder(mDescription)
+					serverResponse = new SRMeetingModification.Builder(status, mDescription)
 					.setMeetingHash(mHash)
 					.setParticipants(mParticipants)
 					.build();
 					break;
 				case REMOVE:
-					data = new SRDataForMeetingManaging.Builder(mDescription)
+					serverResponse = new SRMeetingRemoval.Builder(status, mDescription)
 					.build();
 					break;
 				case RETRIEVE:
-					data = new SRDataForMeetingManaging.Builder(mDescription)
+					serverResponse = new SRMeetingRetrieval.Builder(status, mDescription)
 					.setMeeting(new Meeting(mName, mDate, mTime, mCreator, mLocation, mShareLocationTime, null))
 					.setParticipants(mParticipants)
 					.build();
 					break;
 				case GCM_REGISTRATION:
-					data = new SRDataForMeetingManaging.Builder(mDescription)
+					serverResponse = new SRGcmRegistration.Builder(status, mDescription)
 					.build();
 					break;
 				case GCM_UNREGISTRATION:
-					data = new SRDataForMeetingManaging.Builder(mDescription)
+					serverResponse = new SRGcmUnregistration.Builder(status, mDescription)
 					.build();
+					break;
+				case GCM_CHECK_REGISTRATION:
+					serverResponse = new SRGcmRegistrationCheck.Builder(status, mDescription)
+					.setRegisteredContactsPhones(mPhones)
+					.build();
+					break;
+				case ATTEND:
+					//TODO
+					break;
+				case UNATTEND:
+					//TODO
 					break;
 				default:
 					break;
 				}
-				srvResp = new ServerResponse(ServerResponseStatus.OK, data);
 			}
 
 		} catch (IllegalStateException e) {
@@ -637,9 +737,9 @@ public class AnalyzeServerResponse {
 			e.printStackTrace();
 		}
 
-		return srvResp;
+		return serverResponse;
 	}
-	
+
 	/**
 	 * Checks if the server's response which is being analyzed is a response for the same action as
 	 * the user expects it to be.

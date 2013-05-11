@@ -10,7 +10,8 @@ public enum Action {
 	ATTEND ("attend"),
 	UNATTEND ("unattend"),
 	GCM_REGISTRATION ("gcm_register"),
-	GCM_UNREGISTRATION ("gcm_unregister");
+	GCM_UNREGISTRATION ("gcm_unregister"),
+	GCM_CHECK_REGISTRATION ("gcm_check_registration");
 	
 	private final String mStr;
 	

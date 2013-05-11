@@ -10,16 +10,16 @@ public class Meeting {
 	private String mDate;
 	private String mTime;
 	private String mHash;
-	private String mCreator;
+	private String mManager;
 	private String mLocation;
 	private String mShareLocationTime;
 	private List<String> mParticipants;
 	
-	public Meeting(String name, String date, String time, String creator, String location, String shareLocationTime, List<String> participants) {
+	public Meeting(String name, String date, String time, String manager, String location, String shareLocationTime, List<String> participants) {
 		mName = name;
 		mDate = date;
 		mTime = time;
-		mCreator = creator;
+		mManager = manager;
 		mLocation = location;
 		mShareLocationTime = shareLocationTime;
 		mParticipants = new ArrayList<String>();
@@ -39,8 +39,8 @@ public class Meeting {
 		return mTime;
 	}
 	
-	public String getCreator() {
-		return mCreator;
+	public String getManager() {
+		return mManager;
 	}
 
 	public String getLocation() {

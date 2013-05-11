@@ -8,6 +8,7 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 
+import com.bergerlavy.bolepo.BolePoConstants.Credentials;
 import com.bergerlavy.bolepo.BolePoMisc;
 import com.bergerlavy.db.DbContract;
 import com.bergerlavy.db.DbHelper;
@@ -18,16 +19,143 @@ public class DAL {
 
 	private static Context mContext;
 	private static DbHelper mDbHelper;
+	private static SQLiteDatabase mReadableDb;
+	private static SQLiteDatabase mWritableDb;
 
 	public static void setContext(Context context) {
 		mContext = context;
 		mDbHelper = new DbHelper(context);
 	}
 
+	public static Cursor createAcceptedMeetingsCursor() {
+		mReadableDb = mDbHelper.getReadableDatabase();
+		Cursor acceptedMeetingsCursor = null;
+		/* getting all the meetings IDs that the user of this device accepted (created meetings are automatically marked as accepted) */
+		Cursor c = mReadableDb.query(DbContract.Participants.TABLE_NAME,
+				new String[] { DbContract.Participants._ID, DbContract.Participants.COLUMN_NAME_PARTICIPANT_MEETING_ID }, 
+				DbContract.Participants.COLUMN_NAME_PARTICIPANT_PHONE + " = '" + BolePoMisc.getDevicePhoneNumber(mContext) + "' and " +
+						DbContract.Participants.COLUMN_NAME_PARTICIPANT_RSVP + " = '" + RSVP.YES.getRsvp() + "'",
+						null, null, null, null);
+		String selectionStr = "";
+		if (c != null) {
+			if (c.moveToFirst()) 
+				while (!c.isAfterLast()) {
+					selectionStr += DbContract.Meetings._ID + " = " + c.getInt(c.getColumnIndex(DbContract.Participants.COLUMN_NAME_PARTICIPANT_MEETING_ID)) + " or ";
+					c.moveToNext();
+				}
+			c.close();
+		}
+		/* removing the last ' or ' */
+		if (selectionStr.length() > 4)
+			selectionStr = selectionStr.substring(0, selectionStr.length() - 4);
+
+		/* getting all the meetings records that the user of this device accepted */
+		acceptedMeetingsCursor = mReadableDb.query(DbContract.Meetings.TABLE_NAME, null, selectionStr, null, null, null, null);
+		if (acceptedMeetingsCursor != null)
+			acceptedMeetingsCursor.moveToFirst();
+
+		mReadableDb.close();
+		return acceptedMeetingsCursor;
+	}
+
+	public static Cursor createWaitingForApprovalMeetingsCursor() {
+		mReadableDb = mDbHelper.getReadableDatabase();
+		Cursor notApprovedMeetingsCursor = null;
+		Cursor c = mReadableDb.query(DbContract.Participants.TABLE_NAME,
+				new String[] { DbContract.Participants._ID, DbContract.Participants.COLUMN_NAME_PARTICIPANT_MEETING_ID },
+				DbContract.Participants.COLUMN_NAME_PARTICIPANT_PHONE + " = '" + BolePoMisc.getDevicePhoneNumber(mContext) + "' and " +
+						DbContract.Participants.COLUMN_NAME_PARTICIPANT_RSVP + " = '" + RSVP.UNKNOWN.getRsvp() + "'",
+						null, null, null, null);
+		String selectionStr = "";
+		if (c != null) {
+			if (c.moveToFirst())
+				while (!c.isAfterLast()) {
+					selectionStr += DbContract.Meetings._ID + " = " + c.getInt(c.getColumnIndex(DbContract.Participants.COLUMN_NAME_PARTICIPANT_MEETING_ID)) + " or ";
+					c.moveToNext();
+				}
+			c.close();
+		}
+		/* removing the last ' or ' */
+		if (selectionStr.length() > 4)
+			selectionStr = selectionStr.substring(0, selectionStr.length() - 4);
+
+		/* getting all the meetings records that the user of this device accepted */
+		if (selectionStr.equals(""))
+			selectionStr = "0 == 1";
+		notApprovedMeetingsCursor = mReadableDb.query(DbContract.Meetings.TABLE_NAME, null, selectionStr, null, null, null, null);
+		if (notApprovedMeetingsCursor != null)
+			notApprovedMeetingsCursor.moveToFirst();
+
+		mReadableDb.close();
+		return notApprovedMeetingsCursor;
+	}
+
+	/**
+	 * Retrieves the credentials of the user of this device in the meeting denoted by it's ID
+	 * @param meetingId the ID of the meeting that is checked for the user's credentials
+	 * @return
+	 */
+	public static Credentials getMyCredentials(long meetingId) {
+		mReadableDb = mDbHelper.getReadableDatabase();
+		Cursor c = mReadableDb.query(DbContract.Participants.TABLE_NAME,
+				new String[] { DbContract.Participants._ID, DbContract.Participants.COLUMN_NAME_PARTICIPANT_CREDENTIALS },
+				DbContract.Participants.COLUMN_NAME_PARTICIPANT_MEETING_ID + " = " + meetingId + " and " + 
+						DbContract.Participants.COLUMN_NAME_PARTICIPANT_PHONE + " = '" + BolePoMisc.getDevicePhoneNumber(mContext) + "'",
+						null, null, null, null);
+		if (c != null) {
+			if (c.moveToFirst()) {
+				return Credentials.getEnum(c.getString(c.getColumnIndex(DbContract.Participants.COLUMN_NAME_PARTICIPANT_CREDENTIALS)));
+			}
+			c.close();
+		}
+		mReadableDb.close();
+		return null;
+	}
+
+	public static Meeting getMeetingById(long meetingId) {
+		mReadableDb = mDbHelper.getReadableDatabase();
+		Meeting meeting = null;
+		Cursor c = mReadableDb.query(DbContract.Meetings.TABLE_NAME, null, DbContract.Meetings._ID + " = " + meetingId, null, null, null, null);
+		if (c != null) {
+			if (c.moveToFirst()) {
+				meeting = new Meeting(c.getString(c.getColumnIndex(DbContract.Meetings.COLUMN_NAME_MEETING_NAME)),
+						c.getString(c.getColumnIndex(DbContract.Meetings.COLUMN_NAME_MEETING_DATE)),
+						c.getString(c.getColumnIndex(DbContract.Meetings.COLUMN_NAME_MEETING_TIME)),
+						c.getString(c.getColumnIndex(DbContract.Meetings.COLUMN_NAME_MEETING_MANAGER)),
+						c.getString(c.getColumnIndex(DbContract.Meetings.COLUMN_NAME_MEETING_LOCATION)),
+						c.getString(c.getColumnIndex(DbContract.Meetings.COLUMN_NAME_MEETING_SHARE_LOCATION_TIME)),
+						getParticipantsPhonesAsList(meetingId));
+				meeting.setHash(c.getString(c.getColumnIndex(DbContract.Meetings.COLUMN_NAME_MEETING_HASH)));
+			}
+			c.close();
+		}
+		mReadableDb.close();
+		return meeting;
+	}
+
+	public static Participant getMeetingManager(long meetingId) {
+		mReadableDb = mDbHelper.getReadableDatabase();
+		Participant participant = null;
+		String managerPhone = null;
+		Cursor c = mReadableDb.query(DbContract.Meetings.TABLE_NAME,
+				new String[] { DbContract.Meetings._ID, DbContract.Meetings.COLUMN_NAME_MEETING_MANAGER },
+				DbContract.Meetings._ID + " = " + meetingId,
+				null, null, null, null);
+		if (c != null) {
+			if (c.moveToFirst())
+				managerPhone = c.getString(c.getColumnIndex(DbContract.Meetings.COLUMN_NAME_MEETING_MANAGER));
+			c.close();
+		}
+		mReadableDb.close();
+		if (managerPhone != null)
+			participant = getParticipantByPhoneNumber(managerPhone);
+		return participant;
+	}
+		
 	public static Participant getParticipantByPhoneNumber(String phone) {
 		Participant p = null;
-		SQLiteDatabase readableDB = mDbHelper.getReadableDatabase();
-		Cursor c = readableDB.query(DbContract.Participants.TABLE_NAME,
+		mReadableDb = mDbHelper.getReadableDatabase();
+		Cursor c = mReadableDb.query(DbContract.Participants.TABLE_NAME,
 				null,
 				DbContract.Participants.COLUMN_NAME_PARTICIPANT_PHONE + " = " + phone,
 				null, null, null, null);
@@ -42,20 +170,20 @@ public class DAL {
 				.build();
 			}
 		}
-		readableDB.close();
+		mReadableDb.close();
 		return p;
 	}
 
-	public static List<Participant> getMeetingParticipants(long meetingID) {
+	public static List<Participant> getParticipantsAsList(long meetingID) {
 		List<Participant> parts = new ArrayList<Participant>();
-		SQLiteDatabase readableDB = mDbHelper.getReadableDatabase();
+		mReadableDb = mDbHelper.getReadableDatabase();
 
-		Cursor participantsFromDBCursor = readableDB.query(DbContract.Participants.TABLE_NAME,
+		Cursor participantsFromDBCursor = mReadableDb.query(DbContract.Participants.TABLE_NAME,
 				null,
 				DbContract.Participants.COLUMN_NAME_PARTICIPANT_MEETING_ID + " = " + meetingID,
 				null, null, null, null);
 
-		readableDB.close();
+		mReadableDb.close();
 
 		participantsFromDBCursor.moveToFirst();
 		while (!participantsFromDBCursor.isAfterLast()) {
@@ -71,16 +199,46 @@ public class DAL {
 
 		return parts;
 	}
-
-	public static boolean createMeeting(Meeting m, SRDataForMeetingManaging serverData) {
-		SQLiteDatabase writableDB = mDbHelper.getWritableDatabase();
-
+	
+	public static List<String> getParticipantsPhonesAsList(long meetingId) {
+		mReadableDb = mDbHelper.getReadableDatabase();
+		List<String> participantsPhones = new ArrayList<String>();
+		Cursor c = mReadableDb.query(DbContract.Participants.TABLE_NAME,
+				new String[] { DbContract.Participants._ID, DbContract.Participants.COLUMN_NAME_PARTICIPANT_PHONE },
+				DbContract.Participants.COLUMN_NAME_PARTICIPANT_MEETING_ID + " = " + meetingId,
+				null, null, null, null);
+		if (c != null) {
+			if (c.moveToFirst()) {
+				while (!c.isAfterLast()) {
+					participantsPhones.add(c.getString(c.getColumnIndex(DbContract.Participants.COLUMN_NAME_PARTICIPANT_PHONE)));
+					c.moveToNext();
+				}
+			}
+			c.close();
+		}
+		mReadableDb.close();
+		return participantsPhones;
+	}
+	
+	public static String[] getParticipantsPhonesAsArray(long meetingId) {
+		List<String> participantsList = getParticipantsPhonesAsList(meetingId);
+		String[] participantsArray = new String[participantsList.size()];
+		participantsList.toArray(participantsArray);
+		return participantsArray;
+	}
+	
+	public static boolean createMeeting(Meeting m, SRMeetingCreation serverResponse) {
+		if (!serverResponse.hasData())
+			return false;
+		
 		ContentValues values = meetingToValues(m);
-		values.put(DbContract.Meetings.COLUMN_NAME_MEETING_HASH, serverData.getMeetingHash());
+		values.put(DbContract.Meetings.COLUMN_NAME_MEETING_HASH, serverResponse.getMeetingHash());
 
+		mWritableDb = mDbHelper.getWritableDatabase();
+		
 		/* inserting the meeting into the meetings table */
-		long meetingID = writableDB.insert(DbContract.Meetings.TABLE_NAME, "null", values);
-		writableDB.close();
+		long meetingID = mWritableDb.insert(DbContract.Meetings.TABLE_NAME, "null", values);
+		mWritableDb.close();
 
 		/* checking whether an error occurred during the insert to the database */
 		if (meetingID == -1)
@@ -88,19 +246,19 @@ public class DAL {
 
 		/* inserting the participants into the participants table */
 
-		if (insertParticipants(meetingID, serverData) == m.getParticipantsNum())
+		if (insertParticipants(meetingID, serverResponse.getParticipants()) == m.getParticipantsNum())
 			return true;
 		return false;
 	}
-	
+
 	public static boolean createMeeting(Meeting m, List<Participant> participants) {
-		SQLiteDatabase writableDB = mDbHelper.getWritableDatabase();
+		mWritableDb = mDbHelper.getWritableDatabase();
 
 		ContentValues values = meetingToValues(m);
 
 		/* inserting the meeting into the meetings table */
-		long meetingID = writableDB.insert(DbContract.Meetings.TABLE_NAME, "null", values);
-		writableDB.close();
+		long meetingID = mWritableDb.insert(DbContract.Meetings.TABLE_NAME, "null", values);
+		mWritableDb.close();
 
 		/* checking whether an error occurred during the insert to the database */
 		if (meetingID == -1)
@@ -113,45 +271,47 @@ public class DAL {
 		return false;
 	}
 
-	public static boolean editMeeting(long id, Meeting newMeeting, SRDataForMeetingManaging serverData) {
-
+	public static boolean editMeeting(long id, Meeting newMeeting, SRMeetingModification serverResponse) {
+		if (!serverResponse.hasData())
+			return false;
+		
 		/* removing old participants */
 
 		removeParticipants(id);
 
 		/* updating meetings table with the modified meeting */
 
-		SQLiteDatabase writableDB = mDbHelper.getWritableDatabase();
+		mWritableDb = mDbHelper.getWritableDatabase();
 		ContentValues values = meetingToValues(newMeeting);
-		values.put(DbContract.Meetings.COLUMN_NAME_MEETING_HASH, serverData.getMeetingHash());
+		values.put(DbContract.Meetings.COLUMN_NAME_MEETING_HASH, serverResponse.getMeetingHash());
 
-		writableDB.update(DbContract.Meetings.TABLE_NAME, values, DbContract.Meetings._ID + " = " + id, null);
-		writableDB.close();
+		mWritableDb.update(DbContract.Meetings.TABLE_NAME, values, DbContract.Meetings._ID + " = " + id, null);
+		mWritableDb.close();
 
 		/* inserting the new participants into the participants table */
 
-		if (insertParticipants(id, serverData) == newMeeting.getParticipantsNum() + 1)
+		if (insertParticipants(id, serverResponse.getParticipants()) == newMeeting.getParticipantsNum())
 			return true;
 		return false;
 	}
 
 	public static boolean amIMeetingCreator(long id) {
-		SQLiteDatabase readableDB = mDbHelper.getReadableDatabase();
-		Cursor c = readableDB.query(DbContract.Participants.TABLE_NAME,
+		mReadableDb = mDbHelper.getReadableDatabase();
+		Cursor c = mReadableDb.query(DbContract.Participants.TABLE_NAME,
 				new String[] { DbContract.Participants._ID },
 				DbContract.Participants.COLUMN_NAME_PARTICIPANT_MEETING_ID + " = " + id + " and " + 
 						DbContract.Participants.COLUMN_NAME_PARTICIPANT_PHONE + " = '" + BolePoMisc.getDevicePhoneNumber(mContext) + "' and " + 
-						DbContract.Participants.COLUMN_NAME_PARTICIPANT_CREDENTIALS + " = '" + Credentials.ROOT.getCredentials() + "'",
+						DbContract.Participants.COLUMN_NAME_PARTICIPANT_CREDENTIALS + " = '" + Credentials.MANAGER.toString() + "'",
 						null, null, null, null);
 		if (c != null) {
 			if (c.moveToFirst()) {
 				c.close();
-				readableDB.close();
+				mReadableDb.close();
 				return true;
 			}
 			c.close();
 		}
-		readableDB.close();
+		mReadableDb.close();
 		return false;
 	}
 
@@ -163,9 +323,9 @@ public class DAL {
 
 		/* removing meeting's other data */
 
-		SQLiteDatabase writableDB = mDbHelper.getWritableDatabase();
-		int res = writableDB.delete(DbContract.Meetings.TABLE_NAME, DbContract.Meetings._ID + " = " + id, null);
-		writableDB.close();
+		mWritableDb = mDbHelper.getWritableDatabase();
+		int res = mWritableDb.delete(DbContract.Meetings.TABLE_NAME, DbContract.Meetings._ID + " = " + id, null);
+		mWritableDb.close();
 
 		/* checking if at least one row in the database affected from the delete operation. 
 		 * if no rows affected, that means that there is no meeting with the given id. */
@@ -181,27 +341,29 @@ public class DAL {
 	 * @return <code>true</code> if substitutes succeeded, <code>false</code> otherwise
 	 */
 	public static boolean changeMeetingManager(long id, Participant newManager) {
-		SQLiteDatabase writableDb = mDbHelper.getWritableDatabase();
+		mWritableDb = mDbHelper.getWritableDatabase();
 
 		/* updating only the meeting manager and giving him/her the credentials he/she needs to manage the meeting */
 		ContentValues values = new ContentValues();
 		values.put(DbContract.Meetings.COLUMN_NAME_MEETING_MANAGER, newManager.getPhone());
-		values.put(DbContract.Participants.COLUMN_NAME_PARTICIPANT_CREDENTIALS, Credentials.ROOT.getCredentials());
+		values.put(DbContract.Participants.COLUMN_NAME_PARTICIPANT_CREDENTIALS, Credentials.MANAGER.toString());
 
 		/* updating the local database with the new meeting's manager */
-		int updateRes = writableDb.update(DbContract.Meetings.TABLE_NAME, values, DbContract.Meetings._ID + " = " + id, null);
+		int updateRes = mWritableDb.update(DbContract.Meetings.TABLE_NAME, values, DbContract.Meetings._ID + " = " + id, null);
+
+		mWritableDb.close();
 
 		return updateRes == 1;
 	}
 
 	public static boolean removeParticipant(long meetingId, Participant p) {
 
-		SQLiteDatabase writableDb = mDbHelper.getWritableDatabase();
+		mWritableDb = mDbHelper.getWritableDatabase();
 
 		/* removing the meeting's manager from the participants list */
-		int deleteRes = writableDb.delete(DbContract.Participants.TABLE_NAME, DbContract.Participants.COLUMN_NAME_PARTICIPANT_MEETING_ID + " = " + meetingId + " and " +
+		int deleteRes = mWritableDb.delete(DbContract.Participants.TABLE_NAME, DbContract.Participants.COLUMN_NAME_PARTICIPANT_MEETING_ID + " = " + meetingId + " and " +
 				DbContract.Participants.COLUMN_NAME_PARTICIPANT_PHONE + " = " + p.getPhone(), null);
-		writableDb.close();
+		mWritableDb.close();
 
 		return deleteRes == 1;
 	}
@@ -209,26 +371,26 @@ public class DAL {
 	public static boolean attendAMeeting(long meetingId) {
 		return meetingAttending(meetingId, RSVP.YES);
 	}
-	
+
 	public static boolean unattendAMeeting(long meetingId) {
 		return meetingAttending(meetingId, RSVP.NO);
 	}
 
 	private static boolean meetingAttending(long meetignId, RSVP attend) {
-		SQLiteDatabase writableDb = mDbHelper.getWritableDatabase();
+		mWritableDb = mDbHelper.getWritableDatabase();
 
 		/* updating only the rsvp attending status of the device's user */
 		ContentValues values = new ContentValues();
 		values.put(DbContract.Participants.COLUMN_NAME_PARTICIPANT_RSVP, attend.getRsvp());
 
 		/* updating the local data-base with the new status of the device's user */
-		int updateRes = writableDb.update(DbContract.Participants.TABLE_NAME,
+		int updateRes = mWritableDb.update(DbContract.Participants.TABLE_NAME,
 				values,
 				DbContract.Participants.COLUMN_NAME_PARTICIPANT_MEETING_ID + " = " + meetignId + " and " +
 						DbContract.Participants.COLUMN_NAME_PARTICIPANT_PHONE + " = '" + BolePoMisc.getDevicePhoneNumber(mContext) + "'",
 						null);
 
-		writableDb.close();
+		mWritableDb.close();
 
 		return updateRes == 1;
 	}
@@ -246,7 +408,7 @@ public class DAL {
 		values.put(DbContract.Meetings.COLUMN_NAME_MEETING_TIME, m.getTime());
 		values.put(DbContract.Meetings.COLUMN_NAME_MEETING_LOCATION, m.getLocation());
 		values.put(DbContract.Meetings.COLUMN_NAME_MEETING_SHARE_LOCATION_TIME, m.getShareLocationTime());
-		values.put(DbContract.Meetings.COLUMN_NAME_MEETING_MANAGER, m.getCreator());
+		values.put(DbContract.Meetings.COLUMN_NAME_MEETING_MANAGER, m.getManager());
 		return values;
 	}
 
@@ -257,10 +419,6 @@ public class DAL {
 	 * @param serverData the hash values calculated on the participants data by the server.
 	 * @return the number of successfully added participants.
 	 */
-	private static int insertParticipants(long id, SRDataForMeetingManaging serverData) {
-		return insertParticipants(id, serverData.getParticipants());
-	}
-	
 	private static int insertParticipants(long id, List<Participant> participants) {
 		int count = 0;
 		for (Participant p : participants) {
@@ -272,7 +430,7 @@ public class DAL {
 	}
 
 	private static long insertParticipant(long id, Participant p) {
-		SQLiteDatabase writableDB = mDbHelper.getWritableDatabase();
+		mWritableDb = mDbHelper.getWritableDatabase();
 		ContentValues values = new ContentValues();
 		String bla = p.getPhone();
 		values.put(DbContract.Participants.COLUMN_NAME_PARTICIPANT_PHONE, p.getPhone());
@@ -281,10 +439,10 @@ public class DAL {
 		values.put(DbContract.Participants.COLUMN_NAME_PARTICIPANT_MEETING_ID, id);
 		values.put(DbContract.Participants.COLUMN_NAME_PARTICIPANT_CREDENTIALS, p.getCredentials());
 		values.put(DbContract.Participants.COLUMN_NAME_PARTICIPANT_RSVP, p.getRSVP());
-//		values.put(DbContract.Participants.COLUMN_NAME_PARTICIPANT_SHARE_LOCATION_STATUS, m.getShareLocationTime());
+		//		values.put(DbContract.Participants.COLUMN_NAME_PARTICIPANT_SHARE_LOCATION_STATUS, m.getShareLocationTime());
 		values.put(DbContract.Participants.COLUMN_NAME_PARTICIPANT_HASH, p.getHash());
-		long res = writableDB.insert(DbContract.Participants.TABLE_NAME, "null", values);
-		writableDB.close();
+		long res = mWritableDb.insert(DbContract.Participants.TABLE_NAME, "null", values);
+		mWritableDb.close();
 		return res;
 	}
 
@@ -293,9 +451,9 @@ public class DAL {
 	 * @param meetingID the ID of the meeting row in the database that it's participants are going to be removed.
 	 */
 	private static void removeParticipants(long meetingID) {
-		SQLiteDatabase writableDB = mDbHelper.getWritableDatabase();
-		writableDB.delete(DbContract.Participants.TABLE_NAME, DbContract.Participants.COLUMN_NAME_PARTICIPANT_MEETING_ID + " = " + meetingID, null);
-		writableDB.close();
+		mWritableDb = mDbHelper.getWritableDatabase();
+		mWritableDb.delete(DbContract.Participants.TABLE_NAME, DbContract.Participants.COLUMN_NAME_PARTICIPANT_MEETING_ID + " = " + meetingID, null);
+		mWritableDb.close();
 	}
 
 }

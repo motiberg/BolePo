@@ -14,6 +14,6 @@
         android:id="@android:id/empty"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:text="@string/bolepo_contacts_no_contacts" />
+        android:text="@string/add_participants_no_contacts_invited_yet" />
 
 </LinearLayout>

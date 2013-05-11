@@ -109,6 +109,8 @@
             android:exported="false" />
         <service android:name="com.bergerlavy.bolepo.GCMIntentService" />
 
+        <service android:name="com.bergerlavy.bolepo.services.ContactsService" />
+        
         <activity
             android:name="com.bergerlavy.bolepo.forms.BolePoContactsActivity"
             android:label="@string/title_activity_bole_po_contacts" >

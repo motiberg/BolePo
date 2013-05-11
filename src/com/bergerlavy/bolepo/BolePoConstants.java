@@ -1,5 +1,6 @@
 package com.bergerlavy.bolepo;
 
+
 /**
  * 
  * @author Moti
@@ -23,11 +24,56 @@ public class BolePoConstants {
 	
 	public static final String ACTION_BOLEPO_REFRESH_LISTS = "com.bergerlavy.bolepo.refresh";
 	
+	public static final String CONTACTS_FILE_NAME = "contacts_file";
+	
+	public enum RSVP {
+		YES ("yes"),
+		NO ("no"),
+		MAYBE ("maybe"),
+		UNKNOWN ("unknown");
+
+		private final String mRsvp;
+
+		private RSVP(String rsvp) {
+			mRsvp = rsvp;
+		}
+
+		@Override
+		public String toString() {
+			return mRsvp;
+		}
+	}
+	
+	public enum Credentials {
+		REGULAR ("regular"),
+		MANAGER ("manager");
+		
+		private final String mCredentials;
+		
+		private Credentials(String credentials) {
+			mCredentials = credentials;
+		}
+		
+		@Override
+		public String toString() {
+			return mCredentials;
+		}
+		
+		public static Credentials getEnum(String str) {
+			for (Credentials c : values()) {
+				if (c.toString().equalsIgnoreCase(str))
+					return c;
+			}
+			throw new IllegalArgumentException();
+		}
+	}
+	
 	public enum GCM_NOTIFICATION {
 		NEW_MEETING ("new_meeting"),
 		UPDATED_MEETING ("updated_meeting"),
 		MEETING_CANCLED ("meeting_cancled"),
-		NEW_MANAGER ("new_manager");
+		NEW_MANAGER ("new_manager"),
+		REMOVED_FROM_MEETING ("removed_from_meeting");
 		
 		private final String mStr;
 
@@ -74,6 +120,30 @@ public class BolePoConstants {
 		@Override
 		public String toString() {
 			return mStr;
+		}
+	}
+	
+	public enum ServerResponseStatus {
+		OK ("ok"),
+		ERROR ("error");
+		
+		private final String mStr;
+
+		private ServerResponseStatus(String str) {
+			mStr = str;
+		}
+
+		@Override
+		public String toString() {
+			return mStr;
+		}
+		
+		public static ServerResponseStatus getEnum(String str) {
+			for (ServerResponseStatus srs : values()) {
+				if (srs.toString().equalsIgnoreCase(str))
+					return srs;
+			}
+			throw new IllegalArgumentException();
 		}
 	}
 }

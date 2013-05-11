@@ -10,12 +10,14 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
+import com.bergerlavy.bolepo.BolePoConstants.ServerResponseStatus;
 import com.bergerlavy.bolepo.dals.DAL;
 import com.bergerlavy.bolepo.dals.RSVP;
 import com.bergerlavy.bolepo.dals.SDAL;
-import com.bergerlavy.bolepo.dals.ServerResponse;
-import com.bergerlavy.bolepo.dals.ServerResponseStatus;
+import com.bergerlavy.bolepo.dals.SRMeetingAttendance;
+import com.bergerlavy.bolepo.dals.SRMeetingUnattendance;
 import com.bergerlavy.bolepo.forms.RemoveMeetingActivity;
+import com.bergerlavy.bolepo.dals.ServerResponse;
 import com.bergerlavy.db.DbContract;
 import com.bergerlavy.db.DbHelper;
 
@@ -33,7 +35,7 @@ public class MeetingDataActivity extends Activity {
 	private boolean mIsManager;
 	private long mId;
 	private String mHash;
-	
+
 	public static final String EXTRA_MEETING_ID = "EXTRA_MEETING_ID";
 	public static final String EXTRA_MEETING_CREATOR_REMOVAL = "EXTRA_MEETING_CREATOR_REMOVAL";
 
@@ -106,17 +108,17 @@ public class MeetingDataActivity extends Activity {
 
 	public void commitAction(View view) {
 		boolean toRefresh = false;
-		
+
 		/* if the attend button has been pressed */
 		if (view.getId() == R.id.meeting_data_attend_button) {
-			ServerResponse servResp = SDAL.attendAMeeting(mHash);
-			if (servResp.getStatus() == ServerResponseStatus.OK) {
+			SRMeetingAttendance servResp = SDAL.attendAMeeting(mHash);
+			if (servResp.isOK()) {
 				if (DAL.attendAMeeting(mId)) {
 					toRefresh = true;
 				}
 			}
 		}
-		
+
 		/* if the unattend button as been pressed */
 		else if (view.getId() == R.id.meeting_data_unattend_button) {
 			/* if the user card is being watched by the manager of the meeting, navigating to the meeting removal activity */
@@ -127,8 +129,8 @@ public class MeetingDataActivity extends Activity {
 				startActivity(intent);
 			}
 			else {
-				ServerResponse servResp = SDAL.unattendAMeeting(mHash);
-				if (servResp.getStatus() == ServerResponseStatus.OK) {
+				SRMeetingUnattendance servResp = SDAL.unattendAMeeting(mHash);
+				if (servResp.isOK()) {
 					if (DAL.unattendAMeeting(mId)) {
 						toRefresh = true;
 					}

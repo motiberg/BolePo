@@ -253,11 +253,12 @@ containing a value of this type.
         public static final int accepted_meetings_root_participant_cm_item_delete_title=0x7f05002b;
         public static final int accepted_meetings_root_participant_cm_item_edit_title=0x7f05002a;
         public static final int accepted_meetings_root_participant_cm_item_view_title=0x7f050044;
-        public static final int action_forgot_password=0x7f05004a;
+        public static final int action_forgot_password=0x7f05004b;
         public static final int action_settings=0x7f050021;
-        public static final int action_sign_in_register=0x7f050048;
-        public static final int action_sign_in_short=0x7f050049;
+        public static final int action_sign_in_register=0x7f050049;
+        public static final int action_sign_in_short=0x7f05004a;
         public static final int add_participants_menu_invite=0x7f050037;
+        public static final int add_participants_no_contacts_invited_yet=0x7f050045;
         public static final int app_name=0x7f050011;
         /**   Title for notification shown when GooglePlayServices is unavailable [CHAR LIMIT=70] 
          */
@@ -324,10 +325,10 @@ containing a value of this type.
          */
         public static final int common_signin_button_text_long=0x7f05000d;
         public static final int date_picker_save_and_close_button=0x7f050041;
-        public static final int error_field_required=0x7f05004f;
-        public static final int error_incorrect_password=0x7f05004e;
-        public static final int error_invalid_email=0x7f05004c;
-        public static final int error_invalid_password=0x7f05004d;
+        public static final int error_field_required=0x7f050050;
+        public static final int error_incorrect_password=0x7f05004f;
+        public static final int error_invalid_email=0x7f05004d;
+        public static final int error_invalid_password=0x7f05004e;
         public static final int hello_world=0x7f05001d;
         public static final int item_am_meeting_creator=0x7f050029;
         public static final int item_am_meeting_date_and_time=0x7f050027;
@@ -336,7 +337,7 @@ containing a value of this type.
         public static final int item_wfa_meeting_name_label=0x7f050023;
         public static final int login_login_button=0x7f050036;
         public static final int login_phone_number_label=0x7f050035;
-        public static final int login_progress_signing_in=0x7f05004b;
+        public static final int login_progress_signing_in=0x7f05004c;
         public static final int main_accepted_header_label=0x7f050040;
         public static final int main_menu_create_meeting=0x7f050022;
         public static final int main_menu_gps=0x7f05002f;
@@ -361,8 +362,8 @@ containing a value of this type.
         public static final int no_meetings=0x7f050025;
         /**  Strings related to login 
          */
-        public static final int prompt_email=0x7f050046;
-        public static final int prompt_password=0x7f050047;
+        public static final int prompt_email=0x7f050047;
+        public static final int prompt_password=0x7f050048;
         public static final int remove_meeting_cancel_removal=0x7f05003d;
         public static final int remove_meeting_confirm_removal=0x7f05003c;
         public static final int remove_meeting_pass_ownship=0x7f05003e;
@@ -371,7 +372,7 @@ containing a value of this type.
         public static final int title_activity_create_meeting=0x7f050013;
         public static final int title_activity_date_picker=0x7f05001e;
         public static final int title_activity_gps=0x7f05002e;
-        public static final int title_activity_login=0x7f050045;
+        public static final int title_activity_login=0x7f050046;
         public static final int title_activity_main=0x7f05001f;
         public static final int title_activity_remove_meeting=0x7f05003b;
         public static final int title_activity_time_picker=0x7f050030;

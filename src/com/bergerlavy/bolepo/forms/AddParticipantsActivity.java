@@ -5,8 +5,6 @@ import java.util.List;
 
 import android.app.ListActivity;
 import android.content.Intent;
-import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -15,14 +13,14 @@ import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 
+import com.bergerlavy.bolepo.BolePoMisc;
 import com.bergerlavy.bolepo.R;
-import com.bergerlavy.db.DbContract;
-import com.bergerlavy.db.DbHelper;
+import com.bergerlavy.bolepo.dals.DAL;
+import com.bergerlavy.bolepo.dals.Participant;
 
 public class AddParticipantsActivity extends ListActivity {
 
 	private List<String> mInvitedParticipants;
-	private DbHelper mDbHelper;
 	private ArrayAdapter<String> mAdapter;
 	private boolean mRemoveMeetingChooseContactToManage;
 	private boolean mIsContactChosenToManage;
@@ -58,33 +56,17 @@ public class AddParticipantsActivity extends ListActivity {
 			if (bundle.containsKey(RemoveMeetingActivity.EXTRA_REMOVE_MEETING_CHOOSE_CONTACT)) {
 				mRemoveMeetingChooseContactToManage = true;
 				if (bundle.containsKey(RemoveMeetingActivity.EXTRA_REMOVE_MEETING_MEETING_ID)) {
-					String manager = null;
 					meetingId = bundle.getLong(RemoveMeetingActivity.EXTRA_REMOVE_MEETING_MEETING_ID);
-					mDbHelper = new DbHelper(this);
-					SQLiteDatabase readableDb = mDbHelper.getReadableDatabase();
-					Cursor c = readableDb.query(DbContract.Meetings.TABLE_NAME,
-							new String[] { DbContract.Meetings._ID, DbContract.Meetings.COLUMN_NAME_MEETING_MANAGER },
-							DbContract.Meetings._ID + " = " + meetingId,
-							null, null, null, null);
-					if (c != null) {
-						if (c.moveToFirst())
-							manager = c.getString(c.getColumnIndex(DbContract.Meetings.COLUMN_NAME_MEETING_MANAGER));
-						c.close();
-						c = readableDb.query(DbContract.Participants.TABLE_NAME,
-								new String[] { DbContract.Participants._ID, DbContract.Participants.COLUMN_NAME_PARTICIPANT_PHONE },
-								DbContract.Participants.COLUMN_NAME_PARTICIPANT_MEETING_ID + " = " + meetingId + " and " + DbContract.Participants.COLUMN_NAME_PARTICIPANT_PHONE + " != " + manager,
-								null, null, null, null);
-						if (c != null) {
-							if (c.moveToFirst()) {
-								for ( ; !c.isAfterLast() ; c.moveToNext())
-									mInvitedParticipants.add(c.getString(c.getColumnIndex(DbContract.Participants.COLUMN_NAME_PARTICIPANT_PHONE)));
-							}
-							c.close();
-						}
-					}
-					readableDb.close();
+					
+//					/* getting the meeting manager */
+//					Participant meetingManager = DAL.getMeetingManager(meetingId);
+					
+					/* getting all the participants associated with this meeting */
+					mInvitedParticipants = DAL.getParticipantsPhonesAsList(meetingId);
 				}
 			}
+			/* removing the manager from the participants list, so the list will contain only the invited participants (excluding the inviter) */
+			mInvitedParticipants.remove(BolePoMisc.getDevicePhoneNumber(this));
 		}
 
 		mAdapter = new ArrayAdapter<String>(this, R.layout.item_add_participants, R.id.item_add_participants_participant_name, mInvitedParticipants);
@@ -157,6 +139,7 @@ public class AddParticipantsActivity extends ListActivity {
 		else if (!mRemoveMeetingChooseContactToManage) {
 			int i = 0;
 			Intent data = new Intent();
+			mInvitedParticipants.add(BolePoMisc.getDevicePhoneNumber(this));
 			String[] phones = new String[mInvitedParticipants.size()];
 			for (String phone : mInvitedParticipants) {
 				phones[i++] = phone;

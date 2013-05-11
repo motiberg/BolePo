@@ -2,6 +2,7 @@ package com.bergerlavy.bolepo.dals;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
@@ -17,7 +18,6 @@ import android.location.Location;
 
 import com.bergerlavy.bolepo.BolePoConstants;
 import com.bergerlavy.bolepo.BolePoMisc;
-import com.bergerlavy.bolepo.forms.FormsSupport;
 
 public class SDAL {
 
@@ -32,36 +32,67 @@ public class SDAL {
 		return null;
 	}
 
-	public static ServerResponse retrieveMeeting(String meetingHash) {
-		return executeServerMeetingCommand(Action.RETRIEVE, meetingHash);
+	public static SRMeetingRetrieval retrieveMeeting(String meetingHash) {
+		ServerResponse sr = executeServerMeetingCommand(Action.RETRIEVE, meetingHash);
+		if (sr instanceof SRMeetingRetrieval)
+			return (SRMeetingRetrieval) sr;
+		throw new ClassCastException();
 	}
 
-	public static ServerResponse createMeeting(Meeting m) {
-		return executeServerMeetingCommand(Action.CREATE, m);
+	public static SRMeetingCreation createMeeting(Meeting m) {
+		ServerResponse sr = executeServerMeetingCommand(Action.CREATE, m);
+		if (sr instanceof SRMeetingCreation)
+			return (SRMeetingCreation) sr;
+		throw new ClassCastException();
 	}
 
-	public static ServerResponse editMeeting(Meeting m) {
-		return executeServerMeetingCommand(Action.MODIFY, m);
+	public static SRMeetingModification editMeeting(Meeting m) {
+		ServerResponse sr = executeServerMeetingCommand(Action.MODIFY, m);
+		if (sr instanceof SRMeetingModification)
+			return (SRMeetingModification) sr;
+		throw new ClassCastException();
 	}
 
-	public static ServerResponse removeMeeting(String meetingHash) {
-		return executeServerMeetingCommand(Action.REMOVE, meetingHash);
+	public static SRMeetingRemoval removeMeeting(String meetingHash) {
+		ServerResponse sr = executeServerMeetingCommand(Action.REMOVE, meetingHash);
+		if (sr instanceof SRMeetingRemoval)
+			return (SRMeetingRemoval) sr;
+		throw new ClassCastException();
 	}
 	
-	public static ServerResponse attendAMeeting(String meetingHash) {
-		return executeServerMeetingCommand(Action.ATTEND, meetingHash);
+	public static SRMeetingAttendance attendAMeeting(String meetingHash) {
+		ServerResponse sr = executeServerMeetingCommand(Action.ATTEND, meetingHash);
+		if (sr instanceof SRMeetingAttendance)
+			return (SRMeetingAttendance) sr;
+		throw new ClassCastException();
 	}
 	
-	public static ServerResponse unattendAMeeting(String meetingHash) {
-		return executeServerMeetingCommand(Action.UNATTEND, meetingHash);
+	public static SRMeetingUnattendance unattendAMeeting(String meetingHash) {
+		ServerResponse sr = executeServerMeetingCommand(Action.UNATTEND, meetingHash);
+		if (sr instanceof SRMeetingUnattendance)
+			return (SRMeetingUnattendance) sr;
+		throw new ClassCastException();
 	}
 	
-	public static ServerResponse regGCM(String regId) {
-		return executeServerGcmCommand(Action.GCM_REGISTRATION, regId);
+	public static SRGcmRegistration regGCM(String regId) {
+		ServerResponse sr = executeServerGcmCommand(Action.GCM_REGISTRATION, regId);
+		if (sr instanceof SRGcmRegistration)
+			return (SRGcmRegistration) sr;
+		throw new ClassCastException();
 	}
 
-	public static ServerResponse unregGCM(String regId) {
-		return executeServerGcmCommand(Action.GCM_UNREGISTRATION, regId);
+	public static SRGcmUnregistration unregGCM(String regId) {
+		ServerResponse sr = executeServerGcmCommand(Action.GCM_UNREGISTRATION, regId);
+		if (sr instanceof SRGcmUnregistration)
+			return (SRGcmUnregistration) sr;
+		throw new ClassCastException();
+	}
+	
+	public static SRGcmRegistrationCheck checkForGcmRegistration(Set<String> contacts) {
+		ServerResponse sr = executeServerGcmCommand(Action.GCM_CHECK_REGISTRATION, contacts);
+		if (sr instanceof SRGcmRegistrationCheck)
+			return (SRGcmRegistrationCheck) sr;
+		throw new ClassCastException();
 	}
 
 	public static void sendDeviceLocation(String meetingHash, Location l) {
@@ -145,15 +176,40 @@ public class SDAL {
 		return serverResponse;
 	}
 	
-	private static ServerResponse executeServerGcmCommand(Action action, String regId) {
+	@SuppressWarnings("unchecked")
+	private static ServerResponse executeServerGcmCommand(Action action, Object data) {
 		HttpPost httppost = new HttpPost(BolePoConstants.BolePoServerBaseUrl + BolePoConstants.GcmServletRelativeUrl);
 		httppost.getParams().setParameter(CoreProtocolPNames.USER_AGENT, "BolePo user-agent");
 		ServerResponse serverResponse = null;
 		
-		List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>(3);
+		String regId = null;
+		Set<String> contacts = null;
+		List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>();
 		nameValuePairs.add(new BasicNameValuePair("action", action.getActionString()));
-		nameValuePairs.add(new BasicNameValuePair("userphone", BolePoMisc.getDevicePhoneNumber(mContext)));
-		nameValuePairs.add(new BasicNameValuePair("gcmid", regId));
+		
+		switch (action) {
+		case GCM_REGISTRATION:
+			regId = (String) data;
+			nameValuePairs.add(new BasicNameValuePair("userphone", BolePoMisc.getDevicePhoneNumber(mContext)));
+			nameValuePairs.add(new BasicNameValuePair("gcmid", regId));
+			break;
+		case GCM_UNREGISTRATION:
+			regId = (String) data;
+			nameValuePairs.add(new BasicNameValuePair("userphone", BolePoMisc.getDevicePhoneNumber(mContext)));
+			nameValuePairs.add(new BasicNameValuePair("gcmid", regId));
+			break;
+		case GCM_CHECK_REGISTRATION:
+			contacts = (Set<String>) data;
+			int vla = contacts.size();
+			nameValuePairs.add(new BasicNameValuePair("contactsCount", contacts.size() + ""));
+			int counter = 1;
+			for (String phone : contacts)
+				nameValuePairs.add(new BasicNameValuePair("contact_" + counter++, phone));
+			break;
+		default:
+			break;
+			
+		}
 		
 		try {
 			httppost.setEntity(new UrlEncodedFormEntity(nameValuePairs));
@@ -179,7 +235,7 @@ public class SDAL {
 		int counter = 0;
 		List<String> parts = meeting.getParticipants();
 		for (String s : parts) {
-			nameValuePairs.add(new BasicNameValuePair("participant_" + counter++, FormsSupport.chopeNonDigitsFromPhoneNumber(s)));
+			nameValuePairs.add(new BasicNameValuePair("participant_" + counter++, BolePoMisc.chopeNonDigitsFromPhoneNumber(s)));
 		}
 		return nameValuePairs;
 	}

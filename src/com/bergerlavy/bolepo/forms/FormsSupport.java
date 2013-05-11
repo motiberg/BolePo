@@ -32,13 +32,7 @@ public class FormsSupport {
 		return vStatus.isOK();
 	}
 
-	public static String chopeNonDigitsFromPhoneNumber(String phone) {
-		String result = "";
-		for (int i = 0 ; i < phone.length() ; i++)
-			if (phone.charAt(i) >= '0' && phone.charAt(i) <= '9')
-				result += phone.charAt(i);
-		return result;
-	}
+	
 
 	
 }

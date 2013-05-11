@@ -5,8 +5,6 @@ import java.util.List;
 
 import android.app.Activity;
 import android.content.Intent;
-import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.view.Menu;
@@ -26,14 +24,12 @@ import com.bergerlavy.bolepo.dals.Action;
 import com.bergerlavy.bolepo.dals.DAL;
 import com.bergerlavy.bolepo.dals.Meeting;
 import com.bergerlavy.bolepo.dals.SDAL;
-import com.bergerlavy.bolepo.dals.SRDataForMeetingManaging;
+import com.bergerlavy.bolepo.dals.SRMeetingCreation;
+import com.bergerlavy.bolepo.dals.SRMeetingModification;
 import com.bergerlavy.bolepo.dals.ServerResponse;
-import com.bergerlavy.bolepo.dals.ServerResponseStatus;
 import com.bergerlavy.bolepo.maps.MeetingLocationSelectionActivity;
 import com.bergerlavy.bolepo.services.ShareLocationsService;
 import com.bergerlavy.bolepo.shareddata.Misc;
-import com.bergerlavy.db.DbContract;
-import com.bergerlavy.db.DbHelper;
 
 
 public class MeetingManagementActivity extends Activity {
@@ -43,10 +39,8 @@ public class MeetingManagementActivity extends Activity {
 	private TextView mTime;
 	private TextView mLocation;
 	private TextView mShareLocationTime;
-	//TODO put value in mParticipantsHashes
 	private List<String> mParticipants;
 	private Button mCommitActionButton;
-	private TextView mParticipantsCount;
 
 	private Action mAction;
 	private String mModifiedMeetingHash;
@@ -74,7 +68,6 @@ public class MeetingManagementActivity extends Activity {
 		setContentView(R.layout.activity_meeting_management);
 
 		mParticipants = new ArrayList<String>();
-		mParticipantsCount = (TextView) findViewById(R.id.meeting_management_participants_textview);
 
 		mName = (EditText) findViewById(R.id.meeting_management_purpose_edittext);
 		mDate = (EditText) findViewById(R.id.meeting_management_date_edittext);
@@ -102,14 +95,14 @@ public class MeetingManagementActivity extends Activity {
 		});
 
 		mDate.setOnClickListener(new OnClickListener() {
-			
+
 			@Override
 			public void onClick(View v) {
 				Intent intent = new Intent(MeetingManagementActivity.this, DatePickerActivity.class);
 				startActivityForResult(intent, RQ_MEETING_DATE);
 			}
 		});
-		
+
 		Bundle extras = getIntent().getExtras();
 
 		/* extracting the which operation the user intending to make */
@@ -126,89 +119,58 @@ public class MeetingManagementActivity extends Activity {
 			/* setting the primary button to have a title that matches the modification mode */
 			mCommitActionButton.setText(getResources().getString(R.string.meeting_managment_modify_button_text));
 
-			DbHelper dbHelper = new DbHelper(this);
-			SQLiteDatabase readableDB = dbHelper.getReadableDatabase();
-
 			mModifiedMeetingID = extras.getLong(MainActivity.EXTRA_MEETING_ID);
 
-			/* getting meeting's details by its ID (local data-base ID) */
-			Cursor c = readableDB.query(DbContract.Meetings.TABLE_NAME, null, DbContract.Meetings._ID + " = " + mModifiedMeetingID, null, null, null, null);
-			if (c != null) {
-				c.moveToFirst();
+			Meeting meeting = DAL.getMeetingById(mModifiedMeetingID);
+			mName.setText(meeting.getName());
+			mDate.setText(meeting.getDate());
+			mTime.setText(meeting.getTime());
+			mLocation.setText(meeting.getLocation());
+			mShareLocationTime.setText(meeting.getShareLocationTime());
+			mModifiedMeetingHash = meeting.getHash();
 
-				/* extracting data from the cursor into the TextView objects */
-				mName.setText(c.getString(c.getColumnIndex(DbContract.Meetings.COLUMN_NAME_MEETING_NAME)));
-				mDate.setText(c.getString(c.getColumnIndex(DbContract.Meetings.COLUMN_NAME_MEETING_DATE)));
-				mTime.setText(c.getString(c.getColumnIndex(DbContract.Meetings.COLUMN_NAME_MEETING_TIME)));
-				mLocation.setText(c.getString(c.getColumnIndex(DbContract.Meetings.COLUMN_NAME_MEETING_LOCATION)));
-				mShareLocationTime.setText(c.getString(c.getColumnIndex(DbContract.Meetings.COLUMN_NAME_MEETING_SHARE_LOCATION_TIME)));
-				mModifiedMeetingHash = c.getString(c.getColumnIndex(DbContract.Meetings.COLUMN_NAME_MEETING_HASH));
-				c.close();
-			}
-
-			Cursor p = readableDB.query(DbContract.Participants.TABLE_NAME,
-					new String[] { DbContract.Participants._ID, DbContract.Participants.COLUMN_NAME_PARTICIPANT_PHONE },
-					DbContract.Participants.COLUMN_NAME_PARTICIPANT_MEETING_ID + " = '" + mModifiedMeetingHash + "'",
-					null, null, null, null);
-
-			if (p != null) {
-				if (p.moveToFirst())
-					while (!p.isAfterLast()) {
-						mParticipants.add(p.getString(p.getColumnIndex(DbContract.Participants.COLUMN_NAME_PARTICIPANT_PHONE)));
-						p.moveToNext();
-					}
-				p.close();
-			}
-
-			/* setting the participants count label */
-//			if (mParticipants.size() == 0)
-//				mParticipantsCount.setText(R.string.meeting_management_no_participants);
-//			else mParticipantsCount.setText(mParticipants.size() + " " + getString(R.string.meeting_management_participants));
-
-			readableDB.close();
+			mParticipants = DAL.getParticipantsPhonesAsList(mModifiedMeetingID);
 		}
 		if (mAction == Action.CREATE) {
-			
+
 			/* setting the primary button to have a title that matches the creation mode */
 			mCommitActionButton.setText(getResources().getString(R.string.meeting_managment_create_button_text));
-			
-			/* setting the participants count label */
-//			mParticipantsCount.setText(R.string.meeting_management_no_participants);
+
+			/* adding the meeting's creator to the participants list */
+			mParticipants.add(BolePoMisc.getDevicePhoneNumber(this));
 		}
 	}
 
 	@Override
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-		if (resultCode == RESULT_OK) {
-			if (requestCode == RQ_MEETING_TIME) {
-				mTime.setText(Misc.pumpStrToDoubleCharacters(data.getIntExtra(TimePickerActivity.EXTRA_HOUR, 0) + "") + ":" + Misc.pumpStrToDoubleCharacters(data.getIntExtra(TimePickerActivity.EXTRA_MINUTES, 0) + ""));
-			}
-			if (requestCode == RQ_MEETING_LOCATION) {
-				//TODO
-			}
-			if (requestCode == RQ_MEETING_PARTICIPANTS) {
+		if (requestCode == RQ_MEETING_TIME) {
+			mTime.setText(Misc.pumpStrToDoubleCharacters(data.getIntExtra(TimePickerActivity.EXTRA_HOUR, 0) + "") + ":" + Misc.pumpStrToDoubleCharacters(data.getIntExtra(TimePickerActivity.EXTRA_MINUTES, 0) + ""));
+		}
+		if (requestCode == RQ_MEETING_LOCATION) {
+			//TODO
+		}
+		if (requestCode == RQ_MEETING_PARTICIPANTS) {
+			if (resultCode == RESULT_OK) {
 				if (data.hasExtra(AddParticipantsActivity.EXTRA_PARTICIPANTS)) {
 					String[] participants = data.getStringArrayExtra(AddParticipantsActivity.EXTRA_PARTICIPANTS);
 					if (participants != null) {
-						if (participants.length > 0) {
-//							mParticipantsCount.setText(participants.length + " " + getString(R.string.meeting_management_participants));
-							mParticipants.clear();
-							for (String s : participants)
-								mParticipants.add(s);
-						}
-//						else mParticipantsCount.setText(R.string.meeting_management_no_participants);
+						mParticipants.clear();
+						for (String s : participants)
+							mParticipants.add(s);
+
 					}
 				}
 			}
-			if (requestCode == RQ_MEETING_SHARETIME) {
-				mShareLocationTime.setText(Misc.pumpStrToDoubleCharacters(data.getIntExtra(TimePickerActivity.EXTRA_HOUR, 0) + "") + ":" + Misc.pumpStrToDoubleCharacters(data.getIntExtra(TimePickerActivity.EXTRA_MINUTES, 0) + ""));
-			}
-			if (requestCode == RQ_MEETING_DATE) {
-				mDate.setText(Misc.pumpStrToDoubleCharacters(data.getIntExtra(DatePickerActivity.EXTRA_DAY, 0) + "") + "/" + 
-						Misc.pumpStrToDoubleCharacters(data.getIntExtra(DatePickerActivity.EXTRA_MONTH, 0) + "") + "/" + 
-						data.getIntExtra(DatePickerActivity.EXTRA_YEAR, 0));
-			}
 		}
+		if (requestCode == RQ_MEETING_SHARETIME) {
+			mShareLocationTime.setText(Misc.pumpStrToDoubleCharacters(data.getIntExtra(TimePickerActivity.EXTRA_HOUR, 0) + "") + ":" + Misc.pumpStrToDoubleCharacters(data.getIntExtra(TimePickerActivity.EXTRA_MINUTES, 0) + ""));
+		}
+		if (requestCode == RQ_MEETING_DATE) {
+			mDate.setText(Misc.pumpStrToDoubleCharacters(data.getIntExtra(DatePickerActivity.EXTRA_DAY, 0) + "") + "/" + 
+					Misc.pumpStrToDoubleCharacters(data.getIntExtra(DatePickerActivity.EXTRA_MONTH, 0) + "") + "/" + 
+					data.getIntExtra(DatePickerActivity.EXTRA_YEAR, 0));
+		}
+
 		super.onActivityResult(requestCode, resultCode, data);
 	}
 
@@ -217,13 +179,12 @@ public class MeetingManagementActivity extends Activity {
 	 * @param view
 	 */
 	public void commitAction(View view) {
-		mParticipants.add(BolePoMisc.getDevicePhoneNumber(this));
 		final Meeting meeting = new Meeting(
 				mName.getText().toString(), 
 				mDate.getText().toString(), 
 				mTime.getText().toString(), 
 				BolePoMisc.getDevicePhoneNumber(this),
-//				mLocation.getText().toString(),
+				//				mLocation.getText().toString(),
 				"dfdfdf",
 				mShareLocationTime.getText().toString(),
 				mParticipants
@@ -258,44 +219,9 @@ public class MeetingManagementActivity extends Activity {
 
 	public void setParticipants(View view) {
 		Intent intent = new Intent(this, AddParticipantsActivity.class);
-
-		/* in case the kind of action is modifying an existing meeting, its needed to pass the already
-		 * invited participants so the user will be able to remove invited participants if he would like to, or 
-		 * just to see the participants he already invited. */
-		if (mAction == Action.MODIFY) {
-			SQLiteDatabase readableDB = new DbHelper(this).getReadableDatabase();
-
-			/* getting all the participants that belong to the modified meeting using the meeting id in the 
-			 * local data-base */
-			Cursor participantsCursor = readableDB.query(DbContract.Participants.TABLE_NAME,
-					new String[] { DbContract.Participants._ID, DbContract.Participants.COLUMN_NAME_PARTICIPANT_NAME },
-					DbContract.Participants.COLUMN_NAME_PARTICIPANT_MEETING_ID + " = " + mModifiedMeetingID,
-					null, null, null, null);
-
-			/* in case the query went well and its not empty */
-			if (participantsCursor != null && participantsCursor.moveToFirst()) {
-				List<String> participants = new ArrayList<String>();
-
-				/* iterating through the cursor's records and getting the participants name and adding to a list */
-				while (!participantsCursor.isAfterLast()) {
-					participants.add(participantsCursor.getString(participantsCursor.getColumnIndex(DbContract.Participants.COLUMN_NAME_PARTICIPANT_NAME)));
-					participantsCursor.moveToNext();
-				}
-
-				String[] parts = new String[participants.size()];
-				parts = participants.toArray(parts);
-				intent.putExtra(EXTRA_PARTICIPANTS, parts);
-
-				/* closing cursor and data-base */
-				participantsCursor.close();
-				readableDB.close();
-			}
-		}
-		else if (mAction == Action.CREATE) {
-			String[] strs = new String[mParticipants.size()];
-			strs = mParticipants.toArray(strs);
-			intent.putExtra(EXTRA_PARTICIPANTS, strs);
-		}
+		String[] strs = new String[mParticipants.size()];
+		strs = mParticipants.toArray(strs);
+		intent.putExtra(EXTRA_PARTICIPANTS, strs);
 		startActivityForResult(intent, RQ_MEETING_PARTICIPANTS);
 	}
 
@@ -314,6 +240,8 @@ public class MeetingManagementActivity extends Activity {
 	public class ManageMeetingOnServer extends AsyncTask<Meeting, Void, Boolean> {
 
 		ServerResponse servResp = null;
+		SRMeetingCreation servRespCreation = null;
+		SRMeetingModification servRespModification = null;
 
 		@Override
 		protected Boolean doInBackground(Meeting... params) {
@@ -327,25 +255,25 @@ public class MeetingManagementActivity extends Activity {
 			}
 
 			/* checking if the sending of the meeting data to the server SUCCEEDED */
-			if (servResp != null && servResp.getStatus() == ServerResponseStatus.OK) {
-
-				if (servResp.hasData()) {
-
-					SRDataForMeetingManaging serverData = servResp.getData();
-					if (mAction == Action.CREATE) {
-						/* checking if the meetings has been successfully inserted to the DB */
-						if (DAL.createMeeting(meeting, serverData))
-							shouldUpdate = true;
-					}
-					if (mAction == Action.MODIFY) {
-						if (DAL.editMeeting(mModifiedMeetingID, meeting, serverData)) {
-							shouldUpdate = true;
-						}
+			if (servResp.isOK()) {
+				if (mAction == Action.CREATE) {
+					if (servResp instanceof SRMeetingCreation)
+						servRespCreation = (SRMeetingCreation) servResp;
+					else throw new ClassCastException();
+					if (DAL.createMeeting(meeting, servRespCreation))
+						shouldUpdate = true;
+				}
+				if (mAction == Action.MODIFY) {
+					if (servResp instanceof SRMeetingModification)
+						servRespModification = (SRMeetingModification) servResp;
+					else throw new ClassCastException();
+					if (DAL.editMeeting(mModifiedMeetingID, meeting, servRespModification)) {
+						shouldUpdate = true;
 					}
 				}
 			} else {
 				/* server returned some error */
-
+				//TODO
 			}
 
 			return shouldUpdate;

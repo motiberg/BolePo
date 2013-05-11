@@ -14,9 +14,6 @@ import com.bergerlavy.bolepo.dals.DAL;
 import com.bergerlavy.bolepo.dals.Meeting;
 import com.bergerlavy.bolepo.dals.Participant;
 import com.bergerlavy.bolepo.dals.SDAL;
-import com.bergerlavy.bolepo.dals.SRDataForMeetingManaging;
-import com.bergerlavy.bolepo.dals.ServerResponse;
-import com.bergerlavy.bolepo.dals.ServerResponseStatus;
 
 public class GCMIntentService extends com.google.android.gcm.GCMBaseIntentService {
 
@@ -89,10 +86,10 @@ public class GCMIntentService extends com.google.android.gcm.GCMBaseIntentServic
 					null);
 			if (DAL.createMeeting(meeting, participants)) {
 				Intent refreshListIntent = new Intent();
-				refreshListIntent.setAction("com.bergerlavy.bolepo.refresh");
+				refreshListIntent.setAction(BolePoConstants.ACTION_BOLEPO_REFRESH_LISTS);
 				sendBroadcast(refreshListIntent); 
 			
-				notificationBuilder.setContentText(meeting.getCreator() + " invites you to " + meeting.getName())
+				notificationBuilder.setContentText(meeting.getManager() + " invites you to " + meeting.getName())
 				        .setSmallIcon(R.drawable.ic_launcher);
 
 				Intent notificationIntent = new Intent(this.getApplicationContext(), MainActivity.class);
@@ -104,6 +101,10 @@ public class GCMIntentService extends com.google.android.gcm.GCMBaseIntentServic
 			participants.clear();
 			break;
 		case UPDATED_MEETING:
+			
+			break;
+		case REMOVED_FROM_MEETING:
+			
 			break;
 		default:
 			break;
