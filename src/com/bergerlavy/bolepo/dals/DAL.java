@@ -50,6 +50,8 @@ public class DAL {
 			selectionStr = selectionStr.substring(0, selectionStr.length() - 4);
 
 		/* getting all the meetings records that the user of this device accepted */
+		if (selectionStr.equals(""))
+			selectionStr = "0 == 1";
 		acceptedMeetingsCursor = mReadableDb.query(DbContract.Meetings.TABLE_NAME, null, selectionStr, null, null, null, null);
 		if (acceptedMeetingsCursor != null)
 			acceptedMeetingsCursor.moveToFirst();
@@ -290,6 +292,7 @@ public class DAL {
 		mWritableDb = mDbHelper.getWritableDatabase();
 
 		ContentValues values = meetingToValues(m);
+		values.put(DbContract.Meetings.COLUMN_NAME_MEETING_HASH, m.getHash());
 
 		/* inserting the meeting into the meetings table */
 		long meetingID = mWritableDb.insert(DbContract.Meetings.TABLE_NAME, "null", values);

@@ -75,15 +75,20 @@ public class GCMIntentService extends com.google.android.gcm.GCMBaseIntentServic
 		case NEW_MEETING:
 			String participantsCount = intent.getStringExtra(BolePoConstants.GCM_DATA.MEETING_PARTICIPANTS_COUNT.toString());
 			int particpantsCountInt = Integer.parseInt(participantsCount);
-			for (int i = 0 ; i < particpantsCountInt ; i++) 
-				participants.add(parseParticipantData(intent.getStringExtra(BolePoConstants.GCM_DATA.PARTICIPANT_DATA.toString() + i)));
+			List<String> partsPhones = new ArrayList<String>();
+			for (int i = 0 ; i < particpantsCountInt ; i++) { 
+				Participant p = parseParticipantData(intent.getStringExtra(BolePoConstants.GCM_DATA.PARTICIPANT_DATA.toString() + i));
+				participants.add(p);
+				partsPhones.add(p.getPhone());
+			}			
 			Meeting meeting = new Meeting(intent.getStringExtra(BolePoConstants.GCM_DATA.MEETING_NAME.toString()),
 					intent.getStringExtra(BolePoConstants.GCM_DATA.MEETING_DATE.toString()),
 					intent.getStringExtra(BolePoConstants.GCM_DATA.MEETING_TIME.toString()),
 					intent.getStringExtra(BolePoConstants.GCM_DATA.MEETING_MANAGER.toString()),
 					intent.getStringExtra(BolePoConstants.GCM_DATA.MEETING_LOCATION.toString()),
 					intent.getStringExtra(BolePoConstants.GCM_DATA.MEETING_SHARE_LOCATION_TIME.toString()),
-					null);
+					partsPhones);
+			meeting.setHash(intent.getStringExtra(BolePoConstants.GCM_DATA.MEETING_HASH.toString()));
 			if (DAL.createMeeting(meeting, participants)) {
 				Intent refreshListIntent = new Intent();
 				refreshListIntent.setAction(BolePoConstants.ACTION_BOLEPO_REFRESH_LISTS);

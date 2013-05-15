@@ -39,7 +39,9 @@ public class AnalyzeServerResponse {
 	protected String mTotal;
 	protected String mFailDelivered;
 	protected String mPhone;
-
+	protected String mOldParticipantHash;
+	protected String mNewParticipantHash;
+	
 	protected List<Participant> mParticipants;
 	protected List<String> mPhones;
 
@@ -673,6 +675,86 @@ public class AnalyzeServerResponse {
 				break;
 			case UNATTEND:
 				break;
+			case REPLACE_MANAGER:
+				handler = new DefaultHandler() {
+
+					boolean action = false;
+					boolean state = false;
+					boolean desc = false;
+					boolean meetingHash = false;
+					boolean oldParticipantHash = false;
+					boolean newParticipantHash = false;
+
+					public void startElement(String uri, String localName,String qName, 
+							Attributes attributes) throws SAXException {
+						//TODO remove syso
+						System.out.println("Start Element :" + qName);
+
+						if (qName.equalsIgnoreCase("action")) {
+							action = true;
+						}
+
+						if (qName.equalsIgnoreCase("state")) {
+							state = true;
+						}
+
+						if (qName.equalsIgnoreCase("desc")) {
+							desc = true;
+						}
+
+						if (qName.equalsIgnoreCase("meetinghash")) {
+							meetingHash = true;
+						}
+						
+						if (qName.equalsIgnoreCase("oldparticipanthash")) {
+							oldParticipantHash = true;
+						}
+						
+						if (qName.equalsIgnoreCase("newparticipanthash")) {
+							newParticipantHash = true;
+						}
+					}
+
+					public void endElement(String uri, String localName,
+							String qName) throws SAXException {
+					}
+
+					public void characters(char ch[], int start, int length) throws SAXException {
+						if (action) {
+							mAction = new String(ch, start, length);
+							action = false;
+						}
+
+						if (state) {
+							mState = new String(ch, start, length);
+							state = false;
+						}
+
+						if (desc) {
+							mDescription = new String(ch, start, length);
+							desc = false;
+						}
+
+						if (meetingHash) {
+							mHash = new String(ch, start, length);
+							meetingHash = false;
+						}
+						
+						if (oldParticipantHash) {
+							mOldParticipantHash = new String(ch, start, length);
+							oldParticipantHash = false;
+						}
+						
+						if (newParticipantHash) {
+							mNewParticipantHash = new String(ch, start, length);
+							newParticipantHash = false;
+						}
+					}
+				};
+				break;
+			case REMOVE_PARTICIPANT:
+				handler = handlerForStatusOnly; 
+				break;
 			}
 
 			saxParser.parse(inputStream, handler);
@@ -721,6 +803,17 @@ public class AnalyzeServerResponse {
 					break;
 				case UNATTEND:
 					//TODO
+					break;
+				case REPLACE_MANAGER:
+					serverResponse = new SRMeetingManagerReplacement.Builder(status, mDescription)
+					.setMeetingHash(mHash)
+					.setOldManagerHash(mOldParticipantHash)
+					.setNewManagerHash(mNewParticipantHash)
+					.build();
+					break;
+				case REMOVE_PARTICIPANT:
+					serverResponse = new SRParticipantRemoval.Builder(status, mDescription)
+					.build();
 					break;
 				default:
 					break;
