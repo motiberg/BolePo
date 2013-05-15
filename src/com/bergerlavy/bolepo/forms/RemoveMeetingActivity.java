@@ -10,18 +10,20 @@ import android.view.ViewGroup.LayoutParams;
 import android.widget.Button;
 import android.widget.TextView;
 
+import com.bergerlavy.bolepo.BolePoConstants;
 import com.bergerlavy.bolepo.MainActivity;
 import com.bergerlavy.bolepo.R;
 import com.bergerlavy.bolepo.dals.DAL;
 import com.bergerlavy.bolepo.dals.Meeting;
 import com.bergerlavy.bolepo.dals.SDAL;
+import com.bergerlavy.bolepo.dals.SRMeetingManagerReplacement;
+import com.bergerlavy.bolepo.dals.SRParticipantRemoval;
 import com.bergerlavy.bolepo.dals.ServerResponse;
 
 public class RemoveMeetingActivity extends Activity {
 
 	private long mMeetingIdToRemove;
 	private String mMeetingManager;
-	private static RefreshMeetingsListListener mRefreshMeetingsListListener;
 
 	public static final String EXTRA_REMOVE_MEETING_CHOOSE_CONTACT = "EXTRA_REMOVE_MEETING_CHOOSE_CONTACT";
 	public static final String EXTRA_REMOVE_MEETING_MEETING_ID = "EXTRA_REMOVE_MEETING_MEETING_ID";
@@ -96,9 +98,12 @@ public class RemoveMeetingActivity extends Activity {
 			if (resultCode == RESULT_OK) {
 				if (data.hasExtra(AddParticipantsActivity.EXTRA_CONTACT_TO_MANAGE)) {
 					String contactPhone = data.getStringExtra(AddParticipantsActivity.EXTRA_CONTACT_TO_MANAGE);
-					//TODO server side update for those changes
-					DAL.changeMeetingManager(mMeetingIdToRemove, DAL.getParticipantByPhoneNumber(contactPhone));
-					DAL.removeParticipant(mMeetingIdToRemove, DAL.getParticipantByPhoneNumber(mMeetingManager));
+
+					new ReplaceMeetingManagerTask().execute(contactPhone);
+
+
+
+
 				}
 			}
 			if (resultCode == RESULT_CANCELED) {
@@ -107,10 +112,6 @@ public class RemoveMeetingActivity extends Activity {
 			finish();
 		}
 		super.onActivityResult(requestCode, resultCode, data);
-	}
-
-	public static void registerForMeetingsUpdate(RefreshMeetingsListListener l) {
-		mRefreshMeetingsListListener = l;
 	}
 
 	public class MeetingRemovalTask extends AsyncTask<String, Void, Boolean> {
@@ -130,7 +131,49 @@ public class RemoveMeetingActivity extends Activity {
 		@Override
 		protected void onPostExecute(Boolean result) {
 			if (result) {
-				mRefreshMeetingsListListener.onUpdate();
+				Intent refreshListIntent = new Intent();
+				refreshListIntent.setAction(BolePoConstants.ACTION_BOLEPO_REFRESH_LISTS);
+				sendBroadcast(refreshListIntent); 
+			}
+			super.onPostExecute(result);
+		}
+
+	}
+
+	public class ReplaceMeetingManagerTask extends AsyncTask<String, Void, Boolean> {
+
+		@Override
+		protected Boolean doInBackground(String... params) {
+			//TODO server side update for those changes
+			boolean changingManagerStatus;
+			ServerResponse servResp = null;
+			String oldMeetingManagerPhone = DAL.getMeetingManager(mMeetingIdToRemove).getPhone();
+			
+			servResp = (SRMeetingManagerReplacement) SDAL.replaceMeetingManager(DAL.getMeetingHashById(mMeetingIdToRemove),
+					DAL.getMeetingManager(mMeetingIdToRemove).getHash(),
+					DAL.getParticipantHashByPhone(mMeetingIdToRemove, params[0]));
+			if (servResp.isOK()) {
+				changingManagerStatus = DAL.changeMeetingManager(mMeetingIdToRemove,
+						DAL.getParticipantByPhoneNumber(mMeetingIdToRemove, params[0]),
+						(SRMeetingManagerReplacement) servResp);
+				
+				if (changingManagerStatus) {
+					servResp = (SRParticipantRemoval) SDAL.removeParticipant(DAL.getParticipantHashByPhone(mMeetingIdToRemove, oldMeetingManagerPhone));
+					if (servResp.isOK()) {
+						return DAL.removeParticipant(mMeetingIdToRemove, DAL.getParticipantByPhoneNumber(mMeetingIdToRemove, oldMeetingManagerPhone));
+						
+					}
+				}
+			}
+			return false;
+		}
+
+		@Override
+		protected void onPostExecute(Boolean result) {
+			if (result) {
+				Intent refreshListIntent = new Intent();
+				refreshListIntent.setAction(BolePoConstants.ACTION_BOLEPO_REFRESH_LISTS);
+				sendBroadcast(refreshListIntent); 
 			}
 			super.onPostExecute(result);
 		}

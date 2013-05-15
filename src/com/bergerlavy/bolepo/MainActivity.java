@@ -37,6 +37,8 @@ public class MainActivity extends Activity implements RefreshMeetingsListListene
 	//TODO change the type to NotApprovedYetMeetingsAdapter
 	private AcceptedMeetingsAdapter mNotApprovedYetAdapter;
 
+	private MyBroadcastReceiver mRefreshListsReceiver;
+
 	public static final String EXTRA_MEETING_ID = "EXTRA_MEETING_ID";
 	public static final String EXTRA_MEETING_CREATION = "EXTRA_MEETING_CREATION";
 	public static final String EXTRA_MEETING_MODIFYING = "EXTRA_MEETING_MODIFYING";
@@ -49,7 +51,7 @@ public class MainActivity extends Activity implements RefreshMeetingsListListene
 
 		DAL.setContext(this);
 		SDAL.setContext(this);
-		
+
 		/* starting the contacts service to check which of the contacts stored in this device 
 		 * are registered to the application */
 		Intent contactsServiceIntent = new Intent(this, ContactsService.class);
@@ -79,11 +81,22 @@ public class MainActivity extends Activity implements RefreshMeetingsListListene
 			mNotApprovedYetAdapter.changeCursor(DAL.createWaitingForApprovalMeetingsCursor());
 
 			IntentFilter intentFilter = new IntentFilter();
-			intentFilter.addAction("com.bergerlavy.bolepo.refresh");
-			MyBroadcastReceiver receiver = new MyBroadcastReceiver();
-			registerReceiver(receiver, intentFilter); 
+			intentFilter.addAction(BolePoConstants.ACTION_BOLEPO_REFRESH_LISTS);
+			mRefreshListsReceiver = new MyBroadcastReceiver();
+			registerReceiver(mRefreshListsReceiver, intentFilter); 
 		}
 	}
+
+	@Override
+	protected void onPause() {
+		if (mRefreshListsReceiver != null) {
+			unregisterReceiver(mRefreshListsReceiver);
+			mRefreshListsReceiver = null;
+		}
+		super.onPause();
+	}
+
+
 
 	private void firstInit() {
 
@@ -96,7 +109,6 @@ public class MainActivity extends Activity implements RefreshMeetingsListListene
 		registerForContextMenu(mNotApprovedYetList);
 
 		MeetingManagementActivity.registerForMeetingsUpdate(this);
-		RemoveMeetingActivity.registerForMeetingsUpdate(this);
 
 		startService(new Intent(this, ShareLocationsService.class));
 	}
@@ -188,7 +200,7 @@ public class MainActivity extends Activity implements RefreshMeetingsListListene
 		super.onCreateContextMenu(menu, v, menuInfo);
 		MenuInflater inflater = getMenuInflater();
 		AdapterContextMenuInfo info = (AdapterContextMenuInfo) menuInfo;
-		
+
 		if (DAL.getMyCredentials(info.id) == Credentials.MANAGER)
 			inflater.inflate(R.menu.accepted_meetings_root_participant_context_menu, menu);	
 		else inflater.inflate(R.menu.accepted_meetings_regular_participant_context_menu, menu);

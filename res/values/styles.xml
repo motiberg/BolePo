@@ -19,7 +19,7 @@
     </style>
 
     <style name="FormStyle" parent="AppTheme">
-        <item name="android:background">#A7CFF2</item>
+        <item name="android:background">#CDCDCD</item>
     </style>
 
     <style name="FormRowStyle" parent="AppTheme">
@@ -43,5 +43,12 @@
         <item name="android:layout_height">wrap_content</item>
         <item name="android:padding">16dp</item>
     </style>
-
+    
+    <style name="ListHeaderStyle" parent="AppTheme">
+        <item name="android:background">#404F64</item>
+        <item name="android:textColor">@android:color/white</item>
+        <item name="android:paddingLeft">6dp</item>
+        <item name="android:paddingTop">6dp</item>
+        <item name="android:paddingBottom">6dp</item>
+    </style>
 </resources>

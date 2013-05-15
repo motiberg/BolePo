@@ -33,10 +33,17 @@ public class DatePickerActivity extends Activity {
 	public void saveAndClose(View view) {
 		Intent intent = new Intent();
 		intent.putExtra(EXTRA_DAY, mDatePicker.getDayOfMonth());
-		intent.putExtra(EXTRA_MONTH, mDatePicker.getMonth());
+		
+		/* getMonth() returns the month as a value in the range of 0 .. 11, hence the increment by 1 */
+		intent.putExtra(EXTRA_MONTH, mDatePicker.getMonth() + 1);
 		intent.putExtra(EXTRA_YEAR, mDatePicker.getYear());
 		setResult(RESULT_OK, intent);
 		finish();
 	}
 
+	@Override
+	public void onBackPressed() {
+		setResult(RESULT_CANCELED);
+		super.onBackPressed();
+	}
 }

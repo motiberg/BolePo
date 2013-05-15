@@ -409,6 +409,7 @@ containing a value of this type.
         public static final int FormLabelStyle=0x7f070004;
         public static final int FormRowStyle=0x7f070003;
         public static final int FormStyle=0x7f070002;
+        public static final int ListHeaderStyle=0x7f070006;
         public static final int LoginFormContainer=0x7f070005;
     }
     public static final class styleable {

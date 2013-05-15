@@ -35,7 +35,7 @@ import com.bergerlavy.bolepo.shareddata.Misc;
 public class MeetingManagementActivity extends Activity {
 
 	private EditText mName;
-	private EditText mDate;
+	private TextView mDate;
 	private TextView mTime;
 	private TextView mLocation;
 	private TextView mShareLocationTime;
@@ -45,6 +45,28 @@ public class MeetingManagementActivity extends Activity {
 	private Action mAction;
 	private String mModifiedMeetingHash;
 	private long mModifiedMeetingID;
+
+	/**
+	 * An indicator for the meeting time choosing activity status. A 'true' value means
+	 * the activity is at the front of the screen. A 'false' value means it doesn't. The
+	 * primary purpose of this indicator is to disable multiple instances of the activity.
+	 */
+	private static boolean mTimeDialogIsOn;
+
+	/**
+	 * An indicator for the meeting date choosing activity status. A 'true' value means
+	 * the activity is at the front of the screen. A 'false' value means it doesn't. The
+	 * primary purpose of this indicator is to disable multiple instances of the activity.
+	 */
+	private static boolean mDateDialogIsOn;
+
+	/**
+	 * An indicator for the meeting location sharing time choosing activity status.
+	 * A 'true' value means the activity is at the front of the screen.
+	 * A 'false' value means it doesn't. The primary purpose of this indicator is
+	 * to disable multiple instances of the activity.
+	 */
+	private static boolean mShareLocationTimeDialogIsOn;
 
 	private static RefreshMeetingsListListener mRefreshMeetingsListListener;
 
@@ -70,7 +92,7 @@ public class MeetingManagementActivity extends Activity {
 		mParticipants = new ArrayList<String>();
 
 		mName = (EditText) findViewById(R.id.meeting_management_purpose_edittext);
-		mDate = (EditText) findViewById(R.id.meeting_management_date_edittext);
+		mDate = (TextView) findViewById(R.id.meeting_management_date_edittext);
 		mTime = (TextView) findViewById(R.id.meeting_management_time_edittext);
 		mLocation = (TextView) findViewById(R.id.meeting_management_location_edittext);
 		mShareLocationTime = (TextView) findViewById(R.id.meeting_management_share_locations_time_edittext);
@@ -79,9 +101,12 @@ public class MeetingManagementActivity extends Activity {
 		mTime.setOnClickListener(new OnClickListener() {
 
 			@Override
-			public void onClick(View arg0) {
-				Intent intent = new Intent(MeetingManagementActivity.this, TimePickerActivity.class);
-				startActivityForResult(intent, RQ_MEETING_TIME);
+			public void onClick(View v) {
+				if (!mTimeDialogIsOn) {
+					Intent intent = new Intent(MeetingManagementActivity.this, TimePickerActivity.class);
+					startActivityForResult(intent, RQ_MEETING_TIME);
+					mTimeDialogIsOn = true;
+				}
 			}
 		});
 
@@ -89,8 +114,13 @@ public class MeetingManagementActivity extends Activity {
 
 			@Override
 			public void onClick(View v) {
-				Intent intent = new Intent(MeetingManagementActivity.this, TimePickerActivity.class);
-				startActivityForResult(intent, RQ_MEETING_SHARETIME);				
+				if (!mShareLocationTimeDialogIsOn) {
+					Intent intent = new Intent(MeetingManagementActivity.this, TimePickerActivity.class);
+					intent.putExtra(TimePickerActivity.EXTRA_INIT_HOUR, 1);
+					intent.putExtra(TimePickerActivity.EXTRA_INIT_MINUTES, 0);
+					startActivityForResult(intent, RQ_MEETING_SHARETIME);
+					mShareLocationTimeDialogIsOn = true;
+				}
 			}
 		});
 
@@ -98,8 +128,11 @@ public class MeetingManagementActivity extends Activity {
 
 			@Override
 			public void onClick(View v) {
-				Intent intent = new Intent(MeetingManagementActivity.this, DatePickerActivity.class);
-				startActivityForResult(intent, RQ_MEETING_DATE);
+				if (!mDateDialogIsOn) {
+					Intent intent = new Intent(MeetingManagementActivity.this, DatePickerActivity.class);
+					startActivityForResult(intent, RQ_MEETING_DATE);
+					mDateDialogIsOn = true;
+				}
 			}
 		});
 
@@ -144,7 +177,10 @@ public class MeetingManagementActivity extends Activity {
 	@Override
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 		if (requestCode == RQ_MEETING_TIME) {
-			mTime.setText(Misc.pumpStrToDoubleCharacters(data.getIntExtra(TimePickerActivity.EXTRA_HOUR, 0) + "") + ":" + Misc.pumpStrToDoubleCharacters(data.getIntExtra(TimePickerActivity.EXTRA_MINUTES, 0) + ""));
+			if (resultCode == RESULT_OK) {
+				mTime.setText(Misc.pumpStrToDoubleCharacters(data.getIntExtra(TimePickerActivity.EXTRA_HOUR, 0) + "") + ":" + Misc.pumpStrToDoubleCharacters(data.getIntExtra(TimePickerActivity.EXTRA_MINUTES, 0) + ""));
+			}
+			mTimeDialogIsOn = false;
 		}
 		if (requestCode == RQ_MEETING_LOCATION) {
 			//TODO
@@ -163,12 +199,18 @@ public class MeetingManagementActivity extends Activity {
 			}
 		}
 		if (requestCode == RQ_MEETING_SHARETIME) {
-			mShareLocationTime.setText(Misc.pumpStrToDoubleCharacters(data.getIntExtra(TimePickerActivity.EXTRA_HOUR, 0) + "") + ":" + Misc.pumpStrToDoubleCharacters(data.getIntExtra(TimePickerActivity.EXTRA_MINUTES, 0) + ""));
+			if (resultCode == RESULT_OK) {
+				mShareLocationTime.setText(Misc.pumpStrToDoubleCharacters(data.getIntExtra(TimePickerActivity.EXTRA_HOUR, 0) + "") + ":" + Misc.pumpStrToDoubleCharacters(data.getIntExtra(TimePickerActivity.EXTRA_MINUTES, 0) + ""));
+			}
+			mShareLocationTimeDialogIsOn = false;
 		}
 		if (requestCode == RQ_MEETING_DATE) {
-			mDate.setText(Misc.pumpStrToDoubleCharacters(data.getIntExtra(DatePickerActivity.EXTRA_DAY, 0) + "") + "/" + 
-					Misc.pumpStrToDoubleCharacters(data.getIntExtra(DatePickerActivity.EXTRA_MONTH, 0) + "") + "/" + 
-					data.getIntExtra(DatePickerActivity.EXTRA_YEAR, 0));
+			if (resultCode == RESULT_OK) {
+				mDate.setText(Misc.pumpStrToDoubleCharacters(data.getIntExtra(DatePickerActivity.EXTRA_DAY, 0) + "") + "/" + 
+						Misc.pumpStrToDoubleCharacters(data.getIntExtra(DatePickerActivity.EXTRA_MONTH, 0) + "") + "/" + 
+						data.getIntExtra(DatePickerActivity.EXTRA_YEAR, 0));
+			}
+			mDateDialogIsOn = false;
 		}
 
 		super.onActivityResult(requestCode, resultCode, data);

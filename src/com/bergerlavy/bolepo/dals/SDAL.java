@@ -74,6 +74,20 @@ public class SDAL {
 		throw new ClassCastException();
 	}
 	
+	public static SRMeetingManagerReplacement replaceMeetingManager(String meetingHash, String oldManagerHash, String newManagerHash) {
+		ServerResponse sr = executeServerMeetingCommand(Action.REPLACE_MANAGER, new String[] { meetingHash, oldManagerHash, newManagerHash });
+		if (sr instanceof SRMeetingManagerReplacement)
+			return (SRMeetingManagerReplacement) sr;
+		throw new ClassCastException();
+	}
+	
+	public static SRParticipantRemoval removeParticipant(String participantHash) {
+		ServerResponse sr = executeServerMeetingCommand(Action.REMOVE_PARTICIPANT, participantHash);
+		if (sr instanceof SRParticipantRemoval)
+			return (SRParticipantRemoval) sr;
+		throw new ClassCastException();
+	}
+	
 	public static SRGcmRegistration regGCM(String regId) {
 		ServerResponse sr = executeServerGcmCommand(Action.GCM_REGISTRATION, regId);
 		if (sr instanceof SRGcmRegistration)
@@ -122,6 +136,7 @@ public class SDAL {
 		ServerResponse serverResponse = null;
 		Meeting meeting = null;
 		String meetingHash = null;
+		String participantHash = null;
 
 		/* adding default parameters that should be in every server request for meetings handling */
 		List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>();
@@ -155,6 +170,16 @@ public class SDAL {
 			meetingHash = (String) data;
 			nameValuePairs.add(new BasicNameValuePair("hash", meetingHash));
 			nameValuePairs.add(new BasicNameValuePair("user", BolePoMisc.getDevicePhoneNumber(mContext)));
+			break;
+		case REPLACE_MANAGER:
+			String[] replaceManagerData = (String []) data;
+			nameValuePairs.add(new BasicNameValuePair("meeting_hash", replaceManagerData[0]));
+			nameValuePairs.add(new BasicNameValuePair("old_manager_hash", replaceManagerData[1]));
+			nameValuePairs.add(new BasicNameValuePair("new_manager_hash", replaceManagerData[2]));
+			break;
+		case REMOVE_PARTICIPANT:
+			participantHash = (String) data;
+			nameValuePairs.add(new BasicNameValuePair("participant_hash", participantHash));
 			break;
 		default:
 			break;
