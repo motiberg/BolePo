@@ -67,10 +67,10 @@ public class SDAL {
 		throw new ClassCastException();
 	}
 	
-	public static SRMeetingUnattendance unattendAMeeting(String meetingHash) {
-		ServerResponse sr = executeServerMeetingCommand(Action.UNATTEND, meetingHash);
-		if (sr instanceof SRMeetingUnattendance)
-			return (SRMeetingUnattendance) sr;
+	public static SRMeetingDeclining declineAMeeting(String meetingHash) {
+		ServerResponse sr = executeServerMeetingCommand(Action.DECLINE, meetingHash);
+		if (sr instanceof SRMeetingDeclining)
+			return (SRMeetingDeclining) sr;
 		throw new ClassCastException();
 	}
 	
@@ -166,7 +166,7 @@ public class SDAL {
 			nameValuePairs.add(new BasicNameValuePair("hash", meetingHash));
 			nameValuePairs.add(new BasicNameValuePair("user", BolePoMisc.getDevicePhoneNumber(mContext)));
 			break;
-		case UNATTEND:
+		case DECLINE:
 			meetingHash = (String) data;
 			nameValuePairs.add(new BasicNameValuePair("hash", meetingHash));
 			nameValuePairs.add(new BasicNameValuePair("user", BolePoMisc.getDevicePhoneNumber(mContext)));

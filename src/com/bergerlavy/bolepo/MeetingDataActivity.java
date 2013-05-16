@@ -14,7 +14,7 @@ import com.bergerlavy.bolepo.dals.DAL;
 import com.bergerlavy.bolepo.dals.Meeting;
 import com.bergerlavy.bolepo.dals.SDAL;
 import com.bergerlavy.bolepo.dals.SRMeetingAttendance;
-import com.bergerlavy.bolepo.dals.SRMeetingUnattendance;
+import com.bergerlavy.bolepo.dals.SRMeetingDeclining;
 import com.bergerlavy.bolepo.forms.RemoveMeetingActivity;
 import com.bergerlavy.db.DbHelper;
 
@@ -83,7 +83,6 @@ public class MeetingDataActivity extends Activity {
 	}
 
 	public void commitAction(View view) {
-		Toast.makeText(this, "dfdfd", Toast.LENGTH_LONG).show();
 		boolean toRefresh = false;
 
 		/* if the attend button has been pressed */
@@ -106,9 +105,9 @@ public class MeetingDataActivity extends Activity {
 				startActivity(intent);
 			}
 			else {
-				SRMeetingUnattendance servResp = SDAL.unattendAMeeting(mHash);
+				SRMeetingDeclining servResp = SDAL.declineAMeeting(mHash);
 				if (servResp.isOK()) {
-					if (DAL.unattendAMeeting(mId)) {
+					if (DAL.declineAMeeting(mId)) {
 						toRefresh = true;
 					}
 				}
@@ -120,6 +119,7 @@ public class MeetingDataActivity extends Activity {
 			intent.setAction(BolePoConstants.ACTION_BOLEPO_REFRESH_LISTS);
 			sendBroadcast(intent);
 		}
+		finish();
 	}
 
 }

@@ -28,6 +28,10 @@ public class DAL {
 		mDbHelper = new DbHelper(context);
 	}
 
+	public static boolean expelFromMeeting(String meetingHash) {
+		return removeMeeting(getMeetingIdByHash(meetingHash));
+	}
+	
 	private static long getMeetingIdByHash(String meetingHash) {
 		mReadableDb = mDbHelper.getReadableDatabase();
 		long meetingId = -1;
@@ -138,9 +142,8 @@ public class DAL {
 						DbContract.Participants.COLUMN_NAME_PARTICIPANT_PHONE + " = '" + BolePoMisc.getDevicePhoneNumber(mContext) + "'",
 						null, null, null, null);
 		if (c != null) {
-			if (c.moveToFirst()) {
+			if (c.moveToFirst())
 				return Credentials.getEnum(c.getString(c.getColumnIndex(DbContract.Participants.COLUMN_NAME_PARTICIPANT_CREDENTIALS)));
-			}
 			c.close();
 		}
 		mReadableDb.close();
@@ -160,9 +163,8 @@ public class DAL {
 						DbContract.Participants.COLUMN_NAME_PARTICIPANT_PHONE + " = '" + BolePoMisc.getDevicePhoneNumber(mContext) + "'",
 						null, null, null, null);
 		if (c != null) {
-			if (c.moveToFirst()) {
+			if (c.moveToFirst())
 				return RSVP.getEnum(c.getString(c.getColumnIndex(DbContract.Participants.COLUMN_NAME_PARTICIPANT_RSVP)));
-			}
 			c.close();
 		}
 		mReadableDb.close();
@@ -271,7 +273,8 @@ public class DAL {
 
 			participantsFromDBCursor.moveToNext();
 		}
-
+		participantsFromDBCursor.close();
+		
 		return parts;
 	}
 
@@ -532,7 +535,7 @@ public class DAL {
 		return meetingAttending(meetingId, RSVP.YES);
 	}
 
-	public static boolean unattendAMeeting(long meetingId) {
+	public static boolean declineAMeeting(long meetingId) {
 		return meetingAttending(meetingId, RSVP.NO);
 	}
 

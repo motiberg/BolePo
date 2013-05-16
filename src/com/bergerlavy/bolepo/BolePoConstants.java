@@ -83,7 +83,8 @@ public class BolePoConstants {
 		MEETING_CANCLED ("meeting_cancled"),
 		NEW_MANAGER ("new_manager"),
 		REMOVED_FROM_MEETING ("removed_from_meeting"),
-		PARTICIPANT_ATTENDED ("participant_attended");
+		PARTICIPANT_ATTENDED ("participant_attended"),
+		PARTICIPANT_DECLINED ("participant_declined");
 		
 		private final String mStr;
 
@@ -115,7 +116,9 @@ public class BolePoConstants {
 		MEETING_PARTICIPANTS_COUNT ("meeting_participants_count"),
 		MEETING_HASH ("meeting_hash"),
 		PARTICIPANT_DATA ("participant_data"),
-		PARTICIPANT_ATTENDANCE ("participant_attends");
+		PARTICIPANT_ATTENDANCE ("participant_attends"),
+		PARTICIPANT_DECLINING ("participant_declining"),
+		REMOVED_BY_MANAGER ("removed_by_manager");
 //		PARTICIPANT_PHONE ("participant_phone"),
 //		PARTICIPANT_NAME ("participant_name"),
 //		PARTICIPANT_RSVP ("participant_rsvp"),

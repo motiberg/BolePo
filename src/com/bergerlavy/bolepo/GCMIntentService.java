@@ -20,6 +20,7 @@ public class GCMIntentService extends com.google.android.gcm.GCMBaseIntentServic
 
 	public static final int NEW_MEETING_NOTIFICATION_ID = 1;
 	public static final int PARTICIPANT_ATTENDANCE_NOTIFICATION_ID = 2;
+	public static final int PARTICIPANT_DECLINING_NOTIFICATION_ID = 3;
 
 	public GCMIntentService() {
 		super(BolePoConstants.SENDER_ID);
@@ -111,9 +112,30 @@ public class GCMIntentService extends com.google.android.gcm.GCMBaseIntentServic
 
 			break;
 		case REMOVED_FROM_MEETING:
+		{
+			String meetingHash = intent.getStringExtra(BolePoConstants.GCM_DATA.MEETING_HASH.toString());
+			String meetingName = intent.getStringExtra(BolePoConstants.GCM_DATA.MEETING_NAME.toString());
 
+			if (DAL.expelFromMeeting(meetingHash)) {
+
+				Intent refreshListIntent = new Intent();
+				refreshListIntent.setAction(BolePoConstants.ACTION_BOLEPO_REFRESH_LISTS);
+				sendBroadcast(refreshListIntent); 
+
+				notificationBuilder.setContentText("You are no longer invited to " + meetingName)
+				.setSmallIcon(R.drawable.ic_launcher);
+
+				Intent notificationIntent = new Intent(this.getApplicationContext(), MainActivity.class);
+				PendingIntent contentIntent = PendingIntent.getActivity(this.getApplicationContext(), 0, notificationIntent, 0);
+				notificationBuilder.setContentIntent(contentIntent);
+
+				mNotificationManager.notify(NEW_MEETING_NOTIFICATION_ID, notificationBuilder.build());
+			}
 			break;
+		}
+
 		case PARTICIPANT_ATTENDED:
+		{
 			String attendedParticipant = intent.getStringExtra(BolePoConstants.GCM_DATA.PARTICIPANT_ATTENDANCE.toString());
 			String meetingHash = intent.getStringExtra(BolePoConstants.GCM_DATA.MEETING_HASH.toString());
 			String meetingName = intent.getStringExtra(BolePoConstants.GCM_DATA.MEETING_NAME.toString());
@@ -122,12 +144,34 @@ public class GCMIntentService extends com.google.android.gcm.GCMBaseIntentServic
 			notificationBuilder.setContentText(attendedParticipant + " attends: " + meetingName)
 			.setSmallIcon(R.drawable.ic_launcher);
 
+			//TODO change the destination activity - then don't forget to remove the notification cancel in the MainActivity
 			Intent notificationIntent = new Intent(this.getApplicationContext(), MainActivity.class);
 			PendingIntent contentIntent = PendingIntent.getActivity(this.getApplicationContext(), 0, notificationIntent, 0);
 			notificationBuilder.setContentIntent(contentIntent);
 
 			mNotificationManager.notify(PARTICIPANT_ATTENDANCE_NOTIFICATION_ID, notificationBuilder.build());
 			break;
+		}
+		case PARTICIPANT_DECLINED:
+		{
+			String declinedParticipant = intent.getStringExtra(BolePoConstants.GCM_DATA.PARTICIPANT_DECLINING.toString());
+			String meetingHash = intent.getStringExtra(BolePoConstants.GCM_DATA.MEETING_HASH.toString());
+			String meetingName = intent.getStringExtra(BolePoConstants.GCM_DATA.MEETING_NAME.toString());
+
+			//TODO change the RSVP from NO to DECLINE
+			DAL.updateParticipantAttendance(meetingHash, declinedParticipant, RSVP.NO);
+
+			notificationBuilder.setContentText(declinedParticipant + " declines: " + meetingName)
+			.setSmallIcon(R.drawable.ic_launcher);
+
+			//TODO change the destination activity - then don't forget to remove the notification cancel in the MainActivity
+			Intent notificationIntent = new Intent(this.getApplicationContext(), MainActivity.class);
+			PendingIntent contentIntent = PendingIntent.getActivity(this.getApplicationContext(), 0, notificationIntent, 0);
+			notificationBuilder.setContentIntent(contentIntent);
+
+			mNotificationManager.notify(PARTICIPANT_DECLINING_NOTIFICATION_ID, notificationBuilder.build());
+			break;
+		}
 		default:
 			break;
 

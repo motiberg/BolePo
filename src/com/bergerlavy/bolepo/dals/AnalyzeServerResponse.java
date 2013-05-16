@@ -675,7 +675,8 @@ public class AnalyzeServerResponse {
 			case ATTEND:
 				handler = handlerForStatusOnly;
 				break;
-			case UNATTEND:
+			case DECLINE:
+				handler = handlerForStatusOnly;
 				break;
 			case REPLACE_MANAGER:
 				handler = new DefaultHandler() {
@@ -804,8 +805,9 @@ public class AnalyzeServerResponse {
 					serverResponse = new SRMeetingAttendance.Builder(status, mDescription)
 					.build();
 					break;
-				case UNATTEND:
-					//TODO
+				case DECLINE:
+					serverResponse = new SRMeetingDeclining.Builder(status, mDescription)
+					.build();
 					break;
 				case REPLACE_MANAGER:
 					serverResponse = new SRMeetingManagerReplacement.Builder(status, mDescription)

@@ -8,7 +8,7 @@ public enum Action {
 	REMOVE ("remove"),
 	RETRIEVE ("retrieve"),
 	ATTEND ("attend"),
-	UNATTEND ("unattend"),
+	DECLINE ("decline"),
 	REPLACE_MANAGER ("replace_manager"),
 	REMOVE_PARTICIPANT ("remove_participant"),
 	GCM_REGISTRATION ("gcm_register"),
