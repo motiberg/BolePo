@@ -23,9 +23,11 @@
 
         <TextView
             android:id="@+id/meeting_data_name"
+            style="@style/FormLabelStyle"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="5"
+            android:gravity="center_vertical"
             android:textIsSelectable="true" />
     </LinearLayout>
 
@@ -41,13 +43,15 @@
         <TextView
             style="@style/FormLabelStyle"
             android:layout_weight="1"
-            android:text="@string/meeting_management_date"  />
+            android:text="@string/meeting_management_date" />
 
         <TextView
             android:id="@+id/meeting_data_date"
+            style="@style/FormLabelStyle"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="5"
+            android:gravity="center_vertical"
             android:textIsSelectable="true" />
     </LinearLayout>
 
@@ -67,9 +71,11 @@
 
         <TextView
             android:id="@+id/meeting_data_time"
+            style="@style/FormLabelStyle"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="5"
+            android:gravity="center_vertical"
             android:textIsSelectable="true" />
     </LinearLayout>
 
@@ -89,9 +95,10 @@
 
         <TextView
             android:id="@+id/meeting_data_location"
+            style="@style/FormLabelStyle"
             android:layout_width="0dp"
             android:layout_height="match_parent"
-            android:layout_gravity="center_vertical"
+            android:gravity="center_vertical"
             android:layout_weight="7"
             android:textIsSelectable="true" />
 
@@ -120,9 +127,11 @@
 
         <TextView
             android:id="@+id/meeting_data_share_locations_time"
+            style="@style/FormLabelStyle"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="7"
+            android:gravity="center_vertical"
             android:textIsSelectable="true" />
     </LinearLayout>
 
@@ -137,34 +146,37 @@
         android:paddingBottom="6dp" >
 
         <TextView
+            android:id="@+id/meeting_data_participants"
             style="@style/FormLabelStyle"
-            android:layout_weight="1"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
             android:text="@string/meeting_management_participants" />
     </LinearLayout>
 
-    <LinearLayout
-        style="@style/FormRowStyle"
-        android:layout_width="match_parent"
-        android:layout_height="40dp"
-        android:background="@drawable/rounded_view"
-        android:orientation="vertical"
-        android:paddingBottom="6dp" >
-
         <Button
             android:id="@+id/meeting_data_attend_button"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
+            android:layout_marginTop="6dp"
+            android:layout_marginBottom="2dp"
             android:background="@drawable/rounded_green_button"
-            android:onClick="commitAction" />
-        
+            android:onClick="commitAction"
+            android:paddingTop="10dp"
+            android:paddingBottom="10dp"
+            android:text="@string/meeting_data_attend_button_text" />
+
         <Button
-            android:id="@+id/meeting_data_unattend_button"
-            android:layout_width="wrap_content"
+            android:id="@+id/meeting_data_decline_button"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
+            android:layout_marginTop="6dp"
+            android:layout_marginBottom="2dp"
+            android:paddingTop="10dp"
+            android:paddingBottom="10dp"
             android:background="@drawable/rounded_red_button"
-            android:onClick="commitAction" />
-    </LinearLayout>
+            android:onClick="commitAction"
+            android:text="@string/meeting_data_decline_button_text" />
 
 </LinearLayout>

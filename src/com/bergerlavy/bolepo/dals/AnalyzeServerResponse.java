@@ -93,6 +93,7 @@ public class AnalyzeServerResponse {
 
 				if (desc) {
 					mDescription = new String(ch, start, length);
+					System.out.println("Description = " + mDescription);
 					desc = false;
 				}
 			}
@@ -672,6 +673,7 @@ public class AnalyzeServerResponse {
 				};
 				break;
 			case ATTEND:
+				handler = handlerForStatusOnly;
 				break;
 			case UNATTEND:
 				break;
@@ -799,7 +801,8 @@ public class AnalyzeServerResponse {
 					.build();
 					break;
 				case ATTEND:
-					//TODO
+					serverResponse = new SRMeetingAttendance.Builder(status, mDescription)
+					.build();
 					break;
 				case UNATTEND:
 					//TODO

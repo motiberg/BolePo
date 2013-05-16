@@ -102,6 +102,7 @@
 
             <TextView
                 android:id="@+id/meeting_management_location_edittext"
+                style="@style/FormLabelStyle"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_gravity="center_vertical"

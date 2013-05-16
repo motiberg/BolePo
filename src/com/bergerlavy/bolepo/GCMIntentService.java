@@ -10,6 +10,7 @@ import android.content.Intent;
 import android.support.v4.app.NotificationCompat;
 import android.widget.Toast;
 
+import com.bergerlavy.bolepo.BolePoConstants.RSVP;
 import com.bergerlavy.bolepo.dals.DAL;
 import com.bergerlavy.bolepo.dals.Meeting;
 import com.bergerlavy.bolepo.dals.Participant;
@@ -18,7 +19,8 @@ import com.bergerlavy.bolepo.dals.SDAL;
 public class GCMIntentService extends com.google.android.gcm.GCMBaseIntentService {
 
 	public static final int NEW_MEETING_NOTIFICATION_ID = 1;
-	
+	public static final int PARTICIPANT_ATTENDANCE_NOTIFICATION_ID = 2;
+
 	public GCMIntentService() {
 		super(BolePoConstants.SENDER_ID);
 	}
@@ -31,10 +33,10 @@ public class GCMIntentService extends com.google.android.gcm.GCMBaseIntentServic
 	@Override
 	protected void onRegistered(Context context, String regId) {
 		Toast.makeText(context, "gcm register", Toast.LENGTH_LONG).show();
-		
+
 		/* store registration ID on shared preferences */
-    	BolePoMisc.setGcmRegId(this, regId);
-		
+		BolePoMisc.setGcmRegId(this, regId);
+
 		/* notify server about the registered ID */
 		SDAL.regGCM(regId);
 
@@ -47,12 +49,12 @@ public class GCMIntentService extends com.google.android.gcm.GCMBaseIntentServic
 	@Override
 	protected void onUnregistered(Context context, String regId) {
 		Toast.makeText(context, "gcm unregister", Toast.LENGTH_LONG).show();
-		
-		/* get old registration ID out of shared preferences */
-    	BolePoMisc.removeGcmId(this);
 
-    	/* notify server about the unregistered ID */
-    	SDAL.unregGCM(regId);
+		/* get old registration ID out of shared preferences */
+		BolePoMisc.removeGcmId(this);
+
+		/* notify server about the unregistered ID */
+		SDAL.unregGCM(regId);
 	}
 
 	/**
@@ -66,7 +68,7 @@ public class GCMIntentService extends com.google.android.gcm.GCMBaseIntentServic
 		List<Participant> participants = new ArrayList<Participant>();
 		NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 		NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this).setContentTitle("Bolepo");
-		
+
 		switch (BolePoConstants.GCM_NOTIFICATION.getEnum(messageType)) {
 		case MEETING_CANCLED:
 			break;
@@ -93,9 +95,9 @@ public class GCMIntentService extends com.google.android.gcm.GCMBaseIntentServic
 				Intent refreshListIntent = new Intent();
 				refreshListIntent.setAction(BolePoConstants.ACTION_BOLEPO_REFRESH_LISTS);
 				sendBroadcast(refreshListIntent); 
-			
+
 				notificationBuilder.setContentText(meeting.getManager() + " invites you to " + meeting.getName())
-				        .setSmallIcon(R.drawable.ic_launcher);
+				.setSmallIcon(R.drawable.ic_launcher);
 
 				Intent notificationIntent = new Intent(this.getApplicationContext(), MainActivity.class);
 				PendingIntent contentIntent = PendingIntent.getActivity(this.getApplicationContext(), 0, notificationIntent, 0);
@@ -106,14 +108,29 @@ public class GCMIntentService extends com.google.android.gcm.GCMBaseIntentServic
 			participants.clear();
 			break;
 		case UPDATED_MEETING:
-			
+
 			break;
 		case REMOVED_FROM_MEETING:
-			
+
+			break;
+		case PARTICIPANT_ATTENDED:
+			String attendedParticipant = intent.getStringExtra(BolePoConstants.GCM_DATA.PARTICIPANT_ATTENDANCE.toString());
+			String meetingHash = intent.getStringExtra(BolePoConstants.GCM_DATA.MEETING_HASH.toString());
+			String meetingName = intent.getStringExtra(BolePoConstants.GCM_DATA.MEETING_NAME.toString());
+			DAL.updateParticipantAttendance(meetingHash, attendedParticipant, RSVP.YES);
+
+			notificationBuilder.setContentText(attendedParticipant + " attends: " + meetingName)
+			.setSmallIcon(R.drawable.ic_launcher);
+
+			Intent notificationIntent = new Intent(this.getApplicationContext(), MainActivity.class);
+			PendingIntent contentIntent = PendingIntent.getActivity(this.getApplicationContext(), 0, notificationIntent, 0);
+			notificationBuilder.setContentIntent(contentIntent);
+
+			mNotificationManager.notify(PARTICIPANT_ATTENDANCE_NOTIFICATION_ID, notificationBuilder.build());
 			break;
 		default:
 			break;
-		
+
 		}
 	}
 
@@ -127,7 +144,7 @@ public class GCMIntentService extends com.google.android.gcm.GCMBaseIntentServic
 		Toast.makeText(context, "gcm error", Toast.LENGTH_LONG).show();
 
 	}
-	
+
 	private Participant parseParticipantData(String participant) {
 		String[] data = participant.split("::");
 		return new Participant.Builder(data[0]).setName(data[1]).setCredentials(data[2]).setRsvp(data[3]).setHash(data[4]).build();

@@ -1,6 +1,7 @@
 package com.bergerlavy.bolepo.dals;
 
 import com.bergerlavy.bolepo.BolePoConstants.Credentials;
+import com.bergerlavy.bolepo.BolePoConstants.RSVP;
 
 public class Participant {
 

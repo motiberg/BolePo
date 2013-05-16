@@ -7,11 +7,11 @@
 
             <corners android:radius="15dip" />
 
-            <solid android:color="#FF0000" />
+            <solid android:color="#E82E2E" />
 
             <stroke
-                android:width="2dp"
-                android:color="#86abd9" />
+                android:width="1dp"
+                android:color="#000000" />
         </shape>
     </item>
 

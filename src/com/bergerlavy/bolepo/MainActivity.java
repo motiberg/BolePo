@@ -15,6 +15,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.AdapterView.AdapterContextMenuInfo;
+import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ListView;
 import android.widget.Toast;
 
@@ -43,6 +44,18 @@ public class MainActivity extends Activity implements RefreshMeetingsListListene
 	public static final String EXTRA_MEETING_CREATION = "EXTRA_MEETING_CREATION";
 	public static final String EXTRA_MEETING_MODIFYING = "EXTRA_MEETING_MODIFYING";
 	public static final String EXTRA_MEETING_CREATOR_REMOVAL = "EXTRA_MEETING_CREATOR_REMOVAL";
+	
+	private OnItemClickListener MeetingDataListener = new OnItemClickListener() {
+		
+		@Override
+		public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+			
+			Intent intent = new Intent(MainActivity.this, MeetingDataActivity.class);
+			intent.putExtra(EXTRA_MEETING_ID, id);
+			startActivity(intent);
+			
+		}
+	};
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -59,7 +72,13 @@ public class MainActivity extends Activity implements RefreshMeetingsListListene
 
 		mAcceptedList = (ListView) findViewById(R.id.main_accepted_list);
 		mNotApprovedYetList = (ListView) findViewById(R.id.main_not_approved_yet_list);
+		
+		/* setting an onClick listener to the accepted meetings list to allow the user to watch the meeting's details */
+		mAcceptedList.setOnItemClickListener(MeetingDataListener);
 
+		/* setting an onClick listener to the waiting-for-approval meetings list to allow the user to watch the meeting's details */
+		mNotApprovedYetList.setOnItemClickListener(MeetingDataListener);
+		
 		/* checking if it is the first time the application starts by checking if the user entered 
 		 * the device phone number */
 		if (BolePoMisc.getDevicePhoneNumber(this).equals("")) {
@@ -67,6 +86,7 @@ public class MainActivity extends Activity implements RefreshMeetingsListListene
 			startActivity(intent);
 		}
 		((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).cancel(GCMIntentService.NEW_MEETING_NOTIFICATION_ID);
+		((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).cancel(GCMIntentService.PARTICIPANT_ATTENDANCE_NOTIFICATION_ID);
 	}
 
 

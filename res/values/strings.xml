@@ -54,5 +54,7 @@
     <string name="accepted_meetings_regular_participant_cm_item_delete_title">Delete</string>
     <string name="accepted_meetings_root_participant_cm_item_view_title">View</string>
     <string name="add_participants_no_contacts_invited_yet">No contacts has been invited yet !</string>
+    <string name="meeting_data_attend_button_text">Attend</string>
+    <string name="meeting_data_decline_button_text">Decline</string>
 
 </resources>
