@@ -74,24 +74,24 @@ public class ShareLocationsService extends Service  {
 
 		// run is a abstract method that defines task performed at scheduled time.
 		public void run() {
-			SQLiteDatabase readableDB = new DbHelper(ShareLocationsService.this).getReadableDatabase();
-			Cursor activeMeetingCursor = readableDB.query(DbContract.Meetings.TABLE_NAME,
-					new String[] { DbContract.Meetings._ID, DbContract.Meetings.COLUMN_NAME_MEETING_HASH },
-					null, null, null, null, null);
-
-			if (activeMeetingCursor != null && activeMeetingCursor.moveToFirst()) {
-				while (!activeMeetingCursor.isAfterLast()) {
-					String hash = activeMeetingCursor.getString(activeMeetingCursor.getColumnIndex(DbContract.Meetings.COLUMN_NAME_MEETING_HASH));
-					if (mLocation != null)
-						SDAL.sendDeviceLocation(hash, mLocation);
-					else
-						SDAL.sendDeviceLocation(hash, mLocationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER));
-					activeMeetingCursor.moveToNext();
-				}
-			}
-			activeMeetingCursor.close();
-			readableDB.close();
-
+//			SQLiteDatabase readableDB = new DbHelper(ShareLocationsService.this).getReadableDatabase();
+//			Cursor activeMeetingCursor = readableDB.query(DbContract.Meetings.TABLE_NAME,
+//					new String[] { DbContract.Meetings._ID, DbContract.Meetings.COLUMN_NAME_MEETING_HASH },
+//					null, null, null, null, null);
+//
+//			if (activeMeetingCursor != null && activeMeetingCursor.moveToFirst()) {
+//				while (!activeMeetingCursor.isAfterLast()) {
+//					String hash = activeMeetingCursor.getString(activeMeetingCursor.getColumnIndex(DbContract.Meetings.COLUMN_NAME_MEETING_HASH));
+//					if (mLocation != null)
+//						SDAL.sendDeviceLocation(hash, mLocation);
+//					else
+//						SDAL.sendDeviceLocation(hash, mLocationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER));
+//					activeMeetingCursor.moveToNext();
+//				}
+//			}
+//			activeMeetingCursor.close();
+//			readableDB.close();
+//
 		}
 	}
 

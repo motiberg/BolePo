@@ -1,7 +1,5 @@
 package com.bergerlavy.bolepo.forms;
 
-import android.content.Context;
-
 import com.bergerlavy.bolepo.dals.Meeting;
 
 
@@ -21,14 +19,14 @@ public class FormsSupport {
 	 * @param shareLocationTime
 	 * @return
 	 */
-	public static InputValidationReport createMeetingInputValidation(Context c, Meeting data) {
+	public static InputValidationReport createMeetingInputValidation(Meeting data) {
 
-		CreateMeetingValidation vStatus = new CreateMeetingValidation(c, data);
+		CreateMeetingValidation vStatus = new CreateMeetingValidation(data);
 		return vStatus.isOK();
 	}
 	
-	public static InputValidationReport modifyMeetingInputValidation(Context c, Meeting data, long id) {
-		ModifyMeetingValidation vStatus = new ModifyMeetingValidation(c, data, id);
+	public static InputValidationReport modifyMeetingInputValidation(Meeting data, long id) {
+		ModifyMeetingValidation vStatus = new ModifyMeetingValidation(data, id);
 		return vStatus.isOK();
 	}
 

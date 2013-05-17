@@ -235,9 +235,9 @@ public class MeetingManagementActivity extends Activity {
 		/* checking if the input is valid according to decided rules */
 		InputValidationReport report = null;
 		if (mAction == Action.CREATE)
-			report = FormsSupport.createMeetingInputValidation(this, meeting);
+			report = FormsSupport.createMeetingInputValidation(meeting);
 		else if (mAction == Action.MODIFY)
-			report = FormsSupport.modifyMeetingInputValidation(this, meeting, mModifiedMeetingID);
+			report = FormsSupport.modifyMeetingInputValidation(meeting, mModifiedMeetingID);
 		if (report.isOK()) {
 
 

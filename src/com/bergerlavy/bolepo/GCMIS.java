@@ -4,15 +4,12 @@ import android.app.IntentService;
 import android.app.NotificationManager;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.os.PowerManager;
 import android.support.v4.app.NotificationCompat;
 
-import com.bergerlavy.bolepo.dals.SDAL;
-
 public class GCMIS extends IntentService {
 
-	
+
 	/**
 	 * 
 	 * @param name Used to name the worker thread, important only for debugging.

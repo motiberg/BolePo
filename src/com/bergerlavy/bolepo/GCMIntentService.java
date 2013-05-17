@@ -21,7 +21,10 @@ public class GCMIntentService extends com.google.android.gcm.GCMBaseIntentServic
 	public static final int NEW_MEETING_NOTIFICATION_ID = 1;
 	public static final int PARTICIPANT_ATTENDANCE_NOTIFICATION_ID = 2;
 	public static final int PARTICIPANT_DECLINING_NOTIFICATION_ID = 3;
-
+	public static final int PARTICIPANT_REMOVED_FROM_MEETING_NOTIFICATION_ID = 4;
+	public static final int MEETING_CANCELLED_NOTIFICATION_ID = 5;
+	public static final int NEW_MANAGER_NOTIFICATION_ID = 6;
+	
 	public GCMIntentService() {
 		super(BolePoConstants.SENDER_ID);
 	}
@@ -72,9 +75,57 @@ public class GCMIntentService extends com.google.android.gcm.GCMBaseIntentServic
 
 		switch (BolePoConstants.GCM_NOTIFICATION.getEnum(messageType)) {
 		case MEETING_CANCLED:
+		{
+			String meetingHash = intent.getStringExtra(BolePoConstants.GCM_DATA.MEETING_HASH.toString());
+			String meetingName = intent.getStringExtra(BolePoConstants.GCM_DATA.MEETING_NAME.toString());
+			String meetingManager = intent.getStringExtra(BolePoConstants.GCM_DATA.MEETING_MANAGER.toString());
+			
+			if (DAL.expelFromMeeting(meetingHash)) {
+
+				Intent refreshListIntent = new Intent();
+				refreshListIntent.setAction(BolePoConstants.ACTION_BOLEPO_REFRESH_LISTS);
+				sendBroadcast(refreshListIntent); 
+
+				notificationBuilder.setContentText(meetingManager + " has cancelled " + meetingName)
+				.setSmallIcon(R.drawable.ic_launcher);
+
+				//TODO change the destination activity - then don't forget to remove the notification cancel in the MainActivity
+				Intent notificationIntent = new Intent(this.getApplicationContext(), MainActivity.class);
+				PendingIntent contentIntent = PendingIntent.getActivity(this.getApplicationContext(), 0, notificationIntent, 0);
+				notificationBuilder.setContentIntent(contentIntent);
+
+				mNotificationManager.notify(MEETING_CANCELLED_NOTIFICATION_ID, notificationBuilder.build());
+			}
 			break;
+		}
 		case NEW_MANAGER:
+		{
+			String oldMeetingHash = intent.getStringExtra(BolePoConstants.GCM_DATA.OLD_MEETING_HASH.toString());
+			String newMeetingHash = intent.getStringExtra(BolePoConstants.GCM_DATA.MEETING_HASH.toString());
+			String oldManagerOldHash = intent.getStringExtra(BolePoConstants.GCM_DATA.OLD_MANAGER_OLD_HASH.toString());
+			String oldManagerNewHash = intent.getStringExtra(BolePoConstants.GCM_DATA.OLD_MANAGER_NEW_HASH.toString());
+			String newManagerOldHash = intent.getStringExtra(BolePoConstants.GCM_DATA.NEW_MANAGER_OLD_HASH.toString());
+			String newManagerNewHash = intent.getStringExtra(BolePoConstants.GCM_DATA.NEW_MANAGER_NEW_HASH.toString());
+			
+			String meetingName = intent.getStringExtra(BolePoConstants.GCM_DATA.MEETING_NAME.toString());
+			if (DAL.appointNewManager(oldMeetingHash, newMeetingHash, oldManagerOldHash, oldManagerNewHash, newManagerOldHash, newManagerNewHash)) {
+				
+				Intent refreshListIntent = new Intent();
+				refreshListIntent.setAction(BolePoConstants.ACTION_BOLEPO_REFRESH_LISTS);
+				sendBroadcast(refreshListIntent); 
+
+				notificationBuilder.setContentText("You have been appointed to be the new manager of " + meetingName)
+				.setSmallIcon(R.drawable.ic_launcher);
+
+				//TODO change the destination activity - then don't forget to remove the notification cancel in the MainActivity
+				Intent notificationIntent = new Intent(this.getApplicationContext(), MainActivity.class);
+				PendingIntent contentIntent = PendingIntent.getActivity(this.getApplicationContext(), 0, notificationIntent, 0);
+				notificationBuilder.setContentIntent(contentIntent);
+
+				mNotificationManager.notify(NEW_MANAGER_NOTIFICATION_ID, notificationBuilder.build());
+			}
 			break;
+		}
 		case NEW_MEETING:
 			String participantsCount = intent.getStringExtra(BolePoConstants.GCM_DATA.MEETING_PARTICIPANTS_COUNT.toString());
 			int particpantsCountInt = Integer.parseInt(participantsCount);
@@ -125,11 +176,12 @@ public class GCMIntentService extends com.google.android.gcm.GCMBaseIntentServic
 				notificationBuilder.setContentText("You are no longer invited to " + meetingName)
 				.setSmallIcon(R.drawable.ic_launcher);
 
+				//TODO change the destination activity - then don't forget to remove the notification cancel in the MainActivity
 				Intent notificationIntent = new Intent(this.getApplicationContext(), MainActivity.class);
 				PendingIntent contentIntent = PendingIntent.getActivity(this.getApplicationContext(), 0, notificationIntent, 0);
 				notificationBuilder.setContentIntent(contentIntent);
 
-				mNotificationManager.notify(NEW_MEETING_NOTIFICATION_ID, notificationBuilder.build());
+				mNotificationManager.notify(PARTICIPANT_REMOVED_FROM_MEETING_NOTIFICATION_ID, notificationBuilder.build());
 			}
 			break;
 		}

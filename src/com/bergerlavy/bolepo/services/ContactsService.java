@@ -13,7 +13,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.provider.ContactsContract;
-import android.widget.Toast;
 
 import com.bergerlavy.bolepo.BolePoConstants;
 import com.bergerlavy.bolepo.BolePoMisc;
@@ -25,14 +24,13 @@ import com.bergerlavy.bolepo.forms.BolePoContact;
 public class ContactsService extends IntentService {
 
 	private HashMap<String, BolePoContact> mAllContacts;
-	
+
 	public ContactsService() {
 		super("ContactsService");
 	}
 
 	@Override
 	protected void onHandleIntent(Intent intent) {
-		Toast.makeText(this, "service starting", Toast.LENGTH_SHORT).show();
 		mAllContacts = new HashMap<String, BolePoContact>();
 		ContentResolver cr = getContentResolver();
 		Cursor cur = cr.query(ContactsContract.Contacts.CONTENT_URI, null, null, null, null);
@@ -58,21 +56,21 @@ public class ContactsService extends IntentService {
 			}
 		}
 		cur.close();
-		
+
 		/* requesting the server to check if the contacts are registered to the application */
 		ServerResponse servResp = SDAL.checkForGcmRegistration(mAllContacts.keySet());
 		List<String> registeredContactsPhones = new ArrayList<String>();
 		if (servResp.isOK()) {
 			if (servResp instanceof SRGcmRegistrationCheck) {
 				SRGcmRegistrationCheck response = (SRGcmRegistrationCheck) servResp;
-				
+
 				/* getting a subset of contacts that are registered to the application */
 				List<String> phones = response.getRegistersContactsPhones();
 				for (String phone : phones)
 					registeredContactsPhones.add(phone);
 			}
 		}
-		
+
 		/* writing the registered contacts to a file to be used in invitation of contacts to a meeting */
 		FileOutputStream fos;
 		try {
@@ -90,7 +88,7 @@ public class ContactsService extends IntentService {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		
-		Toast.makeText(this, "service finishing", Toast.LENGTH_SHORT).show();
+
 	}
+
 }

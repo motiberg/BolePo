@@ -6,6 +6,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.database.Cursor;
 import android.os.Bundle;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
@@ -88,7 +89,11 @@ public class MainActivity extends Activity implements RefreshMeetingsListListene
 		((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).cancel(GCMIntentService.NEW_MEETING_NOTIFICATION_ID);
 		((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).cancel(GCMIntentService.PARTICIPANT_ATTENDANCE_NOTIFICATION_ID);
 		((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).cancel(GCMIntentService.PARTICIPANT_DECLINING_NOTIFICATION_ID);
+		((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).cancel(GCMIntentService.PARTICIPANT_REMOVED_FROM_MEETING_NOTIFICATION_ID);
+		((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).cancel(GCMIntentService.MEETING_CANCELLED_NOTIFICATION_ID);
+		((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).cancel(GCMIntentService.NEW_MANAGER_NOTIFICATION_ID);
 	}
+	
 
 	@Override
 	protected void onResume() {
@@ -96,8 +101,10 @@ public class MainActivity extends Activity implements RefreshMeetingsListListene
 
 		if (!BolePoMisc.getDevicePhoneNumber(this).equals("")) {
 			firstInit();
-			mAcceptedAdapter.changeCursor(DAL.createAcceptedMeetingsCursor());
-			mNotApprovedYetAdapter.changeCursor(DAL.createWaitingForApprovalMeetingsCursor());
+			Cursor acceptedCursor = mAcceptedAdapter.swapCursor(DAL.createAcceptedMeetingsCursor());
+			acceptedCursor.close();
+			Cursor notApprovedCursor = mNotApprovedYetAdapter.swapCursor(DAL.createWaitingForApprovalMeetingsCursor());
+			notApprovedCursor.close();
 
 			IntentFilter intentFilter = new IntentFilter();
 			intentFilter.addAction(BolePoConstants.ACTION_BOLEPO_REFRESH_LISTS);
@@ -227,8 +234,10 @@ public class MainActivity extends Activity implements RefreshMeetingsListListene
 
 	@Override
 	public void onUpdate() {
-		mAcceptedAdapter.changeCursor(DAL.createAcceptedMeetingsCursor());
-		mNotApprovedYetAdapter.changeCursor(DAL.createWaitingForApprovalMeetingsCursor());
+		Cursor acceptedCursor = mAcceptedAdapter.swapCursor(DAL.createAcceptedMeetingsCursor());
+		acceptedCursor.close();
+		Cursor notApprovedCursor = mNotApprovedYetAdapter.swapCursor(DAL.createWaitingForApprovalMeetingsCursor());
+		notApprovedCursor.close();
 	}
 
 	private class MyBroadcastReceiver extends BroadcastReceiver {
