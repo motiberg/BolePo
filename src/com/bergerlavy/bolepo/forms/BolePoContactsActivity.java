@@ -167,7 +167,6 @@ public class BolePoContactsActivity extends ListActivity {
 	@Override
 	protected void onListItemClick(ListView l, View v, int position, long id) {
 		TextView phone = (TextView) v.findViewById(R.id.item_bolepo_contact_phone);
-		Toast.makeText(this, "position = " + position, Toast.LENGTH_LONG).show();
 
 		if (!mSelectedContacts.contains(phone.getText().toString())) {
 			mSelectedContacts.add(phone.getText().toString());
@@ -203,14 +202,5 @@ public class BolePoContactsActivity extends ListActivity {
 		super.finish();
 	}
 
-
-
-
-	@Override
-	public boolean onCreateOptionsMenu(Menu menu) {
-		// Inflate the menu; this adds items to the action bar if it is present.
-		getMenuInflater().inflate(R.menu.bole_po_contacts, menu);
-		return true;
-	}
 
 }

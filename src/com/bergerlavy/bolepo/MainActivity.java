@@ -24,13 +24,12 @@ import com.bergerlavy.bolepo.BolePoConstants.Credentials;
 import com.bergerlavy.bolepo.dals.DAL;
 import com.bergerlavy.bolepo.dals.SDAL;
 import com.bergerlavy.bolepo.forms.MeetingManagementActivity;
-import com.bergerlavy.bolepo.forms.RefreshMeetingsListListener;
 import com.bergerlavy.bolepo.forms.RemoveMeetingActivity;
 import com.bergerlavy.bolepo.services.ContactsService;
 import com.bergerlavy.bolepo.services.ShareLocationsService;
 import com.google.android.gcm.GCMRegistrar;
 
-public class MainActivity extends Activity implements RefreshMeetingsListListener {
+public class MainActivity extends Activity {
 
 	private ListView mAcceptedList;
 	private ListView mNotApprovedYetList;
@@ -39,22 +38,26 @@ public class MainActivity extends Activity implements RefreshMeetingsListListene
 	//TODO change the type to NotApprovedYetMeetingsAdapter
 	private AcceptedMeetingsAdapter mNotApprovedYetAdapter;
 
-	private MyBroadcastReceiver mRefreshListsReceiver;
+	private refreshListsReceiver mRefreshListsReceiver;
+	private internetConnectionLostBroadcastReceiver mInternetConnectionLostReceiver;
+
 
 	public static final String EXTRA_MEETING_ID = "EXTRA_MEETING_ID";
 	public static final String EXTRA_MEETING_CREATION = "EXTRA_MEETING_CREATION";
 	public static final String EXTRA_MEETING_MODIFYING = "EXTRA_MEETING_MODIFYING";
 	public static final String EXTRA_MEETING_CREATOR_REMOVAL = "EXTRA_MEETING_CREATOR_REMOVAL";
+
+	private static final int RQ_NETWORK_SETTINGS_DIALOG = 1;
 	
 	private OnItemClickListener MeetingDataListener = new OnItemClickListener() {
-		
+
 		@Override
 		public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-			
+
 			Intent intent = new Intent(MainActivity.this, MeetingDataActivity.class);
 			intent.putExtra(EXTRA_MEETING_ID, id);
 			startActivity(intent);
-			
+
 		}
 	};
 
@@ -63,53 +66,70 @@ public class MainActivity extends Activity implements RefreshMeetingsListListene
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 
-		DAL.setContext(this);
-		SDAL.setContext(this);
-
-		/* starting the contacts service to check which of the contacts stored in this device 
-		 * are registered to the application */
-		Intent contactsServiceIntent = new Intent(this, ContactsService.class);
-		startService(contactsServiceIntent);
-
 		mAcceptedList = (ListView) findViewById(R.id.main_accepted_list);
 		mNotApprovedYetList = (ListView) findViewById(R.id.main_not_approved_yet_list);
 		
-		/* setting an onClick listener to the accepted meetings list to allow the user to watch the meeting's details */
-		mAcceptedList.setOnItemClickListener(MeetingDataListener);
+		/* checking if the device is connected to the internet */
+		if (BolePoMisc.isDeviceOnline(this)) {
 
-		/* setting an onClick listener to the waiting-for-approval meetings list to allow the user to watch the meeting's details */
-		mNotApprovedYetList.setOnItemClickListener(MeetingDataListener);
-		
-		/* checking if it is the first time the application starts by checking if the user entered 
-		 * the device phone number */
-		if (BolePoMisc.getDevicePhoneNumber(this).equals("")) {
-			Intent intent = new Intent(this, LoginActivity.class);
-			startActivity(intent);
+			/* starting the contacts service to check which of the contacts stored in this device 
+			 * are registered to the application */
+			Intent contactsServiceIntent = new Intent(this, ContactsService.class);
+			startService(contactsServiceIntent);
+
+			/* setting an onClick listener to the accepted meetings list to allow the user to watch the meeting's details */
+			mAcceptedList.setOnItemClickListener(MeetingDataListener);
+
+			/* setting an onClick listener to the waiting-for-approval meetings list to allow the user to watch the meeting's details */
+			mNotApprovedYetList.setOnItemClickListener(MeetingDataListener);
+
+			/* checking if it is the first time the application starts by checking if the user entered 
+			 * the device phone number */
+			if (BolePoMisc.getDevicePhoneNumber(this).equals("")) {
+				Intent intent = new Intent(this, LoginActivity.class);
+				startActivity(intent);
+			}
+			((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).cancel(GCMIntentService.NEW_MEETING_NOTIFICATION_ID);
+			((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).cancel(GCMIntentService.PARTICIPANT_ATTENDANCE_NOTIFICATION_ID);
+			((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).cancel(GCMIntentService.PARTICIPANT_DECLINING_NOTIFICATION_ID);
+			((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).cancel(GCMIntentService.PARTICIPANT_REMOVED_FROM_MEETING_NOTIFICATION_ID);
+			((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).cancel(GCMIntentService.MEETING_CANCELLED_NOTIFICATION_ID);
+			((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).cancel(GCMIntentService.NEW_MANAGER_NOTIFICATION_ID);
 		}
-		((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).cancel(GCMIntentService.NEW_MEETING_NOTIFICATION_ID);
-		((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).cancel(GCMIntentService.PARTICIPANT_ATTENDANCE_NOTIFICATION_ID);
-		((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).cancel(GCMIntentService.PARTICIPANT_DECLINING_NOTIFICATION_ID);
-		((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).cancel(GCMIntentService.PARTICIPANT_REMOVED_FROM_MEETING_NOTIFICATION_ID);
-		((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).cancel(GCMIntentService.MEETING_CANCELLED_NOTIFICATION_ID);
-		((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).cancel(GCMIntentService.NEW_MANAGER_NOTIFICATION_ID);
+		else notifyInternetConnectionLost();
 	}
 	
+	private void notifyInternetConnectionLost() {
+		startActivityForResult(new Intent(this, NetworkSettingsDialogActivity.class), RQ_NETWORK_SETTINGS_DIALOG);
+	}
+
 
 	@Override
 	protected void onResume() {
 		super.onResume();
 
-		if (!BolePoMisc.getDevicePhoneNumber(this).equals("")) {
+		DAL.setContext(this);
+		SDAL.setContext(this);
+		
+		if (BolePoMisc.isDeviceOnline(this) && !BolePoMisc.getDevicePhoneNumber(this).equals("")) {
 			firstInit();
 			Cursor acceptedCursor = mAcceptedAdapter.swapCursor(DAL.createAcceptedMeetingsCursor());
 			acceptedCursor.close();
 			Cursor notApprovedCursor = mNotApprovedYetAdapter.swapCursor(DAL.createWaitingForApprovalMeetingsCursor());
 			notApprovedCursor.close();
 
+			/* defining the Broadcast Receiver for refreshing the lists */
 			IntentFilter intentFilter = new IntentFilter();
 			intentFilter.addAction(BolePoConstants.ACTION_BOLEPO_REFRESH_LISTS);
-			mRefreshListsReceiver = new MyBroadcastReceiver();
+			mRefreshListsReceiver = new refreshListsReceiver();
 			registerReceiver(mRefreshListsReceiver, intentFilter); 
+			
+			/* defining the Broadcast Receiver for no internet connection notification */
+			IntentFilter noInternetConnectionIntentFilter = new IntentFilter();
+			noInternetConnectionIntentFilter.addAction(BolePoConstants.ACTION_BOLEPO_INFORM_NO_INTERNET_CONNECTION);
+			mInternetConnectionLostReceiver = new internetConnectionLostBroadcastReceiver();
+			registerReceiver(mInternetConnectionLostReceiver, noInternetConnectionIntentFilter);
+			
 		}
 	}
 
@@ -119,13 +139,17 @@ public class MainActivity extends Activity implements RefreshMeetingsListListene
 			unregisterReceiver(mRefreshListsReceiver);
 			mRefreshListsReceiver = null;
 		}
+		if (mInternetConnectionLostReceiver != null) {
+			unregisterReceiver(mInternetConnectionLostReceiver);
+			mInternetConnectionLostReceiver = null;
+		}
 		super.onPause();
 	}
 
 
 
 	private void firstInit() {
-
+		
 		mAcceptedAdapter = new AcceptedMeetingsAdapter(this, DAL.createAcceptedMeetingsCursor());
 		mAcceptedList.setAdapter(mAcceptedAdapter);
 		registerForContextMenu(mAcceptedList);
@@ -133,8 +157,6 @@ public class MainActivity extends Activity implements RefreshMeetingsListListene
 		mNotApprovedYetAdapter = new AcceptedMeetingsAdapter(this, DAL.createWaitingForApprovalMeetingsCursor());
 		mNotApprovedYetList.setAdapter(mNotApprovedYetAdapter);
 		registerForContextMenu(mNotApprovedYetList);
-
-		MeetingManagementActivity.registerForMeetingsUpdate(this);
 
 		startService(new Intent(this, ShareLocationsService.class));
 	}
@@ -233,19 +255,32 @@ public class MainActivity extends Activity implements RefreshMeetingsListListene
 	}
 
 	@Override
-	public void onUpdate() {
-		Cursor acceptedCursor = mAcceptedAdapter.swapCursor(DAL.createAcceptedMeetingsCursor());
-		acceptedCursor.close();
-		Cursor notApprovedCursor = mNotApprovedYetAdapter.swapCursor(DAL.createWaitingForApprovalMeetingsCursor());
-		notApprovedCursor.close();
+	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+		if (requestCode == RQ_NETWORK_SETTINGS_DIALOG) {
+			if (resultCode == RESULT_CANCELED) {
+				finish();
+			}
+		}
+		super.onActivityResult(requestCode, resultCode, data);
 	}
 
-	private class MyBroadcastReceiver extends BroadcastReceiver {
+
+	private class refreshListsReceiver extends BroadcastReceiver {
 		@Override
 		public void onReceive(Context context, Intent intent) {
-			onUpdate();
+			Cursor acceptedCursor = mAcceptedAdapter.swapCursor(DAL.createAcceptedMeetingsCursor());
+			acceptedCursor.close();
+			Cursor notApprovedCursor = mNotApprovedYetAdapter.swapCursor(DAL.createWaitingForApprovalMeetingsCursor());
+			notApprovedCursor.close();
 		}
 	} 
+	
+	private class internetConnectionLostBroadcastReceiver extends BroadcastReceiver {
+		@Override
+		public void onReceive(Context context, Intent intent) {
+			notifyInternetConnectionLost();
+		}
+	}
 
 
 }

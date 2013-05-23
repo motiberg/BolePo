@@ -21,6 +21,7 @@ public class CreateMeetingValidation implements ValidationStatus {
 		if (mChecked)
 			return mReport;
 
+		mReport = new InputValidationReport.Builder(true).build();
 		mChecked = true;
 
 		List<Meeting> allAcceptedMeetings = DAL.getAllAcceptedMeetings();
@@ -50,7 +51,9 @@ public class CreateMeetingValidation implements ValidationStatus {
 //				return mReport;
 //			}
 		}
-		mReport = new InputValidationReport.Builder(true).build();
+		
+		if (mMeeting.getParticipantsNum() < 2)
+			mReport = new InputValidationReport.Builder(false).setError("Meeting must has at least one participant beside you.").build();
 		return mReport;
 	}
 

@@ -27,6 +27,9 @@
     <!-- can access the internet -->
     <uses-permission android:name="android.permission.INTERNET" />
 
+    <!-- can check the network state for knowing whether the device is connected to the internet -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
     <!-- GCM requires a Google account -->
     <uses-permission android:name="android.permission.GET_ACCOUNTS" />
 
@@ -40,7 +43,7 @@
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 
     <!-- prevent other Android applications from registering and receiving the Android application's messages -->
-    
+
     <permission
         android:name="com.bergerlavy.bolepo.permission.C2D_MESSAGE"
         android:protectionLevel="signature" />
@@ -108,9 +111,8 @@
             android:name="com.bergerlavy.bolepo.services.ShareLocationsService"
             android:exported="false" />
         <service android:name="com.bergerlavy.bolepo.GCMIntentService" />
-
         <service android:name="com.bergerlavy.bolepo.services.ContactsService" />
-        
+
         <activity
             android:name="com.bergerlavy.bolepo.forms.BolePoContactsActivity"
             android:label="@string/title_activity_bole_po_contacts" >
@@ -131,6 +133,11 @@
         <activity
             android:name="com.bergerlavy.bolepo.DatePickerActivity"
             android:label="@string/title_activity_date_picker"
+            android:theme="@android:style/Theme.Dialog" >
+        </activity>
+        <activity
+            android:name="com.bergerlavy.bolepo.NetworkSettingsDialogActivity"
+            android:label="@string/title_activity_network_settings_dialog"
             android:theme="@android:style/Theme.Dialog" >
         </activity>
     </application>

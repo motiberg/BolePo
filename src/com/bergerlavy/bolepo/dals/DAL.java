@@ -10,7 +10,6 @@ import android.database.sqlite.SQLiteDatabase;
 
 import com.bergerlavy.bolepo.BolePoConstants.Credentials;
 import com.bergerlavy.bolepo.BolePoConstants.RSVP;
-import com.bergerlavy.bolepo.shareddata.Misc;
 import com.bergerlavy.bolepo.BolePoMisc;
 import com.bergerlavy.db.DbContract;
 import com.bergerlavy.db.DbHelper;
@@ -29,57 +28,91 @@ public class DAL {
 		mDbHelper = new DbHelper(context);
 	}
 
-	public static boolean appointNewManager(String oldMeetingHash, String newMeetingHash, String oldManagerOldHash, String oldManagerNewHash, String newManagerOldHash, String newManagerNewHash) {
+	public static boolean appointNewManagerAndRemoveOldOne(String oldMeetingHash, String newMeetingHash, String newManagerPhone, String newManagerNewHash) {
+		//get current manager phone
+		//call appintNewManager
+		//remove old manager
+		return false;
+	}
+	
+	public static boolean appointNewManager(String oldMeetingHash, String newMeetingHash, String oldManagerNewHash, String newManagerPhone, String newManagerNewHash) {
 		long meetingId = getMeetingIdByHash(oldMeetingHash);
 		Meeting m = getMeetingById(meetingId);
-		
+		Participant newManager = getParticipantByPhoneNumber(meetingId, newManagerPhone);
+
+		/* updating the meeting manager and hash */
 		ContentValues values = new ContentValues();
 		values.put(DbContract.Meetings.COLUMN_NAME_MEETING_MANAGER, BolePoMisc.getDevicePhoneNumber(mContext));
 		values.put(DbContract.Meetings.COLUMN_NAME_MEETING_HASH, newMeetingHash);
-		
+
 		mWritableDb = mDbHelper.getWritableDatabase();
 		int recordsAffected = mWritableDb.update(DbContract.Meetings.TABLE_NAME, values, DbContract.Meetings._ID + " = " + meetingId, null);
 		mWritableDb.close();
-		
+
 		if (recordsAffected == 0)
 			return false;
-		
+
 		/* updating the new manager data */
 		values = new ContentValues();
 		values.put(DbContract.Participants.COLUMN_NAME_PARTICIPANT_CREDENTIALS, Credentials.MANAGER.toString());
 		values.put(DbContract.Participants.COLUMN_NAME_PARTICIPANT_HASH, newManagerNewHash);
-		
+
 		mWritableDb = mDbHelper.getWritableDatabase();
-		recordsAffected = mWritableDb.update(DbContract.Participants.TABLE_NAME, values, DbContract.Participants.COLUMN_NAME_PARTICIPANT_HASH + " = '" + newManagerOldHash + "'", null);
+		recordsAffected = mWritableDb.update(DbContract.Participants.TABLE_NAME, values, DbContract.Participants.COLUMN_NAME_PARTICIPANT_MEETING_ID + " = " + meetingId + " " +
+				DbContract.Participants.COLUMN_NAME_PARTICIPANT_PHONE + " = '" + newManagerPhone + "'", null);
 		mWritableDb.close();
-		
+
+		/* checking if the update of the record of the participant that is going to be the new manager has succeeded */
 		if (recordsAffected == 0) {
-			/* reverting the modification of the meeting's manager and hash due to failure in the process of appointing new manager */
+			/* reverting the modification of the meeting's manager and hash due to failure in the process of modifying the new manager credentials and hash */
 			values = new ContentValues();
 			values.put(DbContract.Meetings.COLUMN_NAME_MEETING_MANAGER, m.getManager());
 			values.put(DbContract.Meetings.COLUMN_NAME_MEETING_HASH, oldMeetingHash);
-			
+
 			mWritableDb = mDbHelper.getWritableDatabase();
 			mWritableDb.update(DbContract.Meetings.TABLE_NAME, values, DbContract.Meetings._ID + " = " + meetingId, null);
 			mWritableDb.close();
 			return false;
 		}
-		
-		/* updating the new manager data */
+
+		/* updating the old manager data */
 		values = new ContentValues();
 		values.put(DbContract.Participants.COLUMN_NAME_PARTICIPANT_CREDENTIALS, Credentials.REGULAR.toString());
-		values.put(DbContract.Participants.COLUMN_NAME_PARTICIPANT_HASH, newManagerNewHash);
-		
+		values.put(DbContract.Participants.COLUMN_NAME_PARTICIPANT_HASH, oldManagerNewHash);
+
 		mWritableDb = mDbHelper.getWritableDatabase();
-		recordsAffected = mWritableDb.update(DbContract.Participants.TABLE_NAME, values, DbContract.Participants.COLUMN_NAME_PARTICIPANT_HASH + " = '" + newManagerOldHash + "'", null);
+		recordsAffected = mWritableDb.update(DbContract.Participants.TABLE_NAME, values, DbContract.Participants.COLUMN_NAME_PARTICIPANT_MEETING_ID + " = " + meetingId + " " + 
+		DbContract.Participants.COLUMN_NAME_PARTICIPANT_PHONE + " = '" + m.getManager() + "'", null);
 		mWritableDb.close();
+
+		/* checking if the update of the record of the participant that has gave up on the meeting management has succeeded */
+		if (recordsAffected == 0) {
+			/* reverting the modification of the meeting's manager and hash due to failure in the process of modifying the old manager credentials and hash */
+			values = new ContentValues();
+			values.put(DbContract.Meetings.COLUMN_NAME_MEETING_MANAGER, m.getManager());
+			values.put(DbContract.Meetings.COLUMN_NAME_MEETING_HASH, oldMeetingHash);
+
+			mWritableDb = mDbHelper.getWritableDatabase();
+			mWritableDb.update(DbContract.Meetings.TABLE_NAME, values, DbContract.Meetings._ID + " = " + meetingId, null);
+			mWritableDb.close();
+
+			/* reverting the modification of the new manager's credentials and hash due to failure in the process of modifying the old manager credentials and hash */
+			values = new ContentValues();
+			values.put(DbContract.Participants.COLUMN_NAME_PARTICIPANT_CREDENTIALS, Credentials.REGULAR.toString());
+			values.put(DbContract.Participants.COLUMN_NAME_PARTICIPANT_HASH, newManager.getHash());
+
+			mWritableDb = mDbHelper.getWritableDatabase();
+			recordsAffected = mWritableDb.update(DbContract.Participants.TABLE_NAME, values, DbContract.Participants.COLUMN_NAME_PARTICIPANT_HASH + " = '" + newManagerNewHash + "'", null);
+			mWritableDb.close();
+			return false;
+		}
 		return true;
 	}
-	
+
 	public static boolean expelFromMeeting(String meetingHash) {
 		return removeMeeting(getMeetingIdByHash(meetingHash));
 	}
-	
+
 	public static List<Meeting> getAllAcceptedMeetings() {
 		Cursor c = createAcceptedMeetingsCursor();
 		List<Meeting> meetings = new ArrayList<Meeting>();
@@ -98,7 +131,7 @@ public class DAL {
 		c.close();
 		return meetings;
 	}
-	
+
 	public static List<Meeting> getAllAcceptedMeetings(long ... excludes) {
 		Cursor c = createAcceptedMeetingsCursor();
 		List<Meeting> meetings = new ArrayList<Meeting>();
@@ -121,7 +154,7 @@ public class DAL {
 		c.close();
 		return meetings;
 	}
-	
+
 	private static long getMeetingIdByHash(String meetingHash) {
 		mReadableDb = mDbHelper.getReadableDatabase();
 		long meetingId = -1;
@@ -150,7 +183,7 @@ public class DAL {
 						DbContract.Participants.COLUMN_NAME_PARTICIPANT_PHONE + " = '" + participantPhone + "'",
 						null);
 		mWritableDb.close();
-		
+
 		return recordsAffected == 1;
 	}
 
@@ -332,12 +365,12 @@ public class DAL {
 		if (c != null) {
 			if (c.moveToFirst())
 				p = new Participant.Builder(c.getString(c.getColumnIndex(DbContract.Participants.COLUMN_NAME_PARTICIPANT_PHONE)))
-				.setName(c.getString(c.getColumnIndex(DbContract.Participants.COLUMN_NAME_PARTICIPANT_NAME)))
-				.setCredentials(c.getString(c.getColumnIndex(DbContract.Participants.COLUMN_NAME_PARTICIPANT_CREDENTIALS)))
-				.setRsvp(c.getString(c.getColumnIndex(DbContract.Participants.COLUMN_NAME_PARTICIPANT_RSVP)))
-				.setHash(c.getString(c.getColumnIndex(DbContract.Participants.COLUMN_NAME_PARTICIPANT_HASH)))
-				.build();
-			
+			.setName(c.getString(c.getColumnIndex(DbContract.Participants.COLUMN_NAME_PARTICIPANT_NAME)))
+			.setCredentials(c.getString(c.getColumnIndex(DbContract.Participants.COLUMN_NAME_PARTICIPANT_CREDENTIALS)))
+			.setRsvp(c.getString(c.getColumnIndex(DbContract.Participants.COLUMN_NAME_PARTICIPANT_RSVP)))
+			.setHash(c.getString(c.getColumnIndex(DbContract.Participants.COLUMN_NAME_PARTICIPANT_HASH)))
+			.build();
+
 			c.close();
 		}
 		mReadableDb.close();
@@ -367,7 +400,7 @@ public class DAL {
 			participantsFromDBCursor.moveToNext();
 		}
 		participantsFromDBCursor.close();
-		
+
 		return parts;
 	}
 
@@ -522,108 +555,115 @@ public class DAL {
 		return false;
 	}
 
+	public static boolean replaceAndRemoveMeetingManager(String oldMeetingHash, String newManagerPhone, SRMeetingManagerReplacement servResp) {
+		long meetingId = getMeetingIdByHash(servResp.getMeetingNewHash());
+		return changeMeetingManager(oldMeetingHash, newManagerPhone, servResp) && 
+				removeParticipant(meetingId, getParticipantByPhoneNumber(meetingId, newManagerPhone)); 
+	}
+	
 	/**
 	 * Substitutes the meeting's manager
 	 * @param id the id of the meeting in the local data-base
 	 * @param newManager the participant that is going to be the new meeting's manager
 	 * @return <code>true</code> if substitutes succeeded, <code>false</code> otherwise
 	 */
-	public static boolean changeMeetingManager(long id, Participant newManager, SRMeetingManagerReplacement servResp) {
-		mWritableDb = mDbHelper.getWritableDatabase();
-
-		/* updating only the meeting manager and giving him/her the credentials he/she needs to manage the meeting */
-		ContentValues values = new ContentValues();
-		values.put(DbContract.Participants.COLUMN_NAME_PARTICIPANT_CREDENTIALS, Credentials.MANAGER.toString());
-		values.put(DbContract.Participants.COLUMN_NAME_PARTICIPANT_HASH, servResp.getNewManagerHash());
-
-		/* updating the local database with the new meeting's manager */
-		int updateRes = mWritableDb.update(DbContract.Participants.TABLE_NAME,
-				values,
-				DbContract.Participants.COLUMN_NAME_PARTICIPANT_MEETING_ID + " = " + id + " and " + 
-						DbContract.Participants.COLUMN_NAME_PARTICIPANT_PHONE + " = '" + newManager.getPhone() + "'", null);
-
-		mWritableDb.close();
-		
-		/* checking if the update of the credentials of the chosen-to-lead participant didn't went well */
-		if (updateRes == 0)
-			return false;
-		
-		Participant exManager = getMeetingManager(id);
-
-		values = new ContentValues();
-		values.put(DbContract.Participants.COLUMN_NAME_PARTICIPANT_CREDENTIALS, Credentials.REGULAR.toString());
-		values.put(DbContract.Participants.COLUMN_NAME_PARTICIPANT_HASH, servResp.getOldManagerHash());
-
-		mWritableDb = mDbHelper.getWritableDatabase();
-		
-		/* updating the credentials and hash of the replaced manager */
-		updateRes = mWritableDb.update(DbContract.Participants.TABLE_NAME,
-				values,
-				DbContract.Participants.COLUMN_NAME_PARTICIPANT_MEETING_ID + " = " + id + " and " + 
-						DbContract.Participants.COLUMN_NAME_PARTICIPANT_PHONE + " = '" + exManager.getPhone() + "'", null);
-
-		mWritableDb.close();
-		
-		/* checking if the update of the credentials and hash of the ex-manager didn't went well */
-		if (updateRes == 0) {
-			values = new ContentValues();
-			values.put(DbContract.Participants.COLUMN_NAME_PARTICIPANT_CREDENTIALS, Credentials.REGULAR.toString());
-			values.put(DbContract.Participants.COLUMN_NAME_PARTICIPANT_HASH, newManager.getHash());
-
-			mWritableDb = mDbHelper.getWritableDatabase();
-			
-			/* reverting the credentials and hash of the replaced manager */
-			updateRes = mWritableDb.update(DbContract.Participants.TABLE_NAME,
-					values,
-					DbContract.Participants.COLUMN_NAME_PARTICIPANT_MEETING_ID + " = " + id + " and " + 
-							DbContract.Participants.COLUMN_NAME_PARTICIPANT_PHONE + " = '" + newManager.getPhone() + "'", null);
-
-			mWritableDb.close();
-			return false;
-		}
-
-		values = new ContentValues();
-		values.put(DbContract.Meetings.COLUMN_NAME_MEETING_MANAGER, newManager.getPhone());
-		values.put(DbContract.Meetings.COLUMN_NAME_MEETING_HASH, servResp.getMeetingHash());
-
-		mWritableDb = mDbHelper.getWritableDatabase();
-		
-		/* updating the local database with the new meeting's manager */
-		updateRes = mWritableDb.update(DbContract.Meetings.TABLE_NAME, values, DbContract.Meetings._ID + " = " + id, null);
-
-		mWritableDb.close();
-		
-		/* checking if the update of the meeting's manager didn't went well. if so, reverting the changes */
-		if (updateRes == 0) {
-			
-			/* reverting the first change - original manager */
-			values = new ContentValues();
-			values.put(DbContract.Participants.COLUMN_NAME_PARTICIPANT_CREDENTIALS, Credentials.MANAGER.toString());
-			values.put(DbContract.Participants.COLUMN_NAME_PARTICIPANT_HASH, exManager.getHash());
-
-			mWritableDb = mDbHelper.getWritableDatabase();
-			
-			/* reverting the credentials and hash of the replaced manager */
-			updateRes = mWritableDb.update(DbContract.Participants.TABLE_NAME,
-					values,
-					DbContract.Participants.COLUMN_NAME_PARTICIPANT_MEETING_ID + " = " + id + " and " + 
-							DbContract.Participants.COLUMN_NAME_PARTICIPANT_PHONE + " = '" + exManager.getPhone() + "'", null);
-
-			/* reverting the second change - new manager */
-			values = new ContentValues();
-			values.put(DbContract.Participants.COLUMN_NAME_PARTICIPANT_CREDENTIALS, Credentials.REGULAR.toString());
-			values.put(DbContract.Participants.COLUMN_NAME_PARTICIPANT_HASH, newManager.getHash());
-			
-			mWritableDb = mDbHelper.getWritableDatabase();
-			
-			/* reverting the credentials and hash for the participant that was suppose to be the new manager */
-			mWritableDb.update(DbContract.Participants.TABLE_NAME,
-					values,
-					DbContract.Participants.COLUMN_NAME_PARTICIPANT_MEETING_ID + " = " + id + " and " + 
-							DbContract.Participants.COLUMN_NAME_PARTICIPANT_PHONE + " = '" + newManager.getPhone() + "'", null);
-		}
-
-		return updateRes == 1;
+	public static boolean changeMeetingManager(String oldMeetingHash, String newManagerPhone, SRMeetingManagerReplacement servResp) {
+		return appointNewManager(oldMeetingHash, servResp.getMeetingNewHash(), servResp.getOldManagerNewHash(), newManagerPhone, servResp.getNewManagerNewHash());
+//		mWritableDb = mDbHelper.getWritableDatabase();
+//
+//		/* updating only the meeting manager and giving him/her the credentials he/she needs to manage the meeting */
+//		ContentValues values = new ContentValues();
+//		values.put(DbContract.Participants.COLUMN_NAME_PARTICIPANT_CREDENTIALS, Credentials.MANAGER.toString());
+//		values.put(DbContract.Participants.COLUMN_NAME_PARTICIPANT_HASH, servResp.getNewManagerHash());
+//
+//		/* updating the local database with the new meeting's manager */
+//		int updateRes = mWritableDb.update(DbContract.Participants.TABLE_NAME,
+//				values,
+//				DbContract.Participants.COLUMN_NAME_PARTICIPANT_MEETING_ID + " = " + id + " and " + 
+//						DbContract.Participants.COLUMN_NAME_PARTICIPANT_PHONE + " = '" + newManager.getPhone() + "'", null);
+//
+//		mWritableDb.close();
+//
+//		/* checking if the update of the credentials of the chosen-to-lead participant didn't went well */
+//		if (updateRes == 0)
+//			return false;
+//
+//		Participant exManager = getMeetingManager(id);
+//
+//		values = new ContentValues();
+//		values.put(DbContract.Participants.COLUMN_NAME_PARTICIPANT_CREDENTIALS, Credentials.REGULAR.toString());
+//		values.put(DbContract.Participants.COLUMN_NAME_PARTICIPANT_HASH, servResp.getOldManagerHash());
+//
+//		mWritableDb = mDbHelper.getWritableDatabase();
+//
+//		/* updating the credentials and hash of the replaced manager */
+//		updateRes = mWritableDb.update(DbContract.Participants.TABLE_NAME,
+//				values,
+//				DbContract.Participants.COLUMN_NAME_PARTICIPANT_MEETING_ID + " = " + id + " and " + 
+//						DbContract.Participants.COLUMN_NAME_PARTICIPANT_PHONE + " = '" + exManager.getPhone() + "'", null);
+//
+//		mWritableDb.close();
+//
+//		/* checking if the update of the credentials and hash of the ex-manager didn't went well */
+//		if (updateRes == 0) {
+//			values = new ContentValues();
+//			values.put(DbContract.Participants.COLUMN_NAME_PARTICIPANT_CREDENTIALS, Credentials.REGULAR.toString());
+//			values.put(DbContract.Participants.COLUMN_NAME_PARTICIPANT_HASH, newManager.getHash());
+//
+//			mWritableDb = mDbHelper.getWritableDatabase();
+//
+//			/* reverting the credentials and hash of the replaced manager */
+//			updateRes = mWritableDb.update(DbContract.Participants.TABLE_NAME,
+//					values,
+//					DbContract.Participants.COLUMN_NAME_PARTICIPANT_MEETING_ID + " = " + id + " and " + 
+//							DbContract.Participants.COLUMN_NAME_PARTICIPANT_PHONE + " = '" + newManager.getPhone() + "'", null);
+//
+//			mWritableDb.close();
+//			return false;
+//		}
+//
+//		values = new ContentValues();
+//		values.put(DbContract.Meetings.COLUMN_NAME_MEETING_MANAGER, newManager.getPhone());
+//		values.put(DbContract.Meetings.COLUMN_NAME_MEETING_HASH, servResp.getMeetingHash());
+//
+//		mWritableDb = mDbHelper.getWritableDatabase();
+//
+//		/* updating the local database with the new meeting's manager */
+//		updateRes = mWritableDb.update(DbContract.Meetings.TABLE_NAME, values, DbContract.Meetings._ID + " = " + id, null);
+//
+//		mWritableDb.close();
+//
+//		/* checking if the update of the meeting's manager didn't went well. if so, reverting the changes */
+//		if (updateRes == 0) {
+//
+//			/* reverting the first change - original manager */
+//			values = new ContentValues();
+//			values.put(DbContract.Participants.COLUMN_NAME_PARTICIPANT_CREDENTIALS, Credentials.MANAGER.toString());
+//			values.put(DbContract.Participants.COLUMN_NAME_PARTICIPANT_HASH, exManager.getHash());
+//
+//			mWritableDb = mDbHelper.getWritableDatabase();
+//
+//			/* reverting the credentials and hash of the replaced manager */
+//			updateRes = mWritableDb.update(DbContract.Participants.TABLE_NAME,
+//					values,
+//					DbContract.Participants.COLUMN_NAME_PARTICIPANT_MEETING_ID + " = " + id + " and " + 
+//							DbContract.Participants.COLUMN_NAME_PARTICIPANT_PHONE + " = '" + exManager.getPhone() + "'", null);
+//
+//			/* reverting the second change - new manager */
+//			values = new ContentValues();
+//			values.put(DbContract.Participants.COLUMN_NAME_PARTICIPANT_CREDENTIALS, Credentials.REGULAR.toString());
+//			values.put(DbContract.Participants.COLUMN_NAME_PARTICIPANT_HASH, newManager.getHash());
+//
+//			mWritableDb = mDbHelper.getWritableDatabase();
+//
+//			/* reverting the credentials and hash for the participant that was suppose to be the new manager */
+//			mWritableDb.update(DbContract.Participants.TABLE_NAME,
+//					values,
+//					DbContract.Participants.COLUMN_NAME_PARTICIPANT_MEETING_ID + " = " + id + " and " + 
+//							DbContract.Participants.COLUMN_NAME_PARTICIPANT_PHONE + " = '" + newManager.getPhone() + "'", null);
+//		}
+//
+//		return updateRes == 1;
 	}
 
 	public static boolean removeParticipant(long meetingId, Participant p) {

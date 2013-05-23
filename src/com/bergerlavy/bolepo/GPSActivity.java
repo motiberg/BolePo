@@ -42,14 +42,6 @@ public class GPSActivity extends Activity {
 		locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
 		locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, locationListener);
 	}
-
-	@Override
-	public boolean onCreateOptionsMenu(Menu menu) {
-		// Inflate the menu; this adds items to the action bar if it is present.
-		getMenuInflater().inflate(R.menu.g, menu);
-		return true;
-	}
-
 	
 	public void sendGPS(View view) {
 		if (mLocation != null) {

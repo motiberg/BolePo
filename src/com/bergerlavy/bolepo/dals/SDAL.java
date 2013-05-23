@@ -18,6 +18,7 @@ import android.location.Location;
 
 import com.bergerlavy.bolepo.BolePoConstants;
 import com.bergerlavy.bolepo.BolePoMisc;
+import com.bergerlavy.bolepo.NoInternetConnectionBolePoException;
 
 public class SDAL {
 
@@ -59,50 +60,57 @@ public class SDAL {
 			return (SRMeetingRemoval) sr;
 		throw new ClassCastException();
 	}
-	
+
 	public static SRMeetingAttendance attendAMeeting(String meetingHash) {
 		ServerResponse sr = executeServerMeetingCommand(Action.ATTEND, meetingHash);
 		if (sr instanceof SRMeetingAttendance)
 			return (SRMeetingAttendance) sr;
 		throw new ClassCastException();
 	}
-	
+
 	public static SRMeetingDeclining declineAMeeting(String meetingHash) {
 		ServerResponse sr = executeServerMeetingCommand(Action.DECLINE, meetingHash);
 		if (sr instanceof SRMeetingDeclining)
 			return (SRMeetingDeclining) sr;
 		throw new ClassCastException();
 	}
-	
+
+	public static SRMeetingManagerReplacementAndRemoval replaceAndRemoveMeetingManager(String meetingHash, String oldManagerHash, String newManagerHash) {
+		ServerResponse sr = executeServerMeetingCommand(Action.REPLACE_AND_REMOVE_MANAGER, new String[] { meetingHash, oldManagerHash, newManagerHash });
+		if (sr instanceof SRMeetingManagerReplacementAndRemoval)
+			return (SRMeetingManagerReplacementAndRemoval) sr;
+		throw new ClassCastException();
+	}
+
 	public static SRMeetingManagerReplacement replaceMeetingManager(String meetingHash, String oldManagerHash, String newManagerHash) {
 		ServerResponse sr = executeServerMeetingCommand(Action.REPLACE_MANAGER, new String[] { meetingHash, oldManagerHash, newManagerHash });
 		if (sr instanceof SRMeetingManagerReplacement)
 			return (SRMeetingManagerReplacement) sr;
 		throw new ClassCastException();
 	}
-	
+
 	public static SRParticipantRemoval removeParticipant(String participantHash) {
 		ServerResponse sr = executeServerMeetingCommand(Action.REMOVE_PARTICIPANT, participantHash);
 		if (sr instanceof SRParticipantRemoval)
 			return (SRParticipantRemoval) sr;
 		throw new ClassCastException();
 	}
-	
-	public static SRGcmRegistration regGCM(String regId) {
+
+	public static SRGcmRegistration regGCM(String regId) throws NoInternetConnectionBolePoException {
 		ServerResponse sr = executeServerGcmCommand(Action.GCM_REGISTRATION, regId);
 		if (sr instanceof SRGcmRegistration)
 			return (SRGcmRegistration) sr;
 		throw new ClassCastException();
 	}
 
-	public static SRGcmUnregistration unregGCM(String regId) {
+	public static SRGcmUnregistration unregGCM(String regId) throws NoInternetConnectionBolePoException {
 		ServerResponse sr = executeServerGcmCommand(Action.GCM_UNREGISTRATION, regId);
 		if (sr instanceof SRGcmUnregistration)
 			return (SRGcmUnregistration) sr;
 		throw new ClassCastException();
 	}
-	
-	public static SRGcmRegistrationCheck checkForGcmRegistration(Set<String> contacts) {
+
+	public static SRGcmRegistrationCheck checkForGcmRegistration(Set<String> contacts) throws NoInternetConnectionBolePoException {
 		ServerResponse sr = executeServerGcmCommand(Action.GCM_CHECK_REGISTRATION, contacts);
 		if (sr instanceof SRGcmRegistrationCheck)
 			return (SRGcmRegistrationCheck) sr;
@@ -120,15 +128,17 @@ public class SDAL {
 			nameValuePairs.add(new BasicNameValuePair("lat", l.getLatitude() + ""));
 			nameValuePairs.add(new BasicNameValuePair("lon", l.getLongitude() + ""));
 			httppost.setEntity(new UrlEncodedFormEntity(nameValuePairs));
-
-			/* Execute HTTP Post Request */
-			mHttpClient.execute(httppost);
+			if (BolePoMisc.isDeviceOnline(mContext)) {
+				/* Execute HTTP Post Request */
+				mHttpClient.execute(httppost);
+			}
+			else throw new NoInternetConnectionBolePoException();
 		}
 		catch (Exception e) { 
 			e.printStackTrace();
 		}
 	}
-	
+
 	private static ServerResponse executeServerMeetingCommand(Action action, Object data) {
 		HttpPost httppost = new HttpPost(BolePoConstants.BolePoServerBaseUrl + BolePoConstants.MeetingsManagingServletRelativeUrl);
 		httppost.getParams().setParameter(CoreProtocolPNames.USER_AGENT, "BolePo user-agent");
@@ -172,6 +182,7 @@ public class SDAL {
 			nameValuePairs.add(new BasicNameValuePair("user", BolePoMisc.getDevicePhoneNumber(mContext)));
 			break;
 		case REPLACE_MANAGER:
+		case REPLACE_AND_REMOVE_MANAGER:
 			String[] replaceManagerData = (String []) data;
 			nameValuePairs.add(new BasicNameValuePair("meeting_hash", replaceManagerData[0]));
 			nameValuePairs.add(new BasicNameValuePair("old_manager_hash", replaceManagerData[1]));
@@ -187,31 +198,35 @@ public class SDAL {
 		try {
 			httppost.setEntity(new UrlEncodedFormEntity(nameValuePairs));
 
-			/* Execute HTTP Post Request */
-			HttpResponse response = mHttpClient.execute(httppost);
+			if (BolePoMisc.isDeviceOnline(mContext)) {
+				/* Execute HTTP Post Request */
+				HttpResponse response = mHttpClient.execute(httppost);
 
-			/* analyzing the server response to the meeting retrieval request */
-			serverResponse = new AnalyzeServerResponse().analyze(response, action);
-			
-			mHttpClient = new DefaultHttpClient();
+				/* analyzing the server response to the meeting retrieval request */
+				serverResponse = new AnalyzeServerResponse().analyze(response, action);
+
+				//TODO check if necessary
+				mHttpClient = new DefaultHttpClient();
+			}
+			else throw new NoInternetConnectionBolePoException();
 		}
 		catch (Exception e) {
 			e.printStackTrace();
 		}
 		return serverResponse;
 	}
-	
+
 	@SuppressWarnings("unchecked")
-	private static ServerResponse executeServerGcmCommand(Action action, Object data) {
+	private static ServerResponse executeServerGcmCommand(Action action, Object data) throws NoInternetConnectionBolePoException {
 		HttpPost httppost = new HttpPost(BolePoConstants.BolePoServerBaseUrl + BolePoConstants.GcmServletRelativeUrl);
 		httppost.getParams().setParameter(CoreProtocolPNames.USER_AGENT, "BolePo user-agent");
 		ServerResponse serverResponse = null;
-		
+
 		String regId = null;
 		Set<String> contacts = null;
 		List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>();
 		nameValuePairs.add(new BasicNameValuePair("action", action.getActionString()));
-		
+
 		switch (action) {
 		case GCM_REGISTRATION:
 			regId = (String) data;
@@ -225,7 +240,6 @@ public class SDAL {
 			break;
 		case GCM_CHECK_REGISTRATION:
 			contacts = (Set<String>) data;
-			int vla = contacts.size();
 			nameValuePairs.add(new BasicNameValuePair("contactsCount", contacts.size() + ""));
 			int counter = 1;
 			for (String phone : contacts)
@@ -233,19 +247,30 @@ public class SDAL {
 			break;
 		default:
 			break;
-			
-		}
-		
-		try {
-			httppost.setEntity(new UrlEncodedFormEntity(nameValuePairs));
 
-			/* Execute HTTP Post Request */
-			HttpResponse response = mHttpClient.execute(httppost);
+		}
+
+		HttpResponse response = null;
+		if (BolePoMisc.isDeviceOnline(mContext)) {
+			try {
+
+				httppost.setEntity(new UrlEncodedFormEntity(nameValuePairs));
+
+				/* Execute HTTP Post Request */
+				response = mHttpClient.execute(httppost);
+
+			}
+			catch (Exception e) { 
+				e.printStackTrace();
+			}
+		}
+		else throw new NoInternetConnectionBolePoException();
+
+		if (BolePoMisc.isDeviceOnline(mContext))
 			serverResponse = new AnalyzeServerResponse().analyze(response, action);
-		}
-		catch (Exception e) { 
-			e.printStackTrace();
-		}
+		else throw new NoInternetConnectionBolePoException();
+
+
 		return serverResponse;
 	}
 

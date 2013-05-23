@@ -23,6 +23,7 @@ public class BolePoConstants {
 	public static final int ACTION_REMOVE_INDEX = 3;
 	
 	public static final String ACTION_BOLEPO_REFRESH_LISTS = "com.bergerlavy.bolepo.refresh";
+	public static final String ACTION_BOLEPO_INFORM_NO_INTERNET_CONNECTION = "com.bergerlavy.bolepo.inform_no_internet_connection";
 	
 	public static final String CONTACTS_FILE_NAME = "contacts_file";
 	
@@ -82,6 +83,7 @@ public class BolePoConstants {
 		UPDATED_MEETING ("updated_meeting"),
 		MEETING_CANCLED ("meeting_cancled"),
 		NEW_MANAGER ("new_manager"),
+		NEW_MANAGER_REMOVE_OLDER ("new_manager_remove_older"),
 		REMOVED_FROM_MEETING ("removed_from_meeting"),
 		PARTICIPANT_ATTENDED ("participant_attended"),
 		PARTICIPANT_DECLINED ("participant_declined");
@@ -120,10 +122,9 @@ public class BolePoConstants {
 		PARTICIPANT_DECLINING ("participant_declining"),
 		REMOVED_BY_MANAGER ("removed_by_manager"),
 		NEW_MANAGER_NEW_HASH ("new_manager_hash"),
-		NEW_MANAGER_OLD_HASH ("new_manager_old_hash"),
 		OLD_MANAGER_NEW_HASH ("old_manager_hash"),
-		OLD_MANAGER_OLD_HASH ("old_manager_old_hash"),
-		OLD_MEETING_HASH ("old_meeting_hash");
+		OLD_MEETING_HASH ("old_meeting_hash"),
+		NEW_MANAGER_PHONE ("new_manager_phone");
 //		PARTICIPANT_PHONE ("participant_phone"),
 //		PARTICIPANT_NAME ("participant_name"),
 //		PARTICIPANT_RSVP ("participant_rsvp"),

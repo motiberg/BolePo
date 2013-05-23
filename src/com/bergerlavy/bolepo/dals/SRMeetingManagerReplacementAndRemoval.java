@@ -2,14 +2,13 @@ package com.bergerlavy.bolepo.dals;
 
 import com.bergerlavy.bolepo.BolePoConstants.ServerResponseStatus;
 
-public class SRMeetingManagerReplacement extends ServerResponse {
-
-private String mDescription;
+public class SRMeetingManagerReplacementAndRemoval extends ServerResponse {
+	private String mDescription;
 	private String mMeetingNewHash;
 	private String mOldManagerNewHash;
 	private String mNewManagerNewHash;
 	
-	private SRMeetingManagerReplacement(Builder builder) {
+	private SRMeetingManagerReplacementAndRemoval(Builder builder) {
 		mDescription = builder.mDescription;
 		mMeetingNewHash = builder.mMeetingNewHash;
 		mOldManagerNewHash = builder.mOldManagerNewHash;
@@ -68,8 +67,8 @@ private String mDescription;
 			return this;
 		}
 
-		public SRMeetingManagerReplacement build() {
-			return new SRMeetingManagerReplacement(this);
+		public SRMeetingManagerReplacementAndRemoval build() {
+			return new SRMeetingManagerReplacementAndRemoval(this);
 		}
 	}
 }

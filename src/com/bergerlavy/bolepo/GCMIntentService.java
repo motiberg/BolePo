@@ -42,7 +42,12 @@ public class GCMIntentService extends com.google.android.gcm.GCMBaseIntentServic
 		BolePoMisc.setGcmRegId(this, regId);
 
 		/* notify server about the registered ID */
-		SDAL.regGCM(regId);
+		try {
+			SDAL.regGCM(regId);
+		} catch (NoInternetConnectionBolePoException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 
 	}
 
@@ -58,7 +63,12 @@ public class GCMIntentService extends com.google.android.gcm.GCMBaseIntentServic
 		BolePoMisc.removeGcmId(this);
 
 		/* notify server about the unregistered ID */
-		SDAL.unregGCM(regId);
+		try {
+			SDAL.unregGCM(regId);
+		} catch (NoInternetConnectionBolePoException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 
 	/**
@@ -102,13 +112,38 @@ public class GCMIntentService extends com.google.android.gcm.GCMBaseIntentServic
 		{
 			String oldMeetingHash = intent.getStringExtra(BolePoConstants.GCM_DATA.OLD_MEETING_HASH.toString());
 			String newMeetingHash = intent.getStringExtra(BolePoConstants.GCM_DATA.MEETING_HASH.toString());
-			String oldManagerOldHash = intent.getStringExtra(BolePoConstants.GCM_DATA.OLD_MANAGER_OLD_HASH.toString());
 			String oldManagerNewHash = intent.getStringExtra(BolePoConstants.GCM_DATA.OLD_MANAGER_NEW_HASH.toString());
-			String newManagerOldHash = intent.getStringExtra(BolePoConstants.GCM_DATA.NEW_MANAGER_OLD_HASH.toString());
+			String newManagerPhone = intent.getStringExtra(BolePoConstants.GCM_DATA.NEW_MANAGER_PHONE.toString());
 			String newManagerNewHash = intent.getStringExtra(BolePoConstants.GCM_DATA.NEW_MANAGER_NEW_HASH.toString());
 			
 			String meetingName = intent.getStringExtra(BolePoConstants.GCM_DATA.MEETING_NAME.toString());
-			if (DAL.appointNewManager(oldMeetingHash, newMeetingHash, oldManagerOldHash, oldManagerNewHash, newManagerOldHash, newManagerNewHash)) {
+			if (DAL.appointNewManager(oldMeetingHash, newMeetingHash, oldManagerNewHash, newManagerPhone, newManagerNewHash)) {
+				
+				Intent refreshListIntent = new Intent();
+				refreshListIntent.setAction(BolePoConstants.ACTION_BOLEPO_REFRESH_LISTS);
+				sendBroadcast(refreshListIntent); 
+
+				notificationBuilder.setContentText("You have been appointed to be the new manager of " + meetingName)
+				.setSmallIcon(R.drawable.ic_launcher);
+
+				//TODO change the destination activity - then don't forget to remove the notification cancel in the MainActivity
+				Intent notificationIntent = new Intent(this.getApplicationContext(), MainActivity.class);
+				PendingIntent contentIntent = PendingIntent.getActivity(this.getApplicationContext(), 0, notificationIntent, 0);
+				notificationBuilder.setContentIntent(contentIntent);
+
+				mNotificationManager.notify(NEW_MANAGER_NOTIFICATION_ID, notificationBuilder.build());
+			}
+			break;
+		}
+		case NEW_MANAGER_REMOVE_OLDER:
+		{
+			String oldMeetingHash = intent.getStringExtra(BolePoConstants.GCM_DATA.OLD_MEETING_HASH.toString());
+			String newMeetingHash = intent.getStringExtra(BolePoConstants.GCM_DATA.MEETING_HASH.toString());
+			String newManagerPhone = intent.getStringExtra(BolePoConstants.GCM_DATA.NEW_MANAGER_PHONE.toString());
+			String newManagerNewHash = intent.getStringExtra(BolePoConstants.GCM_DATA.NEW_MANAGER_NEW_HASH.toString());
+			
+			String meetingName = intent.getStringExtra(BolePoConstants.GCM_DATA.MEETING_NAME.toString());
+			if (DAL.appointNewManagerAndRemoveOldOne(oldMeetingHash, newMeetingHash, newManagerPhone, newManagerNewHash)) {
 				
 				Intent refreshListIntent = new Intent();
 				refreshListIntent.setAction(BolePoConstants.ACTION_BOLEPO_REFRESH_LISTS);

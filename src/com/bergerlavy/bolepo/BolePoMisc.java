@@ -2,6 +2,8 @@ package com.bergerlavy.bolepo;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 
 public class BolePoMisc {
 	
@@ -49,5 +51,20 @@ public class BolePoMisc {
 			if (phone.charAt(i) >= '0' && phone.charAt(i) <= '9')
 				result += phone.charAt(i);
 		return result;
+	}
+	
+	/**
+	 * Checks if the device is connected to the internet.
+	 * @param context A context to use to get a reference to the ConnectivityManager.
+	 * @return <code>true</code> if the device is connected to the internet, <code>false</code> otherwise.
+	 */
+	public static boolean isDeviceOnline(Context context) {
+	    ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+	    NetworkInfo netInfo = cm.getActiveNetworkInfo();
+	    /* if the device is in airplane mode (or presumably in other situations where there's no available network)
+	     * the function "getActiveNetworkInfo" will return null - hence the checking for null */
+	    if (netInfo != null && netInfo.isConnectedOrConnecting())
+	        return true;
+	    return false;
 	}
 }

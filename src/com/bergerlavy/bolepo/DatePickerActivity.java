@@ -22,13 +22,6 @@ public class DatePickerActivity extends Activity {
 		
 		mDatePicker = (DatePicker) findViewById(R.id.date_picker_date);
 	}
-
-	@Override
-	public boolean onCreateOptionsMenu(Menu menu) {
-		// Inflate the menu; this adds items to the action bar if it is present.
-		getMenuInflater().inflate(R.menu.date_picker, menu);
-		return true;
-	}
 	
 	public void saveAndClose(View view) {
 		Intent intent = new Intent();

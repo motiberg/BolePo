@@ -32,13 +32,6 @@ public class TimePickerActivity extends Activity {
 		if (getIntent().hasExtra(EXTRA_INIT_MINUTES))
 			mTimePicker.setCurrentMinute(getIntent().getIntExtra(EXTRA_INIT_MINUTES, 0));
 	}
-
-	@Override
-	public boolean onCreateOptionsMenu(Menu menu) {
-		// Inflate the menu; this adds items to the action bar if it is present.
-		getMenuInflater().inflate(R.menu.time_picker, menu);
-		return true;
-	}
 	
 	public void saveAndClose(View view) {
 		Intent intent = new Intent();

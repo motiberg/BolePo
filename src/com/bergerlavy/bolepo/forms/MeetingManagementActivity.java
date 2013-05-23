@@ -15,6 +15,7 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.bergerlavy.bolepo.BolePoConstants;
 import com.bergerlavy.bolepo.BolePoMisc;
 import com.bergerlavy.bolepo.DatePickerActivity;
 import com.bergerlavy.bolepo.MainActivity;
@@ -67,8 +68,6 @@ public class MeetingManagementActivity extends Activity {
 	 * to disable multiple instances of the activity.
 	 */
 	private static boolean mShareLocationTimeDialogIsOn;
-
-	private static RefreshMeetingsListListener mRefreshMeetingsListListener;
 
 	/***********************************************************/
 	/********************** REQUEST CODES **********************/
@@ -323,15 +322,13 @@ public class MeetingManagementActivity extends Activity {
 
 		@Override
 		protected void onPostExecute(Boolean result) {
-			if (result)
-				mRefreshMeetingsListListener.onUpdate();
+			if (result) {
+				Intent intent = new Intent();
+				intent.setAction(BolePoConstants.ACTION_BOLEPO_REFRESH_LISTS);
+				sendBroadcast(intent);
+			}
 			super.onPostExecute(result);
 		}
 
 	}
-
-	public static void registerForMeetingsUpdate(RefreshMeetingsListListener l) {
-		mRefreshMeetingsListListener = l;
-	}
-
 }

@@ -10,6 +10,7 @@ public enum Action {
 	ATTEND ("attend"),
 	DECLINE ("decline"),
 	REPLACE_MANAGER ("replace_manager"),
+	REPLACE_AND_REMOVE_MANAGER ("replace_and_remove_manager"),
 	REMOVE_PARTICIPANT ("remove_participant"),
 	GCM_REGISTRATION ("gcm_register"),
 	GCM_UNREGISTRATION ("gcm_unregister"),

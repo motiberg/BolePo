@@ -16,6 +16,7 @@ import android.provider.ContactsContract;
 
 import com.bergerlavy.bolepo.BolePoConstants;
 import com.bergerlavy.bolepo.BolePoMisc;
+import com.bergerlavy.bolepo.NoInternetConnectionBolePoException;
 import com.bergerlavy.bolepo.dals.SDAL;
 import com.bergerlavy.bolepo.dals.SRGcmRegistrationCheck;
 import com.bergerlavy.bolepo.dals.ServerResponse;
@@ -58,7 +59,15 @@ public class ContactsService extends IntentService {
 		cur.close();
 
 		/* requesting the server to check if the contacts are registered to the application */
-		ServerResponse servResp = SDAL.checkForGcmRegistration(mAllContacts.keySet());
+		ServerResponse servResp = null;
+		try {
+			servResp = SDAL.checkForGcmRegistration(mAllContacts.keySet());
+		} catch (NoInternetConnectionBolePoException e) {
+			Intent notifyIntent = new Intent();
+			notifyIntent.setAction(BolePoConstants.ACTION_BOLEPO_INFORM_NO_INTERNET_CONNECTION);
+			sendBroadcast(notifyIntent);
+			return;
+		}
 		List<String> registeredContactsPhones = new ArrayList<String>();
 		if (servResp.isOK()) {
 			if (servResp instanceof SRGcmRegistrationCheck) {

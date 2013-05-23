@@ -679,6 +679,7 @@ public class AnalyzeServerResponse {
 				handler = handlerForStatusOnly;
 				break;
 			case REPLACE_MANAGER:
+			case REPLACE_AND_REMOVE_MANAGER:
 				handler = new DefaultHandler() {
 
 					boolean action = false;
@@ -705,15 +706,15 @@ public class AnalyzeServerResponse {
 							desc = true;
 						}
 
-						if (qName.equalsIgnoreCase("meetinghash")) {
+						if (qName.equalsIgnoreCase("meetingnewhash")) {
 							meetingHash = true;
 						}
 						
-						if (qName.equalsIgnoreCase("oldparticipanthash")) {
+						if (qName.equalsIgnoreCase("oldparticipantnewhash")) {
 							oldParticipantHash = true;
 						}
 						
-						if (qName.equalsIgnoreCase("newparticipanthash")) {
+						if (qName.equalsIgnoreCase("newparticipantnewhash")) {
 							newParticipantHash = true;
 						}
 					}
@@ -811,9 +812,16 @@ public class AnalyzeServerResponse {
 					break;
 				case REPLACE_MANAGER:
 					serverResponse = new SRMeetingManagerReplacement.Builder(status, mDescription)
-					.setMeetingHash(mHash)
-					.setOldManagerHash(mOldParticipantHash)
-					.setNewManagerHash(mNewParticipantHash)
+					.setMeetingNewHash(mHash)
+					.setOldManagerNewHash(mOldParticipantHash)
+					.setNewManagerNewHash(mNewParticipantHash)
+					.build();
+					break;
+				case REPLACE_AND_REMOVE_MANAGER:
+					serverResponse = new SRMeetingManagerReplacementAndRemoval.Builder(status, mDescription)
+					.setMeetingNewHash(mHash)
+					.setOldManagerNewHash(mOldParticipantHash)
+					.setNewManagerNewHash(mNewParticipantHash)
 					.build();
 					break;
 				case REMOVE_PARTICIPANT:

@@ -4,7 +4,6 @@ import android.app.Activity;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.view.Menu;
 import android.view.View;
 import android.view.ViewGroup.LayoutParams;
 import android.widget.Button;
@@ -17,7 +16,7 @@ import com.bergerlavy.bolepo.dals.DAL;
 import com.bergerlavy.bolepo.dals.Meeting;
 import com.bergerlavy.bolepo.dals.SDAL;
 import com.bergerlavy.bolepo.dals.SRMeetingManagerReplacement;
-import com.bergerlavy.bolepo.dals.SRParticipantRemoval;
+import com.bergerlavy.bolepo.dals.SRMeetingManagerReplacementAndRemoval;
 import com.bergerlavy.bolepo.dals.ServerResponse;
 
 public class RemoveMeetingActivity extends Activity {
@@ -59,13 +58,6 @@ public class RemoveMeetingActivity extends Activity {
 		messageTV.setText(message);
 	}
 
-	@Override
-	public boolean onCreateOptionsMenu(Menu menu) {
-		// Inflate the menu; this adds items to the action bar if it is present.
-		getMenuInflater().inflate(R.menu.remove_meeting, menu);
-		return true;
-	}
-
 	public void remove(View view) {
 		switch (view.getId()) {
 		case R.id.remove_meeting_confirm_remove:
@@ -98,12 +90,7 @@ public class RemoveMeetingActivity extends Activity {
 			if (resultCode == RESULT_OK) {
 				if (data.hasExtra(AddParticipantsActivity.EXTRA_CONTACT_TO_MANAGE)) {
 					String contactPhone = data.getStringExtra(AddParticipantsActivity.EXTRA_CONTACT_TO_MANAGE);
-
-					new ReplaceMeetingManagerTask().execute(contactPhone);
-
-
-
-
+					new ReplaceAndRemoveMeetingManagerTask().execute(contactPhone);
 				}
 			}
 			if (resultCode == RESULT_CANCELED) {
@@ -139,32 +126,18 @@ public class RemoveMeetingActivity extends Activity {
 		}
 
 	}
-
-	public class ReplaceMeetingManagerTask extends AsyncTask<String, Void, Boolean> {
+	
+	public class ReplaceAndRemoveMeetingManagerTask extends AsyncTask<String, Void, Boolean> {
 
 		@Override
 		protected Boolean doInBackground(String... params) {
-			//TODO server side update for those changes
-			boolean changingManagerStatus;
 			ServerResponse servResp = null;
-			String oldMeetingManagerPhone = DAL.getMeetingManager(mMeetingIdToRemove).getPhone();
-			
-			servResp = (SRMeetingManagerReplacement) SDAL.replaceMeetingManager(DAL.getMeetingHashById(mMeetingIdToRemove),
+			String oldMeetingHash = DAL.getMeetingHashById(mMeetingIdToRemove);
+			servResp = (SRMeetingManagerReplacementAndRemoval) SDAL.replaceAndRemoveMeetingManager(oldMeetingHash,
 					DAL.getMeetingManager(mMeetingIdToRemove).getHash(),
 					DAL.getParticipantHashByPhone(mMeetingIdToRemove, params[0]));
-			if (servResp.isOK()) {
-				changingManagerStatus = DAL.changeMeetingManager(mMeetingIdToRemove,
-						DAL.getParticipantByPhoneNumber(mMeetingIdToRemove, params[0]),
-						(SRMeetingManagerReplacement) servResp);
-				
-				if (changingManagerStatus) {
-					servResp = (SRParticipantRemoval) SDAL.removeParticipant(DAL.getParticipantHashByPhone(mMeetingIdToRemove, oldMeetingManagerPhone));
-					if (servResp.isOK()) {
-						return DAL.removeParticipant(mMeetingIdToRemove, DAL.getParticipantByPhoneNumber(mMeetingIdToRemove, oldMeetingManagerPhone));
-						
-					}
-				}
-			}
+			if (servResp.isOK())
+				return DAL.replaceAndRemoveMeetingManager(oldMeetingHash, params[0], (SRMeetingManagerReplacement) servResp);
 			return false;
 		}
 
