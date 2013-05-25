@@ -47,7 +47,7 @@ public class BolePoContactsAdapter extends ArrayAdapter<BolePoContact> {
 				contactName.setTextColor(Color.BLACK);
 				contactPhone.setTextColor(Color.BLACK);
 			}
-			
+
 			if (contactPhone != null){
 				contactPhone.setText(contact.getPhone());
 			}

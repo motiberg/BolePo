@@ -137,7 +137,7 @@ public class RemoveMeetingActivity extends Activity {
 					DAL.getMeetingManager(mMeetingIdToRemove).getHash(),
 					DAL.getParticipantHashByPhone(mMeetingIdToRemove, params[0]));
 			if (servResp.isOK())
-				return DAL.replaceAndRemoveMeetingManager(oldMeetingHash, params[0], (SRMeetingManagerReplacement) servResp);
+				return DAL.replaceAndRemoveMeetingManager(oldMeetingHash, params[0], (SRMeetingManagerReplacementAndRemoval) servResp);
 			return false;
 		}
 

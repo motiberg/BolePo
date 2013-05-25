@@ -124,6 +124,7 @@ public class AnalyzeServerResponse {
 					boolean delivered = false;
 					boolean faildelivered = false;
 					boolean total = false;
+					boolean serverkey = false;
 
 					public void startElement(String uri, String localName,String qName, 
 							Attributes attributes) throws SAXException {
@@ -176,6 +177,10 @@ public class AnalyzeServerResponse {
 						if (qName.equalsIgnoreCase("total")) {
 							total = true;
 						}
+						
+						if (qName.equalsIgnoreCase("serverkey")) {
+							serverkey = true;
+						}
 					}
 
 					public void endElement(String uri, String localName,
@@ -213,6 +218,8 @@ public class AnalyzeServerResponse {
 
 						if (meetinghash) {
 							mHash = new String(ch, start, length);
+							//TODO remove this print
+							System.out.println("HASH = " + mHash);
 							meetinghash = false;
 						}
 
@@ -260,6 +267,11 @@ public class AnalyzeServerResponse {
 							//TODO remove syso
 							System.out.println("Total :" + mTotal);
 							total = false;
+						}
+						
+						if (serverkey) {
+							System.out.println("ServerKey = " + new String(ch, start, length));
+							serverkey = false;
 						}
 					}
 				};

@@ -20,12 +20,19 @@ public class DAL {
 
 	private static Context mContext;
 	private static DbHelper mDbHelper;
-	private static SQLiteDatabase mReadableDb;
-	private static SQLiteDatabase mWritableDb;
+//	private static SQLiteDatabase mReadableDb;
+//	private static SQLiteDatabase mWritableDb;
 
 	public static void setContext(Context context) {
 		mContext = context;
 		mDbHelper = new DbHelper(context);
+	}
+	
+	public static void close() {
+		if (mDbHelper != null) {
+			mDbHelper.close();
+			mDbHelper = null;
+		}
 	}
 
 	public static boolean appointNewManagerAndRemoveOldOne(String oldMeetingHash, String newMeetingHash, String newManagerPhone, String newManagerNewHash) {
@@ -36,6 +43,7 @@ public class DAL {
 	}
 	
 	public static boolean appointNewManager(String oldMeetingHash, String newMeetingHash, String oldManagerNewHash, String newManagerPhone, String newManagerNewHash) {
+		System.out.println("Enter appointNewManager()");
 		long meetingId = getMeetingIdByHash(oldMeetingHash);
 		Meeting m = getMeetingById(meetingId);
 		Participant newManager = getParticipantByPhoneNumber(meetingId, newManagerPhone);
@@ -45,22 +53,23 @@ public class DAL {
 		values.put(DbContract.Meetings.COLUMN_NAME_MEETING_MANAGER, BolePoMisc.getDevicePhoneNumber(mContext));
 		values.put(DbContract.Meetings.COLUMN_NAME_MEETING_HASH, newMeetingHash);
 
-		mWritableDb = mDbHelper.getWritableDatabase();
-		int recordsAffected = mWritableDb.update(DbContract.Meetings.TABLE_NAME, values, DbContract.Meetings._ID + " = " + meetingId, null);
-		mWritableDb.close();
+		SQLiteDatabase writableDb = mDbHelper.getWritableDatabase();
+		int recordsAffected = writableDb.update(DbContract.Meetings.TABLE_NAME, values, DbContract.Meetings._ID + " = " + meetingId, null);
+		writableDb.close();
 
-		if (recordsAffected == 0)
+		if (recordsAffected == 0) {
+			System.out.println("Exit appointNewManager()");
 			return false;
-
+		}
 		/* updating the new manager data */
 		values = new ContentValues();
 		values.put(DbContract.Participants.COLUMN_NAME_PARTICIPANT_CREDENTIALS, Credentials.MANAGER.toString());
 		values.put(DbContract.Participants.COLUMN_NAME_PARTICIPANT_HASH, newManagerNewHash);
 
-		mWritableDb = mDbHelper.getWritableDatabase();
-		recordsAffected = mWritableDb.update(DbContract.Participants.TABLE_NAME, values, DbContract.Participants.COLUMN_NAME_PARTICIPANT_MEETING_ID + " = " + meetingId + " " +
+		writableDb = mDbHelper.getWritableDatabase();
+		recordsAffected = writableDb.update(DbContract.Participants.TABLE_NAME, values, DbContract.Participants.COLUMN_NAME_PARTICIPANT_MEETING_ID + " = " + meetingId + " and " +
 				DbContract.Participants.COLUMN_NAME_PARTICIPANT_PHONE + " = '" + newManagerPhone + "'", null);
-		mWritableDb.close();
+		writableDb.close();
 
 		/* checking if the update of the record of the participant that is going to be the new manager has succeeded */
 		if (recordsAffected == 0) {
@@ -69,9 +78,10 @@ public class DAL {
 			values.put(DbContract.Meetings.COLUMN_NAME_MEETING_MANAGER, m.getManager());
 			values.put(DbContract.Meetings.COLUMN_NAME_MEETING_HASH, oldMeetingHash);
 
-			mWritableDb = mDbHelper.getWritableDatabase();
-			mWritableDb.update(DbContract.Meetings.TABLE_NAME, values, DbContract.Meetings._ID + " = " + meetingId, null);
-			mWritableDb.close();
+			writableDb = mDbHelper.getWritableDatabase();
+			writableDb.update(DbContract.Meetings.TABLE_NAME, values, DbContract.Meetings._ID + " = " + meetingId, null);
+			writableDb.close();
+			System.out.println("Exit appointNewManager()");
 			return false;
 		}
 
@@ -80,10 +90,10 @@ public class DAL {
 		values.put(DbContract.Participants.COLUMN_NAME_PARTICIPANT_CREDENTIALS, Credentials.REGULAR.toString());
 		values.put(DbContract.Participants.COLUMN_NAME_PARTICIPANT_HASH, oldManagerNewHash);
 
-		mWritableDb = mDbHelper.getWritableDatabase();
-		recordsAffected = mWritableDb.update(DbContract.Participants.TABLE_NAME, values, DbContract.Participants.COLUMN_NAME_PARTICIPANT_MEETING_ID + " = " + meetingId + " " + 
+		writableDb = mDbHelper.getWritableDatabase();
+		recordsAffected = writableDb.update(DbContract.Participants.TABLE_NAME, values, DbContract.Participants.COLUMN_NAME_PARTICIPANT_MEETING_ID + " = " + meetingId + " " + 
 		DbContract.Participants.COLUMN_NAME_PARTICIPANT_PHONE + " = '" + m.getManager() + "'", null);
-		mWritableDb.close();
+		writableDb.close();
 
 		/* checking if the update of the record of the participant that has gave up on the meeting management has succeeded */
 		if (recordsAffected == 0) {
@@ -92,20 +102,22 @@ public class DAL {
 			values.put(DbContract.Meetings.COLUMN_NAME_MEETING_MANAGER, m.getManager());
 			values.put(DbContract.Meetings.COLUMN_NAME_MEETING_HASH, oldMeetingHash);
 
-			mWritableDb = mDbHelper.getWritableDatabase();
-			mWritableDb.update(DbContract.Meetings.TABLE_NAME, values, DbContract.Meetings._ID + " = " + meetingId, null);
-			mWritableDb.close();
+			writableDb = mDbHelper.getWritableDatabase();
+			writableDb.update(DbContract.Meetings.TABLE_NAME, values, DbContract.Meetings._ID + " = " + meetingId, null);
+			writableDb.close();
 
 			/* reverting the modification of the new manager's credentials and hash due to failure in the process of modifying the old manager credentials and hash */
 			values = new ContentValues();
 			values.put(DbContract.Participants.COLUMN_NAME_PARTICIPANT_CREDENTIALS, Credentials.REGULAR.toString());
 			values.put(DbContract.Participants.COLUMN_NAME_PARTICIPANT_HASH, newManager.getHash());
 
-			mWritableDb = mDbHelper.getWritableDatabase();
-			recordsAffected = mWritableDb.update(DbContract.Participants.TABLE_NAME, values, DbContract.Participants.COLUMN_NAME_PARTICIPANT_HASH + " = '" + newManagerNewHash + "'", null);
-			mWritableDb.close();
+			writableDb = mDbHelper.getWritableDatabase();
+			recordsAffected = writableDb.update(DbContract.Participants.TABLE_NAME, values, DbContract.Participants.COLUMN_NAME_PARTICIPANT_HASH + " = '" + newManagerNewHash + "'", null);
+			writableDb.close();
+			System.out.println("Exit appointNewManager()");
 			return false;
 		}
+		System.out.println("Exit appointNewManager()");
 		return true;
 	}
 
@@ -156,9 +168,9 @@ public class DAL {
 	}
 
 	private static long getMeetingIdByHash(String meetingHash) {
-		mReadableDb = mDbHelper.getReadableDatabase();
+		SQLiteDatabase readableDb = mDbHelper.getReadableDatabase();
 		long meetingId = -1;
-		Cursor c = mReadableDb.query(DbContract.Meetings.TABLE_NAME,
+		Cursor c = readableDb.query(DbContract.Meetings.TABLE_NAME,
 				new String[] { DbContract.Meetings._ID },
 				DbContract.Meetings.COLUMN_NAME_MEETING_HASH + " = '" + meetingHash + "'",
 				null, null, null, null);
@@ -167,31 +179,31 @@ public class DAL {
 				meetingId = c.getLong(c.getColumnIndex(DbContract.Meetings._ID));
 			c.close();
 		}
-		mReadableDb.close();
+		readableDb.close();
 
 		return meetingId;
 	}
 
 	public static boolean updateParticipantAttendance(String meetingHash, String participantPhone, RSVP r) {
 		long meetingId = getMeetingIdByHash(meetingHash);
-		mWritableDb = mDbHelper.getWritableDatabase();
+		SQLiteDatabase writableDb = mDbHelper.getWritableDatabase();
 		ContentValues values = new ContentValues();
 		values.put(DbContract.Participants.COLUMN_NAME_PARTICIPANT_RSVP, r.toString());
-		int recordsAffected = mWritableDb.update(DbContract.Participants.TABLE_NAME,
+		int recordsAffected = writableDb.update(DbContract.Participants.TABLE_NAME,
 				values,
 				DbContract.Participants.COLUMN_NAME_PARTICIPANT_MEETING_ID + " = " + meetingId + " and " +
 						DbContract.Participants.COLUMN_NAME_PARTICIPANT_PHONE + " = '" + participantPhone + "'",
 						null);
-		mWritableDb.close();
+		writableDb.close();
 
 		return recordsAffected == 1;
 	}
 
 	public static Cursor createAcceptedMeetingsCursor() {
-		mReadableDb = mDbHelper.getReadableDatabase();
+		SQLiteDatabase readableDb = mDbHelper.getReadableDatabase();
 		Cursor acceptedMeetingsCursor = null;
 		/* getting all the meetings IDs that the user of this device accepted (created meetings are automatically marked as accepted) */
-		Cursor c = mReadableDb.query(DbContract.Participants.TABLE_NAME,
+		Cursor c = readableDb.query(DbContract.Participants.TABLE_NAME,
 				new String[] { DbContract.Participants._ID, DbContract.Participants.COLUMN_NAME_PARTICIPANT_MEETING_ID }, 
 				DbContract.Participants.COLUMN_NAME_PARTICIPANT_PHONE + " = '" + BolePoMisc.getDevicePhoneNumber(mContext) + "' and " +
 						DbContract.Participants.COLUMN_NAME_PARTICIPANT_RSVP + " = '" + RSVP.YES.toString() + "'",
@@ -205,6 +217,7 @@ public class DAL {
 				}
 			c.close();
 		}
+		readableDb.close();
 		/* removing the last ' or ' */
 		if (selectionStr.length() > 4)
 			selectionStr = selectionStr.substring(0, selectionStr.length() - 4);
@@ -212,18 +225,19 @@ public class DAL {
 		/* getting all the meetings records that the user of this device accepted */
 		if (selectionStr.equals(""))
 			selectionStr = "0 == 1";
-		acceptedMeetingsCursor = mReadableDb.query(DbContract.Meetings.TABLE_NAME, null, selectionStr, null, null, null, null);
+		readableDb = mDbHelper.getReadableDatabase();
+		acceptedMeetingsCursor = readableDb.query(DbContract.Meetings.TABLE_NAME, null, selectionStr, null, null, null, null);
 		if (acceptedMeetingsCursor != null)
 			acceptedMeetingsCursor.moveToFirst();
 
-		mReadableDb.close();
+		readableDb.close();
 		return acceptedMeetingsCursor;
 	}
 
 	public static Cursor createWaitingForApprovalMeetingsCursor() {
-		mReadableDb = mDbHelper.getReadableDatabase();
+		SQLiteDatabase readableDb = mDbHelper.getReadableDatabase();
 		Cursor notApprovedMeetingsCursor = null;
-		Cursor c = mReadableDb.query(DbContract.Participants.TABLE_NAME,
+		Cursor c = readableDb.query(DbContract.Participants.TABLE_NAME,
 				new String[] { DbContract.Participants._ID, DbContract.Participants.COLUMN_NAME_PARTICIPANT_MEETING_ID },
 				DbContract.Participants.COLUMN_NAME_PARTICIPANT_PHONE + " = '" + BolePoMisc.getDevicePhoneNumber(mContext) + "' and " +
 						DbContract.Participants.COLUMN_NAME_PARTICIPANT_RSVP + " = '" + RSVP.UNKNOWN.toString() + "'",
@@ -237,6 +251,7 @@ public class DAL {
 				}
 			c.close();
 		}
+		readableDb.close();
 		/* removing the last ' or ' */
 		if (selectionStr.length() > 4)
 			selectionStr = selectionStr.substring(0, selectionStr.length() - 4);
@@ -244,11 +259,12 @@ public class DAL {
 		/* getting all the meetings records that the user of this device accepted */
 		if (selectionStr.equals(""))
 			selectionStr = "0 == 1";
-		notApprovedMeetingsCursor = mReadableDb.query(DbContract.Meetings.TABLE_NAME, null, selectionStr, null, null, null, null);
+		readableDb = mDbHelper.getReadableDatabase();
+		notApprovedMeetingsCursor = readableDb.query(DbContract.Meetings.TABLE_NAME, null, selectionStr, null, null, null, null);
 		if (notApprovedMeetingsCursor != null)
 			notApprovedMeetingsCursor.moveToFirst();
 
-		mReadableDb.close();
+		readableDb.close();
 		return notApprovedMeetingsCursor;
 	}
 
@@ -258,9 +274,9 @@ public class DAL {
 	 * @return
 	 */
 	public static Credentials getMyCredentials(long meetingId) {
-		mReadableDb = mDbHelper.getReadableDatabase();
+		SQLiteDatabase readableDb = mDbHelper.getReadableDatabase();
 		Credentials credentials = null;
-		Cursor c = mReadableDb.query(DbContract.Participants.TABLE_NAME,
+		Cursor c = readableDb.query(DbContract.Participants.TABLE_NAME,
 				new String[] { DbContract.Participants._ID, DbContract.Participants.COLUMN_NAME_PARTICIPANT_CREDENTIALS },
 				DbContract.Participants.COLUMN_NAME_PARTICIPANT_MEETING_ID + " = " + meetingId + " and " + 
 						DbContract.Participants.COLUMN_NAME_PARTICIPANT_PHONE + " = '" + BolePoMisc.getDevicePhoneNumber(mContext) + "'",
@@ -270,7 +286,7 @@ public class DAL {
 				credentials = Credentials.getEnum(c.getString(c.getColumnIndex(DbContract.Participants.COLUMN_NAME_PARTICIPANT_CREDENTIALS)));
 			c.close();
 		}
-		mReadableDb.close();
+		readableDb.close();
 		return credentials;
 	}
 
@@ -280,9 +296,9 @@ public class DAL {
 	 * @return
 	 */
 	public static RSVP getMyRsvp(long meetingId) {
-		mReadableDb = mDbHelper.getReadableDatabase();
+		SQLiteDatabase readableDb = mDbHelper.getReadableDatabase();
 		RSVP rsvp = null;
-		Cursor c = mReadableDb.query(DbContract.Participants.TABLE_NAME,
+		Cursor c = readableDb.query(DbContract.Participants.TABLE_NAME,
 				new String[] { DbContract.Participants._ID, DbContract.Participants.COLUMN_NAME_PARTICIPANT_RSVP },
 				DbContract.Participants.COLUMN_NAME_PARTICIPANT_MEETING_ID + " = " + meetingId + " and " + 
 						DbContract.Participants.COLUMN_NAME_PARTICIPANT_PHONE + " = '" + BolePoMisc.getDevicePhoneNumber(mContext) + "'",
@@ -292,14 +308,14 @@ public class DAL {
 				rsvp = RSVP.getEnum(c.getString(c.getColumnIndex(DbContract.Participants.COLUMN_NAME_PARTICIPANT_RSVP)));
 			c.close();
 		}
-		mReadableDb.close();
+		readableDb.close();
 		return rsvp;
 	}
 
 	public static Meeting getMeetingById(long meetingId) {
-		mReadableDb = mDbHelper.getReadableDatabase();
+		SQLiteDatabase readableDb = mDbHelper.getReadableDatabase();
 		Meeting meeting = null;
-		Cursor c = mReadableDb.query(DbContract.Meetings.TABLE_NAME, null, DbContract.Meetings._ID + " = " + meetingId, null, null, null, null);
+		Cursor c = readableDb.query(DbContract.Meetings.TABLE_NAME, null, DbContract.Meetings._ID + " = " + meetingId, null, null, null, null);
 		if (c != null) {
 			if (c.moveToFirst()) {
 				meeting = new Meeting(c.getString(c.getColumnIndex(DbContract.Meetings.COLUMN_NAME_MEETING_NAME)),
@@ -313,14 +329,15 @@ public class DAL {
 			}
 			c.close();
 		}
-		mReadableDb.close();
+		readableDb.close();
 		return meeting;
 	}
 
 	public static String getMeetingHashById(long meetingId) {
-		mReadableDb = mDbHelper.getReadableDatabase();
+		System.out.println("Enter getMeetingHashById()");
+		SQLiteDatabase readableDb = mDbHelper.getReadableDatabase();
 		String meetingHash = null;
-		Cursor c = mReadableDb.query(DbContract.Meetings.TABLE_NAME,
+		Cursor c = readableDb.query(DbContract.Meetings.TABLE_NAME,
 				new String[] { DbContract.Meetings._ID, DbContract.Meetings.COLUMN_NAME_MEETING_HASH },
 				DbContract.Meetings._ID + " = " + meetingId,
 				null, null, null, null);
@@ -329,16 +346,17 @@ public class DAL {
 				meetingHash = c.getString(c.getColumnIndex(DbContract.Meetings.COLUMN_NAME_MEETING_HASH));
 			c.close();
 		}
-		mReadableDb.close();
-
+		readableDb.close();
+		System.out.println("Exit getMeetingHashById()");
 		return meetingHash;
 	}
 
 	public static Participant getMeetingManager(long meetingId) {
-		mReadableDb = mDbHelper.getReadableDatabase();
+		System.out.println("Enter getMeetingManager()");
+		SQLiteDatabase readableDb = mDbHelper.getReadableDatabase();
 		Participant participant = null;
 		String managerPhone = null;
-		Cursor c = mReadableDb.query(DbContract.Meetings.TABLE_NAME,
+		Cursor c = readableDb.query(DbContract.Meetings.TABLE_NAME,
 				new String[] { DbContract.Meetings._ID, DbContract.Meetings.COLUMN_NAME_MEETING_MANAGER },
 				DbContract.Meetings._ID + " = " + meetingId,
 				null, null, null, null);
@@ -347,16 +365,18 @@ public class DAL {
 				managerPhone = c.getString(c.getColumnIndex(DbContract.Meetings.COLUMN_NAME_MEETING_MANAGER));
 			c.close();
 		}
-		mReadableDb.close();
+		readableDb.close();
 		if (managerPhone != null)
 			participant = getParticipantByPhoneNumber(meetingId, managerPhone);
+		System.out.println("Exit getMeetingManager()");
 		return participant;
 	}
 
 	public static Participant getParticipantByPhoneNumber(long meetingId, String phone) {
-		mReadableDb = mDbHelper.getReadableDatabase();
+		System.out.println("Enter getParticipantByPhoneNumber()");
+		SQLiteDatabase readableDb = mDbHelper.getReadableDatabase();
 		Participant p = null;
-		Cursor c = mReadableDb.query(DbContract.Participants.TABLE_NAME,
+		Cursor c = readableDb.query(DbContract.Participants.TABLE_NAME,
 				null,
 				DbContract.Participants.COLUMN_NAME_PARTICIPANT_PHONE + " = '" + phone + "' and " + 
 						DbContract.Participants.COLUMN_NAME_PARTICIPANT_MEETING_ID + " = " + meetingId,
@@ -373,20 +393,21 @@ public class DAL {
 
 			c.close();
 		}
-		mReadableDb.close();
+		readableDb.close();
+		System.out.println("Exit getParticipantByPhoneNumber()");
 		return p;
 	}
 
 	public static List<Participant> getParticipantsAsList(long meetingID) {
 		List<Participant> parts = new ArrayList<Participant>();
-		mReadableDb = mDbHelper.getReadableDatabase();
+		SQLiteDatabase readableDb = mDbHelper.getReadableDatabase();
 
-		Cursor participantsFromDBCursor = mReadableDb.query(DbContract.Participants.TABLE_NAME,
+		Cursor participantsFromDBCursor = readableDb.query(DbContract.Participants.TABLE_NAME,
 				null,
 				DbContract.Participants.COLUMN_NAME_PARTICIPANT_MEETING_ID + " = " + meetingID,
 				null, null, null, null);
 
-		mReadableDb.close();
+		readableDb.close();
 
 		participantsFromDBCursor.moveToFirst();
 		while (!participantsFromDBCursor.isAfterLast()) {
@@ -405,9 +426,10 @@ public class DAL {
 	}
 
 	public static String getParticipantHashByPhone(long meetingId, String phone) {
-		mReadableDb = mDbHelper.getReadableDatabase();
+		System.out.println("Enter getParticipantHashByPhone()");
+		SQLiteDatabase readableDb = mDbHelper.getReadableDatabase();
 		String participantHash = null;
-		Cursor c = mReadableDb.query(DbContract.Participants.TABLE_NAME,
+		Cursor c = readableDb.query(DbContract.Participants.TABLE_NAME,
 				new String[] { DbContract.Participants._ID, DbContract.Participants.COLUMN_NAME_PARTICIPANT_HASH },
 				DbContract.Participants.COLUMN_NAME_PARTICIPANT_MEETING_ID + " = " + meetingId + " and " +
 						DbContract.Participants.COLUMN_NAME_PARTICIPANT_PHONE + " = '" + phone + "'",
@@ -417,15 +439,15 @@ public class DAL {
 				participantHash = c.getString(c.getColumnIndex(DbContract.Participants.COLUMN_NAME_PARTICIPANT_HASH));
 			c.close();
 		}
-		mReadableDb.close();
-
+		readableDb.close();
+		System.out.println("Exit getParticipantHashByPhone()");
 		return participantHash;
 	}
 
 	public static List<String> getParticipantsPhonesAsList(long meetingId) {
-		mReadableDb = mDbHelper.getReadableDatabase();
+		SQLiteDatabase readableDb = mDbHelper.getReadableDatabase();
 		List<String> participantsPhones = new ArrayList<String>();
-		Cursor c = mReadableDb.query(DbContract.Participants.TABLE_NAME,
+		Cursor c = readableDb.query(DbContract.Participants.TABLE_NAME,
 				new String[] { DbContract.Participants._ID, DbContract.Participants.COLUMN_NAME_PARTICIPANT_PHONE },
 				DbContract.Participants.COLUMN_NAME_PARTICIPANT_MEETING_ID + " = " + meetingId,
 				null, null, null, null);
@@ -438,7 +460,7 @@ public class DAL {
 			}
 			c.close();
 		}
-		mReadableDb.close();
+		readableDb.close();
 		return participantsPhones;
 	}
 
@@ -456,11 +478,11 @@ public class DAL {
 		ContentValues values = meetingToValues(m);
 		values.put(DbContract.Meetings.COLUMN_NAME_MEETING_HASH, serverResponse.getMeetingHash());
 
-		mWritableDb = mDbHelper.getWritableDatabase();
+		SQLiteDatabase writableDb = mDbHelper.getWritableDatabase();
 
 		/* inserting the meeting into the meetings table */
-		long meetingID = mWritableDb.insert(DbContract.Meetings.TABLE_NAME, "null", values);
-		mWritableDb.close();
+		long meetingID = writableDb.insert(DbContract.Meetings.TABLE_NAME, "null", values);
+		writableDb.close();
 
 		/* checking whether an error occurred during the insert to the database */
 		if (meetingID == -1)
@@ -474,14 +496,14 @@ public class DAL {
 	}
 
 	public static boolean createMeeting(Meeting m, List<Participant> participants) {
-		mWritableDb = mDbHelper.getWritableDatabase();
+		SQLiteDatabase writableDb = mDbHelper.getWritableDatabase();
 
 		ContentValues values = meetingToValues(m);
 		values.put(DbContract.Meetings.COLUMN_NAME_MEETING_HASH, m.getHash());
 
 		/* inserting the meeting into the meetings table */
-		long meetingID = mWritableDb.insert(DbContract.Meetings.TABLE_NAME, "null", values);
-		mWritableDb.close();
+		long meetingID = writableDb.insert(DbContract.Meetings.TABLE_NAME, "null", values);
+		writableDb.close();
 
 		/* checking whether an error occurred during the insert to the database */
 		if (meetingID == -1)
@@ -504,12 +526,12 @@ public class DAL {
 
 		/* updating meetings table with the modified meeting */
 
-		mWritableDb = mDbHelper.getWritableDatabase();
+		SQLiteDatabase writableDb = mDbHelper.getWritableDatabase();
 		ContentValues values = meetingToValues(newMeeting);
 		values.put(DbContract.Meetings.COLUMN_NAME_MEETING_HASH, serverResponse.getMeetingHash());
 
-		mWritableDb.update(DbContract.Meetings.TABLE_NAME, values, DbContract.Meetings._ID + " = " + id, null);
-		mWritableDb.close();
+		writableDb.update(DbContract.Meetings.TABLE_NAME, values, DbContract.Meetings._ID + " = " + id, null);
+		writableDb.close();
 
 		/* inserting the new participants into the participants table */
 
@@ -519,9 +541,9 @@ public class DAL {
 	}
 
 	public static boolean amIMeetingCreator(long id) {
-		mReadableDb = mDbHelper.getReadableDatabase();
+		SQLiteDatabase readableDb = mDbHelper.getReadableDatabase();
 		boolean isMeetingCreator = false;
-		Cursor c = mReadableDb.query(DbContract.Participants.TABLE_NAME,
+		Cursor c = readableDb.query(DbContract.Participants.TABLE_NAME,
 				new String[] { DbContract.Participants._ID },
 				DbContract.Participants.COLUMN_NAME_PARTICIPANT_MEETING_ID + " = " + id + " and " + 
 						DbContract.Participants.COLUMN_NAME_PARTICIPANT_PHONE + " = '" + BolePoMisc.getDevicePhoneNumber(mContext) + "' and " + 
@@ -532,7 +554,7 @@ public class DAL {
 				isMeetingCreator = true;
 			c.close();
 		}
-		mReadableDb.close();
+		readableDb.close();
 		return isMeetingCreator;
 	}
 
@@ -544,9 +566,9 @@ public class DAL {
 
 		/* removing meeting's other data */
 
-		mWritableDb = mDbHelper.getWritableDatabase();
-		int res = mWritableDb.delete(DbContract.Meetings.TABLE_NAME, DbContract.Meetings._ID + " = " + id, null);
-		mWritableDb.close();
+		SQLiteDatabase writableDb = mDbHelper.getWritableDatabase();
+		int res = writableDb.delete(DbContract.Meetings.TABLE_NAME, DbContract.Meetings._ID + " = " + id, null);
+		writableDb.close();
 
 		/* checking if at least one row in the database affected from the delete operation. 
 		 * if no rows affected, that means that there is no meeting with the given id. */
@@ -555,10 +577,14 @@ public class DAL {
 		return false;
 	}
 
-	public static boolean replaceAndRemoveMeetingManager(String oldMeetingHash, String newManagerPhone, SRMeetingManagerReplacement servResp) {
+	public static boolean replaceAndRemoveMeetingManager(String oldMeetingHash, String newManagerPhone, SRMeetingManagerReplacementAndRemoval servResp) {
 		long meetingId = getMeetingIdByHash(servResp.getMeetingNewHash());
 		return changeMeetingManager(oldMeetingHash, newManagerPhone, servResp) && 
 				removeParticipant(meetingId, getParticipantByPhoneNumber(meetingId, newManagerPhone)); 
+	}
+	
+	public static boolean changeMeetingManager(String oldMeetingHash, String newManagerPhone, SRMeetingManagerReplacementAndRemoval servResp) {
+		return appointNewManager(oldMeetingHash, servResp.getMeetingNewHash(), servResp.getOldManagerNewHash(), newManagerPhone, servResp.getNewManagerNewHash());
 	}
 	
 	/**
@@ -668,15 +694,15 @@ public class DAL {
 
 	public static boolean removeParticipant(long meetingId, Participant p) {
 
-		mWritableDb = mDbHelper.getWritableDatabase();
+		SQLiteDatabase writableDb = mDbHelper.getWritableDatabase();
 
 		/* removing the meeting's manager from the participants list */
-		int deleteRes = mWritableDb.delete(DbContract.Participants.TABLE_NAME,
+		int deleteRes = writableDb.delete(DbContract.Participants.TABLE_NAME,
 				DbContract.Participants.COLUMN_NAME_PARTICIPANT_MEETING_ID + " = " + meetingId + " and " +
 						DbContract.Participants.COLUMN_NAME_PARTICIPANT_PHONE + " = '" + p.getPhone() + "'",
 						null);
 
-		mWritableDb.close();
+		writableDb.close();
 
 		return deleteRes == 1;
 	}
@@ -690,20 +716,20 @@ public class DAL {
 	}
 
 	private static boolean meetingAttending(long meetignId, RSVP attend) {
-		mWritableDb = mDbHelper.getWritableDatabase();
+		SQLiteDatabase writableDb = mDbHelper.getWritableDatabase();
 
 		/* updating only the rsvp attending status of the device's user */
 		ContentValues values = new ContentValues();
 		values.put(DbContract.Participants.COLUMN_NAME_PARTICIPANT_RSVP, attend.toString());
 
 		/* updating the local data-base with the new status of the device's user */
-		int updateRes = mWritableDb.update(DbContract.Participants.TABLE_NAME,
+		int updateRes = writableDb.update(DbContract.Participants.TABLE_NAME,
 				values,
 				DbContract.Participants.COLUMN_NAME_PARTICIPANT_MEETING_ID + " = " + meetignId + " and " +
 						DbContract.Participants.COLUMN_NAME_PARTICIPANT_PHONE + " = '" + BolePoMisc.getDevicePhoneNumber(mContext) + "'",
 						null);
 
-		mWritableDb.close();
+		writableDb.close();
 
 		return updateRes == 1;
 	}
@@ -743,9 +769,8 @@ public class DAL {
 	}
 
 	private static long insertParticipant(long id, Participant p) {
-		mWritableDb = mDbHelper.getWritableDatabase();
+		SQLiteDatabase writableDb = mDbHelper.getWritableDatabase();
 		ContentValues values = new ContentValues();
-		String bla = p.getPhone();
 		values.put(DbContract.Participants.COLUMN_NAME_PARTICIPANT_PHONE, p.getPhone());
 		//TODO dont forget to change the data for the name to something other than phone number
 		values.put(DbContract.Participants.COLUMN_NAME_PARTICIPANT_NAME, p.getPhone());
@@ -754,8 +779,8 @@ public class DAL {
 		values.put(DbContract.Participants.COLUMN_NAME_PARTICIPANT_RSVP, p.getRSVP());
 		//		values.put(DbContract.Participants.COLUMN_NAME_PARTICIPANT_SHARE_LOCATION_STATUS, m.getShareLocationTime());
 		values.put(DbContract.Participants.COLUMN_NAME_PARTICIPANT_HASH, p.getHash());
-		long res = mWritableDb.insert(DbContract.Participants.TABLE_NAME, "null", values);
-		mWritableDb.close();
+		long res = writableDb.insert(DbContract.Participants.TABLE_NAME, "null", values);
+		writableDb.close();
 		return res;
 	}
 
@@ -764,9 +789,9 @@ public class DAL {
 	 * @param meetingID the ID of the meeting row in the database that it's participants are going to be removed.
 	 */
 	private static void removeParticipants(long meetingID) {
-		mWritableDb = mDbHelper.getWritableDatabase();
-		mWritableDb.delete(DbContract.Participants.TABLE_NAME, DbContract.Participants.COLUMN_NAME_PARTICIPANT_MEETING_ID + " = " + meetingID, null);
-		mWritableDb.close();
+		SQLiteDatabase wriableDb = mDbHelper.getWritableDatabase();
+		wriableDb.delete(DbContract.Participants.TABLE_NAME, DbContract.Participants.COLUMN_NAME_PARTICIPANT_MEETING_ID + " = " + meetingID, null);
+		wriableDb.close();
 	}
 
 }

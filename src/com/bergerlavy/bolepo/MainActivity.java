@@ -74,8 +74,8 @@ public class MainActivity extends Activity {
 
 			/* starting the contacts service to check which of the contacts stored in this device 
 			 * are registered to the application */
-			Intent contactsServiceIntent = new Intent(this, ContactsService.class);
-			startService(contactsServiceIntent);
+//			Intent contactsServiceIntent = new Intent(this, ContactsService.class);
+//			startService(contactsServiceIntent);
 
 			/* setting an onClick listener to the accepted meetings list to allow the user to watch the meeting's details */
 			mAcceptedList.setOnItemClickListener(MeetingDataListener);
@@ -107,9 +107,6 @@ public class MainActivity extends Activity {
 	@Override
 	protected void onResume() {
 		super.onResume();
-
-		DAL.setContext(this);
-		SDAL.setContext(this);
 		
 		if (BolePoMisc.isDeviceOnline(this) && !BolePoMisc.getDevicePhoneNumber(this).equals("")) {
 			firstInit();
@@ -146,7 +143,19 @@ public class MainActivity extends Activity {
 		super.onPause();
 	}
 
+	@Override
+	protected void onStart() {
+		DAL.setContext(this);
+		SDAL.setContext(this);
+		super.onStart();
+	}
 
+
+	@Override
+	protected void onDestroy() {
+		DAL.close();
+		super.onDestroy();
+	}
 
 	private void firstInit() {
 		

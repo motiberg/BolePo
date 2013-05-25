@@ -1,5 +1,6 @@
 package com.bergerlavy.bolepo.dals;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -130,7 +131,8 @@ public class SDAL {
 			httppost.setEntity(new UrlEncodedFormEntity(nameValuePairs));
 			if (BolePoMisc.isDeviceOnline(mContext)) {
 				/* Execute HTTP Post Request */
-				mHttpClient.execute(httppost);
+				HttpResponse response = mHttpClient.execute(httppost);
+				response.getEntity().consumeContent();
 			}
 			else throw new NoInternetConnectionBolePoException();
 		}
@@ -197,18 +199,23 @@ public class SDAL {
 		}
 		try {
 			httppost.setEntity(new UrlEncodedFormEntity(nameValuePairs));
-
+			HttpResponse response = null;
 			if (BolePoMisc.isDeviceOnline(mContext)) {
 				/* Execute HTTP Post Request */
-				HttpResponse response = mHttpClient.execute(httppost);
-
+				response = mHttpClient.execute(httppost);
+			}
+			else throw new NoInternetConnectionBolePoException();
+			if (BolePoMisc.isDeviceOnline(mContext)) {
 				/* analyzing the server response to the meeting retrieval request */
 				serverResponse = new AnalyzeServerResponse().analyze(response, action);
-
+				response.getEntity().consumeContent();
 				//TODO check if necessary
 				mHttpClient = new DefaultHttpClient();
 			}
-			else throw new NoInternetConnectionBolePoException();
+			else {
+				response.getEntity().consumeContent();
+				throw new NoInternetConnectionBolePoException();
+			}
 		}
 		catch (Exception e) {
 			e.printStackTrace();
@@ -259,6 +266,7 @@ public class SDAL {
 				/* Execute HTTP Post Request */
 				response = mHttpClient.execute(httppost);
 
+
 			}
 			catch (Exception e) { 
 				e.printStackTrace();
@@ -268,8 +276,24 @@ public class SDAL {
 
 		if (BolePoMisc.isDeviceOnline(mContext))
 			serverResponse = new AnalyzeServerResponse().analyze(response, action);
-		else throw new NoInternetConnectionBolePoException();
+		else {
+			try {
+				/* releasing the connection */
+				response.getEntity().consumeContent();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			throw new NoInternetConnectionBolePoException();
+		}
 
+		try {
+			/* releasing the connection */
+			response.getEntity().consumeContent();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 
 		return serverResponse;
 	}
