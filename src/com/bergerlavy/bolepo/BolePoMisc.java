@@ -1,5 +1,10 @@
 package com.bergerlavy.bolepo;
 
+import com.bergerlavy.bolepo.dals.Meeting;
+import com.bergerlavy.bolepo.forms.CreateMeetingValidation;
+import com.bergerlavy.bolepo.forms.InputValidationReport;
+import com.bergerlavy.bolepo.forms.ModifyMeetingValidation;
+
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
@@ -66,5 +71,15 @@ public class BolePoMisc {
 	    if (netInfo != null && netInfo.isConnectedOrConnecting())
 	        return true;
 	    return false;
+	}
+	
+	public static InputValidationReport createMeetingInputValidation(Context context, Meeting data) {
+		CreateMeetingValidation vStatus = new CreateMeetingValidation(context, data);
+		return vStatus.isOK();
+	}
+	
+	public static InputValidationReport modifyMeetingInputValidation(Context context, Meeting data, long id) {
+		ModifyMeetingValidation vStatus = new ModifyMeetingValidation(context, data, id);
+		return vStatus.isOK();
 	}
 }

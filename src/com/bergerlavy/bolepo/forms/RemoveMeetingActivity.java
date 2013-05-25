@@ -1,6 +1,7 @@
 package com.bergerlavy.bolepo.forms;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -12,17 +13,16 @@ import android.widget.TextView;
 import com.bergerlavy.bolepo.BolePoConstants;
 import com.bergerlavy.bolepo.MainActivity;
 import com.bergerlavy.bolepo.R;
-import com.bergerlavy.bolepo.dals.DAL;
 import com.bergerlavy.bolepo.dals.Meeting;
+import com.bergerlavy.bolepo.dals.MeetingsDbAdapter;
 import com.bergerlavy.bolepo.dals.SDAL;
-import com.bergerlavy.bolepo.dals.SRMeetingManagerReplacement;
 import com.bergerlavy.bolepo.dals.SRMeetingManagerReplacementAndRemoval;
 import com.bergerlavy.bolepo.dals.ServerResponse;
 
 public class RemoveMeetingActivity extends Activity {
 
+	private MeetingsDbAdapter mDbAdapter;
 	private long mMeetingIdToRemove;
-	private String mMeetingManager;
 
 	public static final String EXTRA_REMOVE_MEETING_CHOOSE_CONTACT = "EXTRA_REMOVE_MEETING_CHOOSE_CONTACT";
 	public static final String EXTRA_REMOVE_MEETING_MEETING_ID = "EXTRA_REMOVE_MEETING_MEETING_ID";
@@ -33,7 +33,7 @@ public class RemoveMeetingActivity extends Activity {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_remove_meeting);
-
+		
 		LayoutParams params = getWindow().getAttributes();
 		params.width = LayoutParams.MATCH_PARENT;
 		getWindow().setAttributes((android.view.WindowManager.LayoutParams) params);
@@ -61,11 +61,8 @@ public class RemoveMeetingActivity extends Activity {
 	public void remove(View view) {
 		switch (view.getId()) {
 		case R.id.remove_meeting_confirm_remove:
-			Meeting meeting = DAL.getMeetingById(mMeetingIdToRemove);
-			mMeetingManager = meeting.getManager();
-
-			new MeetingRemovalTask().execute(meeting.getHash());
-
+			Meeting meeting = mDbAdapter.getMeetingById(mMeetingIdToRemove);
+			new MeetingRemovalTask(this).execute(meeting.getHash());
 			setResult(RESULT_OK);
 			finish();
 			break;
@@ -90,7 +87,7 @@ public class RemoveMeetingActivity extends Activity {
 			if (resultCode == RESULT_OK) {
 				if (data.hasExtra(AddParticipantsActivity.EXTRA_CONTACT_TO_MANAGE)) {
 					String contactPhone = data.getStringExtra(AddParticipantsActivity.EXTRA_CONTACT_TO_MANAGE);
-					new ReplaceAndRemoveMeetingManagerTask().execute(contactPhone);
+					new ReplaceAndRemoveMeetingManagerTask(this).execute(contactPhone);
 				}
 			}
 			if (resultCode == RESULT_CANCELED) {
@@ -103,15 +100,28 @@ public class RemoveMeetingActivity extends Activity {
 
 	public class MeetingRemovalTask extends AsyncTask<String, Void, Boolean> {
 
+		private Context mContext;
+		
+		public MeetingRemovalTask(Context context) {
+			mContext = context;
+		}
+		
 		@Override
 		protected Boolean doInBackground(String... params) {
 			boolean shouldUpdate = false;
 			ServerResponse servResp = SDAL.removeMeeting(params[0]);
 
+			System.out.println("Opening DB on MeetingRemovalTask");
+			mDbAdapter = new MeetingsDbAdapter(mContext);
+			mDbAdapter.open();
+			
 			if (servResp.isOK()) {
-				if (DAL.removeMeeting(mMeetingIdToRemove))
+				if (mDbAdapter.removeMeeting(mMeetingIdToRemove))
 					shouldUpdate = true;
 			}
+			System.out.println("Closing DB on MeetingRemovalTask");
+			mDbAdapter.close();
+			
 			return shouldUpdate;
 		}
 
@@ -129,15 +139,32 @@ public class RemoveMeetingActivity extends Activity {
 	
 	public class ReplaceAndRemoveMeetingManagerTask extends AsyncTask<String, Void, Boolean> {
 
+		private Context mContext;
+		
+		public ReplaceAndRemoveMeetingManagerTask(Context context) {
+			mContext = context;
+		}
+		
 		@Override
 		protected Boolean doInBackground(String... params) {
+			
+			System.out.println("Opening DB on ReplaceAndRemoveMeetingManagerTask");
+			mDbAdapter = new MeetingsDbAdapter(mContext);
+			mDbAdapter.open();
+			
 			ServerResponse servResp = null;
-			String oldMeetingHash = DAL.getMeetingHashById(mMeetingIdToRemove);
+			String oldMeetingHash = mDbAdapter.getMeetingHashById(mMeetingIdToRemove);
 			servResp = (SRMeetingManagerReplacementAndRemoval) SDAL.replaceAndRemoveMeetingManager(oldMeetingHash,
-					DAL.getMeetingManager(mMeetingIdToRemove).getHash(),
-					DAL.getParticipantHashByPhone(mMeetingIdToRemove, params[0]));
-			if (servResp.isOK())
-				return DAL.replaceAndRemoveMeetingManager(oldMeetingHash, params[0], (SRMeetingManagerReplacementAndRemoval) servResp);
+					mDbAdapter.getMeetingManager(mMeetingIdToRemove).getHash(),
+					mDbAdapter.getParticipantHashByPhone(mMeetingIdToRemove, params[0]));
+			if (servResp.isOK()) {
+				boolean result = mDbAdapter.replaceAndRemoveMeetingManager(oldMeetingHash, params[0], (SRMeetingManagerReplacementAndRemoval) servResp);
+				System.out.println("Closing DB on ReplaceAndRemoveMeetingManagerTask");
+				mDbAdapter.close();
+				return result;
+			}
+			System.out.println("Closing DB on ReplaceAndRemoveMeetingManagerTask");
+			mDbAdapter.close();
 			return false;
 		}
 
@@ -151,5 +178,25 @@ public class RemoveMeetingActivity extends Activity {
 			super.onPostExecute(result);
 		}
 
+	}
+	
+	@Override
+	protected void onStart() {
+		System.out.println("Opening DB on RemoveMeetingActivity");
+		mDbAdapter = new MeetingsDbAdapter(this);
+		mDbAdapter.open();
+		SDAL.setContext(this);
+		super.onStart();
+	}
+	
+
+	@Override
+	protected void onStop() {
+		System.out.println("Closing DB on RemoveMeetingActivity");
+		if (mDbAdapter != null) {
+			mDbAdapter.close();
+			mDbAdapter = null;
+		}
+		super.onStop();
 	}
 }

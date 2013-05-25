@@ -15,11 +15,12 @@ import android.widget.TextView;
 
 import com.bergerlavy.bolepo.BolePoMisc;
 import com.bergerlavy.bolepo.R;
-import com.bergerlavy.bolepo.dals.DAL;
-import com.bergerlavy.bolepo.dals.Participant;
+import com.bergerlavy.bolepo.dals.MeetingsDbAdapter;
 
 public class AddParticipantsActivity extends ListActivity {
 
+	
+	private MeetingsDbAdapter mDbAdapter;
 	private List<String> mInvitedParticipants;
 	private ArrayAdapter<String> mAdapter;
 	private boolean mRemoveMeetingChooseContactToManage;
@@ -41,6 +42,9 @@ public class AddParticipantsActivity extends ListActivity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_add_participants);
 
+		mDbAdapter = new MeetingsDbAdapter(this);
+		mDbAdapter.open();
+		
 		mInvitedParticipants = new ArrayList<String>();
 		
 		long meetingId;
@@ -62,7 +66,7 @@ public class AddParticipantsActivity extends ListActivity {
 //					Participant meetingManager = DAL.getMeetingManager(meetingId);
 					
 					/* getting all the participants associated with this meeting */
-					mInvitedParticipants = DAL.getParticipantsPhonesAsList(meetingId);
+					mInvitedParticipants = mDbAdapter.getParticipantsPhonesAsList(meetingId);
 				}
 			}
 			/* removing the manager from the participants list, so the list will contain only the invited participants (excluding the inviter) */
@@ -132,6 +136,31 @@ public class AddParticipantsActivity extends ListActivity {
 		super.onActivityResult(requestCode, resultCode, data);
 	}
 
+	@Override
+	protected void onStart() {
+
+		if (mDbAdapter == null) {
+			System.out.println("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
+			System.out.println("Opening DB on AddParticipantsActivity");
+			mDbAdapter = new MeetingsDbAdapter(this);
+			mDbAdapter.open();
+		}
+		super.onStart();
+	}
+
+
+	@Override
+	protected void onStop() {
+		
+
+		if (mDbAdapter != null) {
+			System.out.println("Closing DB on AddParticipantsActivity");
+			mDbAdapter.close();
+			mDbAdapter = null;
+		}
+		super.onStop();
+	}
+	
 	@Override
 	public void finish() {
 		if (mRemoveMeetingChooseContactToManage && !mIsContactChosenToManage)

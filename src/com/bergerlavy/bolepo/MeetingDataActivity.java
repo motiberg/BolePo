@@ -7,19 +7,19 @@ import android.view.Menu;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.bergerlavy.bolepo.BolePoConstants.RSVP;
-import com.bergerlavy.bolepo.dals.DAL;
 import com.bergerlavy.bolepo.dals.Meeting;
+import com.bergerlavy.bolepo.dals.MeetingsDbAdapter;
 import com.bergerlavy.bolepo.dals.SDAL;
 import com.bergerlavy.bolepo.dals.SRMeetingAttendance;
 import com.bergerlavy.bolepo.dals.SRMeetingDeclining;
 import com.bergerlavy.bolepo.forms.RemoveMeetingActivity;
-import com.bergerlavy.db.DbHelper;
 
 public class MeetingDataActivity extends Activity {
 
+	private MeetingsDbAdapter mDbAdapter;
+	
 	private TextView mName;
 	private TextView mDate;
 	private TextView mTime;
@@ -39,6 +39,9 @@ public class MeetingDataActivity extends Activity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_meeting_data);
 
+		mDbAdapter = new MeetingsDbAdapter(this);
+		mDbAdapter.open();
+		
 		mName = (TextView) findViewById(R.id.meeting_data_name);
 		mDate = (TextView) findViewById(R.id.meeting_data_date);
 		mTime = (TextView) findViewById(R.id.meeting_data_time);
@@ -49,7 +52,7 @@ public class MeetingDataActivity extends Activity {
 		String meetingManager = null;
 
 		mId = getIntent().getLongExtra(MainActivity.EXTRA_MEETING_ID, -1);
-		Meeting m = DAL.getMeetingById(mId);
+		Meeting m = mDbAdapter.getMeetingById(mId);
 		mName.setText(m.getName());
 		mDate.setText(m.getDate());
 		mTime.setText(m.getTime());
@@ -66,7 +69,7 @@ public class MeetingDataActivity extends Activity {
 			mIsManager = true;
 		}
 		else {
-			RSVP r = DAL.getMyRsvp(mId);
+			RSVP r = mDbAdapter.getMyRsvp(mId);
 			if (r == RSVP.YES) {
 
 				/* hiding the accept button when the viewer already accepted this meeting */
@@ -89,7 +92,7 @@ public class MeetingDataActivity extends Activity {
 		if (view.getId() == R.id.meeting_data_attend_button) {
 			SRMeetingAttendance servResp = SDAL.attendAMeeting(mHash);
 			if (servResp.isOK()) {
-				if (DAL.attendAMeeting(mId)) {
+				if (mDbAdapter.attendAMeeting(mId)) {
 					toRefresh = true;
 				}
 			}
@@ -107,7 +110,7 @@ public class MeetingDataActivity extends Activity {
 			else {
 				SRMeetingDeclining servResp = SDAL.declineAMeeting(mHash);
 				if (servResp.isOK()) {
-					if (DAL.declineAMeeting(mId)) {
+					if (mDbAdapter.declineAMeeting(mId)) {
 						toRefresh = true;
 					}
 				}

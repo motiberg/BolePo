@@ -2,20 +2,25 @@ package com.bergerlavy.bolepo.forms;
 
 import java.util.List;
 
-import com.bergerlavy.bolepo.dals.DAL;
+import android.content.Context;
+
 import com.bergerlavy.bolepo.dals.Meeting;
+import com.bergerlavy.bolepo.dals.MeetingsDbAdapter;
 
 public class ModifyMeetingValidation implements ValidationStatus {
 
+	private MeetingsDbAdapter mDbAdapter;
 	private Meeting mMeeting;
 	private boolean mChecked;
+	private Context mContext;
 	private long mId;
 	private InputValidationReport mReport;
 
-	public ModifyMeetingValidation(Meeting m, long id) {
+	public ModifyMeetingValidation(Context c, Meeting m, long id) {
 		mMeeting = m;
 		mId = id;
 		mChecked = false;
+		mContext = c;
 	}
 
 	@Override
@@ -23,10 +28,13 @@ public class ModifyMeetingValidation implements ValidationStatus {
 		if (mChecked)
 			return mReport;
 		
+		mDbAdapter = new MeetingsDbAdapter(mContext);
+		mDbAdapter.open();
+		
 		mReport = new InputValidationReport.Builder(true).build();
 		mChecked = true;
 
-		List<Meeting> allAcceptedMeetings = DAL.getAllAcceptedMeetings(mId);
+		List<Meeting> allAcceptedMeetings = mDbAdapter.getAllAcceptedMeetings(mId);
 		
 		for (Meeting m : allAcceptedMeetings) {
 			String date = m.getDate();
@@ -56,6 +64,9 @@ public class ModifyMeetingValidation implements ValidationStatus {
 		
 		if (mMeeting.getParticipantsNum() < 2)
 			mReport = new InputValidationReport.Builder(false).setError("Meeting must has at least one participant beside you.").build();
+		
+		mDbAdapter.close();
+		
 		return mReport;
 	}
 

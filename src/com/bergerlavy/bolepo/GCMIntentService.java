@@ -11,13 +11,15 @@ import android.support.v4.app.NotificationCompat;
 import android.widget.Toast;
 
 import com.bergerlavy.bolepo.BolePoConstants.RSVP;
-import com.bergerlavy.bolepo.dals.DAL;
+import com.bergerlavy.bolepo.dals.MeetingsDbAdapter;
 import com.bergerlavy.bolepo.dals.Meeting;
 import com.bergerlavy.bolepo.dals.Participant;
 import com.bergerlavy.bolepo.dals.SDAL;
 
 public class GCMIntentService extends com.google.android.gcm.GCMBaseIntentService {
 
+	private MeetingsDbAdapter mDbAdapter;
+	
 	public static final int NEW_MEETING_NOTIFICATION_ID = 1;
 	public static final int PARTICIPANT_ATTENDANCE_NOTIFICATION_ID = 2;
 	public static final int PARTICIPANT_DECLINING_NOTIFICATION_ID = 3;
@@ -78,6 +80,9 @@ public class GCMIntentService extends com.google.android.gcm.GCMBaseIntentServic
 	@Override
 	protected void onMessage(Context context, Intent intent) {
 
+		mDbAdapter = new MeetingsDbAdapter(context);
+		mDbAdapter.open();
+		
 		String messageType = intent.getStringExtra(BolePoConstants.GCM_DATA.MESSAGE_TYPE.toString());
 		List<Participant> participants = new ArrayList<Participant>();
 		NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
@@ -90,7 +95,7 @@ public class GCMIntentService extends com.google.android.gcm.GCMBaseIntentServic
 			String meetingName = intent.getStringExtra(BolePoConstants.GCM_DATA.MEETING_NAME.toString());
 			String meetingManager = intent.getStringExtra(BolePoConstants.GCM_DATA.MEETING_MANAGER.toString());
 			
-			if (DAL.expelFromMeeting(meetingHash)) {
+			if (mDbAdapter.expelFromMeeting(meetingHash)) {
 
 				Intent refreshListIntent = new Intent();
 				refreshListIntent.setAction(BolePoConstants.ACTION_BOLEPO_REFRESH_LISTS);
@@ -117,7 +122,7 @@ public class GCMIntentService extends com.google.android.gcm.GCMBaseIntentServic
 			String newManagerNewHash = intent.getStringExtra(BolePoConstants.GCM_DATA.NEW_MANAGER_NEW_HASH.toString());
 			
 			String meetingName = intent.getStringExtra(BolePoConstants.GCM_DATA.MEETING_NAME.toString());
-			if (DAL.appointNewManager(oldMeetingHash, newMeetingHash, oldManagerNewHash, newManagerPhone, newManagerNewHash)) {
+			if (mDbAdapter.appointNewManager(oldMeetingHash, newMeetingHash, newManagerPhone, newManagerNewHash)) {
 				
 				Intent refreshListIntent = new Intent();
 				refreshListIntent.setAction(BolePoConstants.ACTION_BOLEPO_REFRESH_LISTS);
@@ -143,7 +148,7 @@ public class GCMIntentService extends com.google.android.gcm.GCMBaseIntentServic
 			String newManagerNewHash = intent.getStringExtra(BolePoConstants.GCM_DATA.NEW_MANAGER_NEW_HASH.toString());
 			
 			String meetingName = intent.getStringExtra(BolePoConstants.GCM_DATA.MEETING_NAME.toString());
-			if (DAL.appointNewManagerAndRemoveOldOne(oldMeetingHash, newMeetingHash, newManagerPhone, newManagerNewHash)) {
+			if (mDbAdapter.appointNewManagerAndRemoveOldOne(oldMeetingHash, newMeetingHash, newManagerPhone, newManagerNewHash)) {
 				
 				Intent refreshListIntent = new Intent();
 				refreshListIntent.setAction(BolePoConstants.ACTION_BOLEPO_REFRESH_LISTS);
@@ -178,7 +183,7 @@ public class GCMIntentService extends com.google.android.gcm.GCMBaseIntentServic
 					intent.getStringExtra(BolePoConstants.GCM_DATA.MEETING_SHARE_LOCATION_TIME.toString()),
 					partsPhones);
 			meeting.setHash(intent.getStringExtra(BolePoConstants.GCM_DATA.MEETING_HASH.toString()));
-			if (DAL.createMeeting(meeting, participants)) {
+			if (mDbAdapter.createMeeting(meeting, participants)) {
 				Intent refreshListIntent = new Intent();
 				refreshListIntent.setAction(BolePoConstants.ACTION_BOLEPO_REFRESH_LISTS);
 				sendBroadcast(refreshListIntent); 
@@ -202,7 +207,7 @@ public class GCMIntentService extends com.google.android.gcm.GCMBaseIntentServic
 			String meetingHash = intent.getStringExtra(BolePoConstants.GCM_DATA.MEETING_HASH.toString());
 			String meetingName = intent.getStringExtra(BolePoConstants.GCM_DATA.MEETING_NAME.toString());
 
-			if (DAL.expelFromMeeting(meetingHash)) {
+			if (mDbAdapter.expelFromMeeting(meetingHash)) {
 
 				Intent refreshListIntent = new Intent();
 				refreshListIntent.setAction(BolePoConstants.ACTION_BOLEPO_REFRESH_LISTS);
@@ -226,7 +231,7 @@ public class GCMIntentService extends com.google.android.gcm.GCMBaseIntentServic
 			String attendedParticipant = intent.getStringExtra(BolePoConstants.GCM_DATA.PARTICIPANT_ATTENDANCE.toString());
 			String meetingHash = intent.getStringExtra(BolePoConstants.GCM_DATA.MEETING_HASH.toString());
 			String meetingName = intent.getStringExtra(BolePoConstants.GCM_DATA.MEETING_NAME.toString());
-			DAL.updateParticipantAttendance(meetingHash, attendedParticipant, RSVP.YES);
+			mDbAdapter.updateParticipantAttendance(meetingHash, attendedParticipant, RSVP.YES);
 
 			notificationBuilder.setContentText(attendedParticipant + " attends: " + meetingName)
 			.setSmallIcon(R.drawable.ic_launcher);
@@ -246,7 +251,7 @@ public class GCMIntentService extends com.google.android.gcm.GCMBaseIntentServic
 			String meetingName = intent.getStringExtra(BolePoConstants.GCM_DATA.MEETING_NAME.toString());
 
 			//TODO change the RSVP from NO to DECLINE
-			DAL.updateParticipantAttendance(meetingHash, declinedParticipant, RSVP.NO);
+			mDbAdapter.updateParticipantAttendance(meetingHash, declinedParticipant, RSVP.NO);
 
 			notificationBuilder.setContentText(declinedParticipant + " declines: " + meetingName)
 			.setSmallIcon(R.drawable.ic_launcher);
@@ -263,6 +268,8 @@ public class GCMIntentService extends com.google.android.gcm.GCMBaseIntentServic
 			break;
 
 		}
+		
+		mDbAdapter.close();
 	}
 
 	/**

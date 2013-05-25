@@ -22,7 +22,7 @@ import com.bergerlavy.bolepo.MainActivity;
 import com.bergerlavy.bolepo.R;
 import com.bergerlavy.bolepo.TimePickerActivity;
 import com.bergerlavy.bolepo.dals.Action;
-import com.bergerlavy.bolepo.dals.DAL;
+import com.bergerlavy.bolepo.dals.MeetingsDbAdapter;
 import com.bergerlavy.bolepo.dals.Meeting;
 import com.bergerlavy.bolepo.dals.SDAL;
 import com.bergerlavy.bolepo.dals.SRMeetingCreation;
@@ -35,6 +35,8 @@ import com.bergerlavy.bolepo.shareddata.Misc;
 
 public class MeetingManagementActivity extends Activity {
 
+	private MeetingsDbAdapter mDbAdapter;
+	
 	private EditText mName;
 	private TextView mDate;
 	private TextView mTime;
@@ -88,6 +90,9 @@ public class MeetingManagementActivity extends Activity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_meeting_management);
 
+		mDbAdapter = new MeetingsDbAdapter(this);
+		mDbAdapter.open();
+		
 		mParticipants = new ArrayList<String>();
 
 		mName = (EditText) findViewById(R.id.meeting_management_purpose_edittext);
@@ -153,7 +158,7 @@ public class MeetingManagementActivity extends Activity {
 
 			mModifiedMeetingID = extras.getLong(MainActivity.EXTRA_MEETING_ID);
 
-			Meeting meeting = DAL.getMeetingById(mModifiedMeetingID);
+			Meeting meeting = mDbAdapter.getMeetingById(mModifiedMeetingID);
 			mName.setText(meeting.getName());
 			mDate.setText(meeting.getDate());
 			mTime.setText(meeting.getTime());
@@ -161,7 +166,7 @@ public class MeetingManagementActivity extends Activity {
 			mShareLocationTime.setText(meeting.getShareLocationTime());
 			mModifiedMeetingHash = meeting.getHash();
 
-			mParticipants = DAL.getParticipantsPhonesAsList(mModifiedMeetingID);
+			mParticipants = mDbAdapter.getParticipantsPhonesAsList(mModifiedMeetingID);
 		}
 		if (mAction == Action.CREATE) {
 
@@ -234,9 +239,9 @@ public class MeetingManagementActivity extends Activity {
 		/* checking if the input is valid according to decided rules */
 		InputValidationReport report = null;
 		if (mAction == Action.CREATE)
-			report = FormsSupport.createMeetingInputValidation(meeting);
+			report = BolePoMisc.createMeetingInputValidation(this, meeting);
 		else if (mAction == Action.MODIFY)
-			report = FormsSupport.modifyMeetingInputValidation(meeting, mModifiedMeetingID);
+			report = BolePoMisc.modifyMeetingInputValidation(this, meeting, mModifiedMeetingID);
 		if (report.isOK()) {
 
 
@@ -301,14 +306,14 @@ public class MeetingManagementActivity extends Activity {
 					if (servResp instanceof SRMeetingCreation)
 						servRespCreation = (SRMeetingCreation) servResp;
 					else throw new ClassCastException();
-					if (DAL.createMeeting(meeting, servRespCreation))
+					if (mDbAdapter.createMeeting(meeting, servRespCreation))
 						shouldUpdate = true;
 				}
 				if (mAction == Action.MODIFY) {
 					if (servResp instanceof SRMeetingModification)
 						servRespModification = (SRMeetingModification) servResp;
 					else throw new ClassCastException();
-					if (DAL.editMeeting(mModifiedMeetingID, meeting, servRespModification)) {
+					if (mDbAdapter.editMeeting(mModifiedMeetingID, meeting, servRespModification)) {
 						shouldUpdate = true;
 					}
 				}
