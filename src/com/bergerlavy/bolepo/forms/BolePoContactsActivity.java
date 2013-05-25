@@ -17,6 +17,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.bergerlavy.bolepo.BolePoConstants;
+import com.bergerlavy.bolepo.BolePoMisc;
 import com.bergerlavy.bolepo.R;
 import com.bergerlavy.bolepo.forms.BolePoContactsAdapter.BolePoContactsComparator;
 
@@ -71,12 +72,13 @@ public class BolePoContactsActivity extends ListActivity {
 				if (isContactSelected(phone))
 					mAllContacts.add(contactBuilder.select().build());
 				else mAllContacts.add(contactBuilder.build());
+
 			}
 			fis.close();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		
+
 
 		mArrayAdapter = new BolePoContactsAdapter(this, R.layout.item_bolepo_contact, mAllContacts);
 		mArrayAdapter.sort(new BolePoContactsAdapter.BolePoContactsComparator());
@@ -115,7 +117,7 @@ public class BolePoContactsActivity extends ListActivity {
 		}
 		return name;
 	}
-	
+
 	private String readPhoneFromFile(FileInputStream fis) throws IOException {
 		String phone = "";
 		char c, d, e;
@@ -148,7 +150,7 @@ public class BolePoContactsActivity extends ListActivity {
 		}
 		return phone;
 	}
-	
+
 	/**
 	 * Checks if the input phone number is one of the phone numbers that received from the calling activity.
 	 * If it does, that means that this phone number belongs to a contact that is already invited to the meeting.

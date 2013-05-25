@@ -33,7 +33,7 @@
     <!-- GCM requires a Google account -->
     <uses-permission android:name="android.permission.GET_ACCOUNTS" />
 
-    <!-- can keep the processor from sleeping when a message is received -->
+    <!-- can keep the processor from sleeping (will be used when a message is received) -->
     <uses-permission android:name="android.permission.WAKE_LOCK" />
 
     <!-- receive location updates from NETWORK_PROVIDER -->

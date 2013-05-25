@@ -157,6 +157,7 @@ int string main_no_scheduled_meeting 0x7f050020
 int string main_not_approved_yet_header_label 0x7f05003e
 int string meeting_data_attend_button_text 0x7f050045
 int string meeting_data_decline_button_text 0x7f050046
+int string meeting_data_leave_button_text 0x7f050047
 int string meeting_management_add_participants_button 0x7f050019
 int string meeting_management_cDesc 0x7f050018
 int string meeting_management_create_button 0x7f05001c
@@ -170,10 +171,10 @@ int string meeting_management_time 0x7f050016
 int string meeting_managment_create_button_text 0x7f05002b
 int string meeting_managment_modify_button_text 0x7f05002c
 int string menu_settings 0x7f050023
-int string network_settings_dialog_go_to_settings 0x7f05004b
-int string network_settings_dialog_message 0x7f050048
-int string network_settings_dialog_quit_app 0x7f05004a
-int string network_settings_dialog_waiting_for_connection_message 0x7f05004c
+int string network_settings_dialog_go_to_settings 0x7f05004c
+int string network_settings_dialog_message 0x7f050049
+int string network_settings_dialog_quit_app 0x7f05004b
+int string network_settings_dialog_waiting_for_connection_message 0x7f05004d
 int string no_meetings 0x7f050024
 int string remove_meeting_cancel_removal 0x7f05003c
 int string remove_meeting_confirm_removal 0x7f05003b
@@ -183,9 +184,9 @@ int string title_activity_bole_po_contacts 0x7f050031
 int string title_activity_create_meeting 0x7f050013
 int string title_activity_date_picker 0x7f05001e
 int string title_activity_gps 0x7f05002d
-int string title_activity_login 0x7f050049
+int string title_activity_login 0x7f05004a
 int string title_activity_main 0x7f05001f
-int string title_activity_network_settings_dialog 0x7f050047
+int string title_activity_network_settings_dialog 0x7f050048
 int string title_activity_remove_meeting 0x7f05003a
 int string title_activity_time_picker 0x7f05002f
 int style AppBaseTheme 0x7f070000

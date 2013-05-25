@@ -26,9 +26,11 @@ public class GCMIS extends IntentService {
         synchronized(LOCK) {
             if (sWakeLock == null) {
                 PowerManager pm = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
-                sWakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "my_wakelock");
+                sWakeLock = pm.newWakeLock(PowerManager.ACQUIRE_CAUSES_WAKEUP, "my_wakelock");
             }
         }
+        
+        /* having the device stay on at the level as requested in the newWakeLock function right above */
         sWakeLock.acquire();
         intent.setClassName(context, GCMIS.class.getName());
         context.startService(intent);

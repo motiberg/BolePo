@@ -33,6 +33,8 @@ public class MeetingDataActivity extends Activity {
 
 	public static final String EXTRA_MEETING_ID = "EXTRA_MEETING_ID";
 	public static final String EXTRA_MEETING_CREATOR_REMOVAL = "EXTRA_MEETING_CREATOR_REMOVAL";
+	
+	private static final int RQ_LEAVE_MEETING = 1;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -61,12 +63,15 @@ public class MeetingDataActivity extends Activity {
 		meetingManager = m.getManager();
 		mHash = m.getHash();
 
+		boolean showLeaveTitle = false;
+		/* checking if the current user is the meeting manager */
 		if (meetingManager.equalsIgnoreCase(BolePoMisc.getDevicePhoneNumber(this))) {
 
 			/* hiding the accept button when the viewer is the meeting manager because obviously he accepted it if he is the manager */
 			((Button) findViewById(R.id.meeting_data_attend_button)).setVisibility(View.GONE);
 
 			mIsManager = true;
+			showLeaveTitle = true;
 		}
 		else {
 			RSVP r = mDbAdapter.getMyRsvp(mId);
@@ -74,8 +79,14 @@ public class MeetingDataActivity extends Activity {
 
 				/* hiding the accept button when the viewer already accepted this meeting */
 				((Button) findViewById(R.id.meeting_data_attend_button)).setVisibility(View.GONE);
+				
+				showLeaveTitle = true;
 			}
 		}
+		
+		/* if the user accepted to attend the meeting in the past, displaying a different text on the "unattend" button */
+		if (showLeaveTitle)
+			((Button) findViewById(R.id.meeting_data_decline_button)).setText(getString(R.string.meeting_data_leave_button_text));
 	}
 
 	@Override
@@ -105,7 +116,7 @@ public class MeetingDataActivity extends Activity {
 				Intent intent = new Intent(this, RemoveMeetingActivity.class);
 				intent.putExtra(EXTRA_MEETING_ID, mId);
 				intent.putExtra(EXTRA_MEETING_CREATOR_REMOVAL, true);
-				startActivity(intent);
+				startActivityForResult(intent, RQ_LEAVE_MEETING);
 			}
 			else {
 				SRMeetingDeclining servResp = SDAL.declineAMeeting(mHash);
@@ -122,7 +133,24 @@ public class MeetingDataActivity extends Activity {
 			intent.setAction(BolePoConstants.ACTION_BOLEPO_REFRESH_LISTS);
 			sendBroadcast(intent);
 		}
-		finish();
+		
+		/* in case the user is the meeting manager we don't want to close the activity because a 
+		 * dialog box is shown to him, and until he doesn't make his choice, he should remain 
+		 * in the activity */
+		if (!mIsManager)
+			finish();
 	}
+
+	@Override
+	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+		if (requestCode == RQ_LEAVE_MEETING) {
+			if (resultCode == RESULT_OK) {
+				finish();
+			}
+		}
+		super.onActivityResult(requestCode, resultCode, data);
+	}
+	
+	
 
 }

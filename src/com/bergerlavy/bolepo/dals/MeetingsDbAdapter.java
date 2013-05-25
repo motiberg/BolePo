@@ -99,13 +99,13 @@ public class MeetingsDbAdapter {
 
 		/* getting the meeting ID using the old meeting hash since the meeting hasn't been changed yet */
 		long meetingId = getMeetingIdByHash(oldMeetingHash);
-		
+
 		/* getting the manager of the meeting */
 		Participant oldManager = getMeetingManager(meetingId);
 		return appointNewManager(oldMeetingHash, newMeetingHash, newManagerPhone, newManagerNewHash) &&
 				removeParticipant(meetingId, oldManager);
 	}
-	
+
 	public boolean replaceAndRemoveMeetingManager(String oldMeetingHash, String newManagerPhone, SRMeetingManagerReplacementAndRemoval servResp) {
 		long meetingId = getMeetingIdByHash(oldMeetingHash);
 		/* getting the manager of the meeting */
@@ -207,19 +207,23 @@ public class MeetingsDbAdapter {
 	public List<Meeting> getAllAcceptedMeetings(long ... excludes) {
 		Cursor c = createAcceptedMeetingsCursor();
 		List<Meeting> meetings = new ArrayList<Meeting>();
+
 		if (c != null) {
-			main_loop: while (!c.isAfterLast()) {
+			while (!c.isAfterLast()) {
+				boolean editedMeeting = false;
 				for (long l : excludes) {
-					if (l == c.getLong(c.getColumnIndex(DbContract.Meetings._ID)))
-						continue main_loop;
+					if (l == c.getLong(c.getColumnIndex(DbContract.Meetings._ID))) {
+						editedMeeting = true;
+					}
 				}
-				meetings.add(new Meeting(c.getString(c.getColumnIndex(DbContract.Meetings.COLUMN_NAME_MEETING_NAME)),
-						c.getString(c.getColumnIndex(DbContract.Meetings.COLUMN_NAME_MEETING_DATE)),
-						c.getString(c.getColumnIndex(DbContract.Meetings.COLUMN_NAME_MEETING_TIME)),
-						c.getString(c.getColumnIndex(DbContract.Meetings.COLUMN_NAME_MEETING_MANAGER)),
-						c.getString(c.getColumnIndex(DbContract.Meetings.COLUMN_NAME_MEETING_LOCATION)),
-						c.getString(c.getColumnIndex(DbContract.Meetings.COLUMN_NAME_MEETING_SHARE_LOCATION_TIME)),
-						getParticipantsPhonesAsList(c.getLong(c.getColumnIndex(DbContract.Meetings._ID)))));
+				if (!editedMeeting)
+					meetings.add(new Meeting(c.getString(c.getColumnIndex(DbContract.Meetings.COLUMN_NAME_MEETING_NAME)),
+							c.getString(c.getColumnIndex(DbContract.Meetings.COLUMN_NAME_MEETING_DATE)),
+							c.getString(c.getColumnIndex(DbContract.Meetings.COLUMN_NAME_MEETING_TIME)),
+							c.getString(c.getColumnIndex(DbContract.Meetings.COLUMN_NAME_MEETING_MANAGER)),
+							c.getString(c.getColumnIndex(DbContract.Meetings.COLUMN_NAME_MEETING_LOCATION)),
+							c.getString(c.getColumnIndex(DbContract.Meetings.COLUMN_NAME_MEETING_SHARE_LOCATION_TIME)),
+							getParticipantsPhonesAsList(c.getLong(c.getColumnIndex(DbContract.Meetings._ID)))));
 				c.moveToNext();
 			}
 		}
@@ -554,7 +558,6 @@ public class MeetingsDbAdapter {
 		values.put(DbContract.Meetings.COLUMN_NAME_MEETING_HASH, serverResponse.getMeetingHash());
 
 		mDb.update(DbContract.Meetings.TABLE_NAME, values, DbContract.Meetings._ID + " = " + id, null);
-		mDb.close();
 
 		/* inserting the new participants into the participants table */
 

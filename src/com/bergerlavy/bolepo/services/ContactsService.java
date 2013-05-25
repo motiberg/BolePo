@@ -48,8 +48,13 @@ public class ContactsService extends IntentService {
 					while (pCur.moveToNext()) {
 						String phoneNo = pCur.getString(pCur.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER));
 						phoneNo = BolePoMisc.chopeNonDigitsFromPhoneNumber(phoneNo);
-						if (!mAllContacts.containsKey(phoneNo)) {
-							mAllContacts.put(phoneNo, new BolePoContact.Builder(name, phoneNo).build());
+						
+						/* avoiding from adding the device phone to the list in case that the user stored 
+						 * his own phone number as a contact */
+						if (!phoneNo.equalsIgnoreCase(BolePoMisc.getDevicePhoneNumber(this))) {
+							if (!mAllContacts.containsKey(phoneNo)) {
+								mAllContacts.put(phoneNo, new BolePoContact.Builder(name, phoneNo).build());
+							}
 						}
 					}
 					pCur.close();

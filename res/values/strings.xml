@@ -55,6 +55,7 @@
     <string name="add_participants_no_contacts_invited_yet">No contacts has been invited yet !</string>
     <string name="meeting_data_attend_button_text">Attend</string>
     <string name="meeting_data_decline_button_text">Decline</string>
+    <string name="meeting_data_leave_button_text">Leave</string>
     <string name="title_activity_network_settings_dialog">No Internet Connection !</string>
     <string name="network_settings_dialog_message">No internet connection has been detected ! Go to Settings and turn it on !</string>
     <string name="title_activity_login">Login to BolePo</string>

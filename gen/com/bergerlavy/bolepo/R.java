@@ -335,6 +335,7 @@ containing a value of this type.
         public static final int main_not_approved_yet_header_label=0x7f05003e;
         public static final int meeting_data_attend_button_text=0x7f050045;
         public static final int meeting_data_decline_button_text=0x7f050046;
+        public static final int meeting_data_leave_button_text=0x7f050047;
         public static final int meeting_management_add_participants_button=0x7f050019;
         public static final int meeting_management_cDesc=0x7f050018;
         public static final int meeting_management_create_button=0x7f05001c;
@@ -348,10 +349,10 @@ containing a value of this type.
         public static final int meeting_managment_create_button_text=0x7f05002b;
         public static final int meeting_managment_modify_button_text=0x7f05002c;
         public static final int menu_settings=0x7f050023;
-        public static final int network_settings_dialog_go_to_settings=0x7f05004b;
-        public static final int network_settings_dialog_message=0x7f050048;
-        public static final int network_settings_dialog_quit_app=0x7f05004a;
-        public static final int network_settings_dialog_waiting_for_connection_message=0x7f05004c;
+        public static final int network_settings_dialog_go_to_settings=0x7f05004c;
+        public static final int network_settings_dialog_message=0x7f050049;
+        public static final int network_settings_dialog_quit_app=0x7f05004b;
+        public static final int network_settings_dialog_waiting_for_connection_message=0x7f05004d;
         public static final int no_meetings=0x7f050024;
         public static final int remove_meeting_cancel_removal=0x7f05003c;
         public static final int remove_meeting_confirm_removal=0x7f05003b;
@@ -361,9 +362,9 @@ containing a value of this type.
         public static final int title_activity_create_meeting=0x7f050013;
         public static final int title_activity_date_picker=0x7f05001e;
         public static final int title_activity_gps=0x7f05002d;
-        public static final int title_activity_login=0x7f050049;
+        public static final int title_activity_login=0x7f05004a;
         public static final int title_activity_main=0x7f05001f;
-        public static final int title_activity_network_settings_dialog=0x7f050047;
+        public static final int title_activity_network_settings_dialog=0x7f050048;
         public static final int title_activity_remove_meeting=0x7f05003a;
         public static final int title_activity_time_picker=0x7f05002f;
     }

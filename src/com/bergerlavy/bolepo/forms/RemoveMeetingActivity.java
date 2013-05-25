@@ -88,6 +88,7 @@ public class RemoveMeetingActivity extends Activity {
 				if (data.hasExtra(AddParticipantsActivity.EXTRA_CONTACT_TO_MANAGE)) {
 					String contactPhone = data.getStringExtra(AddParticipantsActivity.EXTRA_CONTACT_TO_MANAGE);
 					new ReplaceAndRemoveMeetingManagerTask(this).execute(contactPhone);
+					setResult(RESULT_OK);
 				}
 			}
 			if (resultCode == RESULT_CANCELED) {
