@@ -17,7 +17,6 @@
     <string name="title_activity_date_picker">DatePickerActivity</string>
     <string name="title_activity_main">MainActivity</string>
     <string name="main_no_scheduled_meeting">אין פגישה מתוכננת</string>
-    <string name="main_menu_create_meeting">Create Meeting</string>
     <string name="item_wfa_meeting_name_label">Name:</string>
     <string name="menu_settings">bla</string>
     <string name="no_meetings">No Meetings ! Create One !</string>
@@ -62,5 +61,9 @@
     <string name="network_settings_dialog_quit_app">Quit BolePo</string>
     <string name="network_settings_dialog_go_to_settings">Settings</string>
     <string name="network_settings_dialog_waiting_for_connection_message">Looking for internet connection...</string>
+    <string name="main_menu_map">Map</string>
+    <string name="title_activity_meeting_location_selection">MeetingLocationSelectionActivity</string>
+    <string name="action_settings">Settings</string>
+    <string name="title_activity_geocode">GeocodeActivity</string>
 
 </resources>

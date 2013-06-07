@@ -8,8 +8,8 @@
     <item
         android:id="@+id/main_menu_create"
         android:orderInCategory="101"
-        android:showAsAction="never"
-        android:title="@string/main_menu_create_meeting"/>
+        android:showAsAction="ifRoom"
+        android:icon="@android:drawable/ic_input_add"/>
     <item
         android:id="@+id/main_menu_gps"
         android:orderInCategory="102"
@@ -25,5 +25,11 @@
         android:orderInCategory="201"
         android:showAsAction="never"
         android:title="@string/main_menu_unregister"/>
+    
+    <item 
+        android:id="@+id/main_menu_map"
+        android:orderInCategory="202"
+        android:showAsAction="never"
+        android:title="@string/main_menu_map"/>
 
 </menu>

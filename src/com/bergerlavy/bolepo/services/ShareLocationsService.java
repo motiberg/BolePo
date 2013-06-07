@@ -6,17 +6,12 @@ import java.util.TimerTask;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
-import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.os.Binder;
 import android.os.Bundle;
 import android.os.IBinder;
-
-import com.bergerlavy.bolepo.dals.SDAL;
-import com.bergerlavy.db.DbContract;
-import com.bergerlavy.db.DbHelper;
 
 public class ShareLocationsService extends Service  {
 
@@ -24,6 +19,8 @@ public class ShareLocationsService extends Service  {
 	private int mGpsSampleRate = 0;
 	private Timer mTimer;
 	private LocationManager mLocationManager;
+	
+	private final IBinder mBinder = new ShareLocationsBinder();
 
 	@Override
 	public void onCreate() {
@@ -51,9 +48,14 @@ public class ShareLocationsService extends Service  {
 		mLocationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, mGpsSampleRate, 0, locationListener);
 	}
 
-	@Override
-	public IBinder onBind(Intent arg0) {
-		return null;
+	public class ShareLocationsBinder extends Binder {
+		public ShareLocationsService getService() {
+			return ShareLocationsService.this;
+		}
+	}
+	
+	public IBinder onBind(Intent intent) {
+		return mBinder;
 	}
 
 
@@ -68,6 +70,10 @@ public class ShareLocationsService extends Service  {
 	public void onDestroy() {
 		super.onDestroy();
 //		mTimer.cancel();
+	}
+	
+	public Location getLocation() {
+		return mLocation;
 	}
 
 	class Task extends TimerTask {

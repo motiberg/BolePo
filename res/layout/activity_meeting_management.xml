@@ -1,9 +1,9 @@
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    style="@style/FormStyle"
     android:layout_width="match_parent"
     android:layout_height="match_parent" >
 
     <LinearLayout
-        style="@style/FormStyle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
@@ -29,10 +29,11 @@
                 android:id="@+id/meeting_management_purpose_edittext"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
-                android:layout_weight="7"
                 android:layout_marginRight="6dp"
                 android:layout_marginTop="2dp"
-                android:inputType="text" />
+                android:layout_weight="7"
+                android:inputType="text"
+                android:textColor="@android:color/white" />
         </LinearLayout>
 
         <!-- Meeting's Date -->
@@ -173,20 +174,20 @@
             style="@style/FormRowStyle"
             android:layout_width="match_parent"
             android:layout_height="60dp"
+            android:layout_marginBottom="10dp"
             android:background="@drawable/rounded_view"
             android:orientation="vertical"
-            android:paddingBottom="6dp"
-            android:layout_marginBottom="10dp" >
+            android:paddingBottom="6dp" >
 
             <Button
                 android:id="@+id/meeting_managment_commit_action_button"
-                android:paddingLeft="20dp"
-                android:paddingRight="20dp"
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
                 android:layout_gravity="center"
                 android:background="@drawable/rounded_button"
-                android:onClick="commitAction" />
+                android:onClick="commitAction"
+                android:paddingLeft="20dp"
+                android:paddingRight="20dp" />
         </LinearLayout>
     </LinearLayout>
 

@@ -6,6 +6,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.database.Cursor;
 import android.os.Bundle;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
@@ -17,6 +18,7 @@ import android.widget.AdapterView;
 import android.widget.AdapterView.AdapterContextMenuInfo;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ListView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.bergerlavy.bolepo.BolePoConstants.Credentials;
@@ -24,7 +26,9 @@ import com.bergerlavy.bolepo.dals.MeetingsDbAdapter;
 import com.bergerlavy.bolepo.dals.SDAL;
 import com.bergerlavy.bolepo.forms.MeetingManagementActivity;
 import com.bergerlavy.bolepo.forms.RemoveMeetingActivity;
+import com.bergerlavy.bolepo.maps.UsersLocationsMapActivity;
 import com.bergerlavy.bolepo.services.ContactsService;
+import com.bergerlavy.bolepo.services.ShareLocationsService;
 import com.google.android.gcm.GCMRegistrar;
 
 public class MainActivity extends Activity {
@@ -33,6 +37,8 @@ public class MainActivity extends Activity {
 
 	private ListView mAcceptedList;
 	private ListView mNotApprovedYetList;
+	private TextView mAcceptedListHeader;
+	private TextView mNotApprovedYetListHeader;
 
 	private AcceptedMeetingsAdapter mAcceptedAdapter;
 	//TODO change the type to NotApprovedYetMeetingsAdapter
@@ -68,15 +74,36 @@ public class MainActivity extends Activity {
 
 		mAcceptedList = (ListView) findViewById(R.id.main_accepted_list);
 		mNotApprovedYetList = (ListView) findViewById(R.id.main_not_approved_yet_list);
+		mAcceptedListHeader = (TextView) findViewById(R.id.main_accepted_header);
+		mNotApprovedYetListHeader = (TextView) findViewById(R.id.main_not_approved_yet_header);
 
 		mDbAdapter = new MeetingsDbAdapter(this);
 		mDbAdapter.open();
 
-		mAcceptedAdapter = new AcceptedMeetingsAdapter(this, mDbAdapter.createAcceptedMeetingsCursor());
+		Cursor c = mDbAdapter.createAcceptedMeetingsCursor();
+		if (c.getCount() == 0) {
+			mAcceptedList.setVisibility(View.GONE);
+			mAcceptedListHeader.setVisibility(View.GONE);
+		}
+		else {
+			mAcceptedList.setVisibility(View.VISIBLE);
+			mAcceptedListHeader.setVisibility(View.VISIBLE);
+		}
+		mAcceptedAdapter = new AcceptedMeetingsAdapter(this, c);
 		mAcceptedList.setAdapter(mAcceptedAdapter);
 		registerForContextMenu(mAcceptedList);
+		
 
-		mNotApprovedYetAdapter = new AcceptedMeetingsAdapter(this, mDbAdapter.createWaitingForApprovalMeetingsCursor());
+		c = mDbAdapter.createWaitingForApprovalMeetingsCursor();
+		if (c.getCount() == 0) {
+			mNotApprovedYetList.setVisibility(View.GONE);
+			mNotApprovedYetListHeader.setVisibility(View.GONE);
+		}
+		else {
+			mNotApprovedYetList.setVisibility(View.VISIBLE);
+			mNotApprovedYetListHeader.setVisibility(View.VISIBLE);
+		}
+		mNotApprovedYetAdapter = new AcceptedMeetingsAdapter(this, c);
 		mNotApprovedYetList.setAdapter(mNotApprovedYetAdapter);
 		registerForContextMenu(mNotApprovedYetList);
 
@@ -85,7 +112,9 @@ public class MainActivity extends Activity {
 
 			/* starting the contacts service to check which of the contacts stored in this device 
 			 * are registered to the application */
-						startService(new Intent(this, ContactsService.class));
+			startService(new Intent(this, ContactsService.class));
+
+			startService(new Intent(this, ShareLocationsService.class));
 
 			/* setting an onClick listener to the accepted meetings list to allow the user to watch the meeting's details */
 			mAcceptedList.setOnItemClickListener(MeetingDataListener);
@@ -153,10 +182,7 @@ public class MainActivity extends Activity {
 
 	@Override
 	protected void onStart() {
-
 		if (mDbAdapter == null) {
-			System.out.println("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
-			System.out.println("Opening DB on MainActivity");
 			mDbAdapter = new MeetingsDbAdapter(this);
 			mDbAdapter.open();
 		}
@@ -167,10 +193,7 @@ public class MainActivity extends Activity {
 
 	@Override
 	protected void onStop() {
-		
-
 		if (mDbAdapter != null) {
-			System.out.println("Closing DB on MainActivity");
 			mDbAdapter.close();
 			mDbAdapter = null;
 		}
@@ -225,6 +248,9 @@ public class MainActivity extends Activity {
 			} else {
 				Toast.makeText(this, "Not Registered !!!", Toast.LENGTH_LONG).show();
 			}
+			break;
+		case R.id.main_menu_map:
+			startActivity(new Intent(this, UsersLocationsMapActivity.class));
 			break;
 		}
 
@@ -285,13 +311,35 @@ public class MainActivity extends Activity {
 		@Override
 		public void onReceive(Context context, Intent intent) {
 
+			Cursor c = mDbAdapter.createAcceptedMeetingsCursor();
+			if (c.getCount() == 0) {
+				mAcceptedList.setVisibility(View.GONE);
+				mAcceptedListHeader.setVisibility(View.GONE);
+			}
+			else {
+				mAcceptedList.setVisibility(View.VISIBLE);
+				mAcceptedListHeader.setVisibility(View.VISIBLE);
+			}
+			
 			/* changing the current cursor that populates the "Accepted Meetings" list by a new one. 
 			 * the function "changeCursor" closes the old cursor */
-			mAcceptedAdapter.changeCursor(mDbAdapter.createAcceptedMeetingsCursor());
+			mAcceptedAdapter.changeCursor(c);
 
+			c = mDbAdapter.createWaitingForApprovalMeetingsCursor();
+			if (c.getCount() == 0) {
+				mNotApprovedYetList.setVisibility(View.GONE);
+				mNotApprovedYetListHeader.setVisibility(View.GONE);
+			}
+			else {
+				mNotApprovedYetList.setVisibility(View.VISIBLE);
+				mNotApprovedYetListHeader.setVisibility(View.VISIBLE);
+			}
+			
 			/* changing the current cursor that populates the "Waiting For Approval Meetings" list by a new one. 
 			 * the function "changeCursor" closes the old cursor */
-			mNotApprovedYetAdapter.changeCursor(mDbAdapter.createWaitingForApprovalMeetingsCursor());
+			mNotApprovedYetAdapter.changeCursor(c);
+			
+			
 		}
 	} 
 

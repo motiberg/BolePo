@@ -1,176 +1,115 @@
 package com.bergerlavy.bolepo.maps;
 
-import android.app.Activity;
-import android.content.DialogInterface;
-import android.content.DialogInterface.OnClickListener;
-import android.os.Bundle;
-import android.support.v4.app.FragmentManager;
-import android.view.Menu;
+import java.util.ArrayList;
 
+import android.app.Activity;
+import android.content.Context;
+import android.content.Intent;
+import android.os.Bundle;
+import android.util.DisplayMetrics;
+import android.view.Display;
+import android.view.KeyEvent;
+import android.view.Menu;
+import android.view.WindowManager;
+import android.view.inputmethod.EditorInfo;
+import android.widget.EditText;
+import android.widget.TextView;
+import android.widget.TextView.OnEditorActionListener;
+import android.widget.Toast;
+
+import com.bergerlavy.bolepo.BolePoConstants;
 import com.bergerlavy.bolepo.R;
-import com.bergerlavy.bolepo.shareddata.GlobalData;
+import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.GoogleMap.OnMapClickListener;
-import com.google.android.gms.maps.GoogleMapOptions;
 import com.google.android.gms.maps.MapFragment;
-import com.google.android.gms.maps.UiSettings;
-import com.google.android.gms.maps.model.CameraPositionCreator;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.Marker;
-import com.google.android.gms.maps.model.MarkerOptions;
 
-public class MeetingLocationSelectionActivity extends Activity
-{
-	// *************
-	// Data Members
-	// *************
-	private static GoogleMap mMap;
-	private static Marker    mMarker;
-	
-	
-	// ******************************************************
-	//					Main methods
-	// ******************************************************
-	
-	protected void onCreate(Bundle savedInstanceState)
-	{
-		super.onCreate(savedInstanceState);
-		setContentView(R.layout.activity_meeting_location_selection);
-		
-		// Validates and initialize the map
-		ValidateMap();
-	}
+public class MeetingLocationSelectionActivity extends Activity {
+
+	private EditText searchBox;
+	private GoogleMap map;
+
+	private static final int RQ_GEOCODING = 1;
 
 	@Override
-	public boolean onCreateOptionsMenu(Menu menu) 
-	{
-		// Inflate the menu; this adds items to the action bar if it is present.
-		getMenuInflater().inflate(R.menu.activity_meeting_location_selection, menu);
-		return true;
+	protected void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+		setContentView(R.layout.activity_meeting_location_selection);
+
+		searchBox = (EditText) findViewById(R.id.meeting_location_map_search_box);
+		map = ((MapFragment) getFragmentManager().findFragmentById(R.id.map)).getMap();
+
+		searchBox.setOnEditorActionListener(new OnEditorActionListener() {
+
+			@Override
+			public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+				if (actionId == EditorInfo.IME_ACTION_SEARCH) {
+					Intent intent = new Intent(MeetingLocationSelectionActivity.this, GeocodeActivity.class);
+					intent.putExtra(GeocodeActivity.EXTRA_ADDRESS, searchBox.getText().toString());
+					startActivityForResult(intent, RQ_GEOCODING);
+					return true;
+				}
+				return false;
+			}
+		});
 	}
-	
-	/***
-	 * The main function of this class.
-	 * Initialize this view and sets makes the user chose a location.
-	 * @return the bolelocation chosen by the user.
-	 */
-	public static BoleLocation getMeetingLocation()
-	{
-		return null;
-	}
-	
-	// ******************************************************
-	//					Initialization methods
-	// ******************************************************
-	
-	/** 
-	 * This function will be used to ensure that the GoogleMap object
-	 * is never null.
-	 */
-	private void ValidateMap()
-	{
-		// Checks if the map is not yet initalized
-		if (mMap == null)
-		{
-			// Gets the map from the fragment
-			mMap = ((MapFragment)(getFragmentManager().findFragmentById(R.id.selection_map))).getMap();
-			
-			// Initialize the map values
-			InitialMapValues();
-			
-			// Attach the marker to the map
-			FirstTimeAddMarker();
-			
-			// Ensures that the proccess succeeded
-			if (mMap == null)
-			{
-				// TODO : Print Error
+
+
+
+
+	@Override
+	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+		super.onActivityResult(requestCode, resultCode, data);
+		if (requestCode == RQ_GEOCODING) {
+			if (resultCode == RESULT_OK) {
+				ArrayList<LatLng> coordinates = data.getParcelableArrayListExtra(GeocodeActivity.EXTRA_COORDINATES);
+				if (coordinates != null) {
+//					CameraUpdate cu = CameraUpdateFactory.newLatLng(coordinates.get(0));
+//					map.moveCamera(cu);
+					DisplayMetrics displayMetrics = new DisplayMetrics();
+					WindowManager wm = (WindowManager) getApplicationContext().getSystemService(Context.WINDOW_SERVICE);
+					wm.getDefaultDisplay().getMetrics(displayMetrics);
+					int screenw = displayMetrics.widthPixels;
+					int screenh = displayMetrics.heightPixels;
+					Toast.makeText(this, "width = " + screenw + " height = " + screenh, Toast.LENGTH_SHORT).show();
+					int R = 6371; // radius of the earch
+					LatLng northEast = coordinates.get(0);
+					LatLng southWest = coordinates.get(1);
+					double dLat = Math.toRadians(southWest.latitude - northEast.latitude);
+					double dLong = Math.toRadians(southWest.longitude - northEast.longitude);
+					double a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+							Math.sin(dLong / 2) * Math.sin(dLong / 2) *
+							Math.cos(northEast.latitude) * Math.cos(southWest.latitude);
+					double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+					double d = R * c * 1000;
+					Toast.makeText(this, "area dist = " + d, Toast.LENGTH_SHORT).show();
+					
+					double screenDiagonalInPixels = Math.sqrt(screenw * screenw + screenh * screenh);
+					for (int i = 1 ; i < BolePoConstants.MAP_SCALES_PER_ZOOM_LEVEL.length ; i++) {
+						if (screenDiagonalInPixels * BolePoConstants.MAP_SCALES_PER_ZOOM_LEVEL[i] < d) {
+							CameraUpdate cu = CameraUpdateFactory.newLatLngZoom(coordinates.get(2), i - 1);
+							map.animateCamera(cu);
+							break;
+						}
+					}
+					
+				}
+			}
+			if (resultCode == RESULT_CANCELED) {
+				Toast.makeText(this, "No", Toast.LENGTH_SHORT).show();
 			}
 		}
 	}
-	
-	/**
-	 * This function customize the map for our needs
-	 */
-	private void InitialMapValues()
-	{
-		// Sets map type
-		mMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
-		
-		// Enables the "My location"
-		mMap.setMyLocationEnabled(true);
-		
-		// Gets the handler for the map options
-		UiSettings lSettings = mMap.getUiSettings();
-		
-		// Sets zoom level to street level
-		mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(GetBestLocation(), 
-														  GlobalData.STREET_LEVEL_ZOOM));
-	
-		// Enables all options
-		lSettings.setAllGesturesEnabled(true);
-		lSettings.setCompassEnabled(true);
-		lSettings.setMyLocationButtonEnabled(true);
-		
-		// Setting the listener for clicks on the map
-		mMap.setOnMapClickListener(MarkerListener);
-		
+
+
+
+
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+		// Inflate the menu; this adds items to the action bar if it is present.
+		getMenuInflater().inflate(R.menu.meeting_location_selection, menu);
+		return true;
 	}
 
-	// This method adds the marker to the map when it is initialized
-	private void FirstTimeAddMarker()
-	{
-		// Enables the marker to be dragged
-		mMarker.setDraggable(true);
-		
-		// Gets the best available location of the map
-		LatLng CurPos = GetBestLocation();
-		
-		// Adds marker to map.
-		mMarker = mMap.addMarker(new MarkerOptions().position(CurPos)
-													.title("BolePo"));
-	}
-	
-	// ******************************************************
-	//					Supporting methods
-	// ******************************************************
-	
-	/**
-	 * This function is used to initialize the marker.
-	 * @return The best updated location value.
-	 */
-	private LatLng GetBestLocation()
-	{
-		// Defines a return value
-		LatLng ReturnValue = null;
-		
-		
-		
-		// If no location was retrieved, used default location
-		if (ReturnValue == null)
-		{
-			ReturnValue = GlobalData.DEFAULT_LOCATION;
-		}
-		
-		// Returns the best found location
-		return (ReturnValue);
-	}
-	
-	/**
-	 * A listener that handles the movement of the marker
-	 */
-	OnMapClickListener MarkerListener = new OnMapClickListener()
-	{
-		
-		/**
-		 * Moves the marker to the location of the click
-		 */
-		public void onMapClick(LatLng arg0) 
-		{
-			// Changes the location of the marker.
-			mMarker.setPosition(arg0);
-		}
-	};
-	
 }

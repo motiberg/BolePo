@@ -22,14 +22,13 @@ import com.bergerlavy.bolepo.MainActivity;
 import com.bergerlavy.bolepo.R;
 import com.bergerlavy.bolepo.TimePickerActivity;
 import com.bergerlavy.bolepo.dals.Action;
-import com.bergerlavy.bolepo.dals.MeetingsDbAdapter;
 import com.bergerlavy.bolepo.dals.Meeting;
+import com.bergerlavy.bolepo.dals.MeetingsDbAdapter;
 import com.bergerlavy.bolepo.dals.SDAL;
 import com.bergerlavy.bolepo.dals.SRMeetingCreation;
 import com.bergerlavy.bolepo.dals.SRMeetingModification;
 import com.bergerlavy.bolepo.dals.ServerResponse;
 import com.bergerlavy.bolepo.maps.MeetingLocationSelectionActivity;
-import com.bergerlavy.bolepo.services.ShareLocationsService;
 import com.bergerlavy.bolepo.shareddata.Misc;
 
 
@@ -248,9 +247,9 @@ public class MeetingManagementActivity extends Activity {
 			new ManageMeetingOnServer().execute(meeting);
 
 
-			Intent intent = new Intent(this, ShareLocationsService.class);
-			stopService(intent);
-			startService(intent);
+//			Intent intent = new Intent(this, ShareLocationsService.class);
+//			stopService(intent);
+//			startService(intent);
 			finish();
 
 

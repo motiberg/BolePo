@@ -5,7 +5,7 @@
     android:versionName="1.0" >
 
     <uses-sdk
-        android:minSdkVersion="8"
+        android:minSdkVersion="12"
         android:targetSdkVersion="17" />
 
     <!-- can read contacts -->
@@ -128,7 +128,7 @@
         <!-- Key for the google maps -->
         <meta-data
             android:name="com.google.android.maps.v2.API_KEY"
-            android:value="AIzaSyAe_3jYYhX1Icr34vD9mLoWG2tBgrn_PEQ" />
+            android:value="AIzaSyBwol3u6tqeCIKeyuNbNJLlQ0eLP9ZRLHw" />
 
         <activity
             android:name="com.bergerlavy.bolepo.DatePickerActivity"
@@ -139,6 +139,11 @@
             android:name="com.bergerlavy.bolepo.NetworkSettingsDialogActivity"
             android:label="@string/title_activity_network_settings_dialog"
             android:theme="@android:style/Theme.Dialog" >
+        </activity>
+        <activity
+            android:name="com.bergerlavy.bolepo.maps.GeocodeActivity"
+            android:label="@string/title_activity_geocode"
+            android:theme="@style/DialogWithNoTitleBar" >
         </activity>
     </application>
 

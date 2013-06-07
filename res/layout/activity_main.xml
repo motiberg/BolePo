@@ -16,7 +16,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content" />
     
-    <TextView android:id="@+id/main_accepted_not_approved_yet_header"
+    <TextView android:id="@+id/main_not_approved_yet_header"
         style="@style/ListHeaderStyle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
