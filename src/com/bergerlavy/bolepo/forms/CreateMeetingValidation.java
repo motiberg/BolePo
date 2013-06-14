@@ -20,7 +20,7 @@ public class CreateMeetingValidation implements ValidationStatus {
 		mChecked = false;
 		mContext = c;
 	}
-	
+
 	@Override
 	public InputValidationReport isOK() {
 		if (mChecked)
@@ -28,18 +28,32 @@ public class CreateMeetingValidation implements ValidationStatus {
 
 		mDbAdapter = new MeetingsDbAdapter(mContext);
 		mDbAdapter.open();
-		
+
 		mReport = new InputValidationReport.Builder(true).build();
 		mChecked = true;
 
+		if (mMeeting.getName().equals("")) {
+			mReport = new InputValidationReport.Builder(false)
+			.setError("Please provide meeting name")
+			.build();
+			return mReport;
+		}
+
+		if (mMeeting.getTime().equals("")) {
+			mReport = new InputValidationReport.Builder(false)
+			.setError("Please provide meeting time")
+			.build();
+			return mReport;
+		}
+
 		List<Meeting> allAcceptedMeetings = mDbAdapter.getAllAcceptedMeetings();
-		
+
 		for (Meeting m : allAcceptedMeetings) {
 			String date = m.getDate();
 			String time = m.getTime();
 			String shareTime = m.getShareLocationTime();
 			String name = m.getName();
-			
+
 			if (mMeeting.getDate().equals(date)) {
 				Time dbTime = new Time(time);
 				Time dbShareTime = new Time(shareTime);
@@ -54,17 +68,19 @@ public class CreateMeetingValidation implements ValidationStatus {
 			/* handling the case the meeting are at different dates, but actually handling meetings that are
 			 * at sequential dates, i.e. the new meeting is day before or day after the
 			 * meeting in the database */
-//			else {
-//				mReport = new InputValidationReport.Builder(true).build();
-//				return mReport;
-//			}
+			//			else {
+			//				mReport = new InputValidationReport.Builder(true).build();
+			//				return mReport;
+			//			}
 		}
-		
-		if (mMeeting.getParticipantsNum() < 2)
-			mReport = new InputValidationReport.Builder(false).setError("Meeting must has at least one participant beside you.").build();
-		
+
+		if (mMeeting.getParticipantsNum() < 2) {
+			mReport = new InputValidationReport.Builder(false)
+			.setError("Please invite at least one participant")
+			.build();
+		}
 		mDbAdapter.close();
-		
+
 		return mReport;
 	}
 

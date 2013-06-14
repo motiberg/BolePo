@@ -20,11 +20,10 @@ import com.bergerlavy.bolepo.NoInternetConnectionBolePoException;
 import com.bergerlavy.bolepo.dals.SDAL;
 import com.bergerlavy.bolepo.dals.SRGcmRegistrationCheck;
 import com.bergerlavy.bolepo.dals.ServerResponse;
-import com.bergerlavy.bolepo.forms.BolePoContact;
 
 public class ContactsService extends IntentService {
 
-	private HashMap<String, BolePoContact> mAllContacts;
+	private HashMap<String, Long> mAllContacts;
 
 	public ContactsService() {
 		super("ContactsService");
@@ -32,13 +31,12 @@ public class ContactsService extends IntentService {
 
 	@Override
 	protected void onHandleIntent(Intent intent) {
-		mAllContacts = new HashMap<String, BolePoContact>();
+		mAllContacts = new HashMap<String, Long>();
 		ContentResolver cr = getContentResolver();
 		Cursor cur = cr.query(ContactsContract.Contacts.CONTENT_URI, null, null, null, null);
 		if (cur.getCount() > 0) {
 			while (cur.moveToNext()) {
-				String id = cur.getString(cur.getColumnIndex(ContactsContract.Contacts._ID));
-				String name = cur.getString(cur.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME));
+				long id = cur.getLong(cur.getColumnIndex(ContactsContract.Contacts._ID));
 				if (Integer.parseInt(cur.getString(cur.getColumnIndex(ContactsContract.Contacts.HAS_PHONE_NUMBER))) > 0) {
 					Cursor pCur = cr.query(
 							ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
@@ -53,7 +51,7 @@ public class ContactsService extends IntentService {
 						 * his own phone number as a contact */
 						if (!phoneNo.equalsIgnoreCase(BolePoMisc.getDevicePhoneNumber(this))) {
 							if (!mAllContacts.containsKey(phoneNo)) {
-								mAllContacts.put(phoneNo, new BolePoContact.Builder(name, phoneNo).build());
+								mAllContacts.put(phoneNo, id);
 							}
 						}
 					}
@@ -90,10 +88,10 @@ public class ContactsService extends IntentService {
 		try {
 			fos = openFileOutput(BolePoConstants.CONTACTS_FILE_NAME, Context.MODE_PRIVATE);
 			for (String phone : registeredContactsPhones) {
-				BolePoContact contact = mAllContacts.get(phone);
-				fos.write(contact.getName().getBytes());
+				Long contactId = mAllContacts.get(phone);
+				fos.write(String.valueOf(contactId).getBytes());
 				fos.write(new byte[] { '#', '@', '%' });
-				fos.write(contact.getPhone().getBytes());
+				fos.write(phone.getBytes());
 				fos.write(new byte[] { '%', '@', '#' });
 			}
 			fos.close();

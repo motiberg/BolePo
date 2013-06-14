@@ -72,9 +72,8 @@ public class AddParticipantsActivity extends ListActivity {
 			/* removing the manager from the participants list, so the list will contain only the invited participants (excluding the inviter) */
 			mInvitedParticipants.remove(BolePoMisc.getDevicePhoneNumber(this));
 		}
-
-		mAdapter = new ArrayAdapter<String>(this, R.layout.item_add_participants, R.id.item_add_participants_participant_name, mInvitedParticipants);
-		setListAdapter(mAdapter);
+//		mAdapter = new ArrayAdapter<String>(this, R.layout.item_add_participants, R.id.item_add_participants_participant_name, mInvitedParticipants);
+//		setListAdapter(mAdapter);
 	}
 
 	@Override
@@ -86,18 +85,18 @@ public class AddParticipantsActivity extends ListActivity {
 
 	@Override
 	protected void onListItemClick(ListView l, View v, int position, long id) {
-		TextView phone = (TextView) v.findViewById(R.id.item_add_participants_participant_name);
+//		TextView phone = (TextView) v.findViewById(R.id.item_add_participants_participant_name);
 
 		/* if this activity was called from the RemoveMeetingActivity in order to select a participant to become the manager of
 		 * the meeting in case the creator of the meeting doesn't want to participant anymore in the meeting but doesn't want 
 		 * to cancel it for the other participants */
-		if (mRemoveMeetingChooseContactToManage) {
-			mIsContactChosenToManage = true;
-			Intent intent = new Intent();
-			intent.putExtra(EXTRA_CONTACT_TO_MANAGE, phone.getText().toString());
-			setResult(RESULT_OK, intent);
-			finish();
-		}
+//		if (mRemoveMeetingChooseContactToManage) {
+//			mIsContactChosenToManage = true;
+//			Intent intent = new Intent();
+//			intent.putExtra(EXTRA_CONTACT_TO_MANAGE, phone.getText().toString());
+//			setResult(RESULT_OK, intent);
+//			finish();
+//		}
 		super.onListItemClick(l, v, position, id);
 	}
 

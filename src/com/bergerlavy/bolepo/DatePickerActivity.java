@@ -3,7 +3,6 @@ package com.bergerlavy.bolepo;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
-import android.view.Menu;
 import android.view.View;
 import android.widget.DatePicker;
 
@@ -38,5 +37,10 @@ public class DatePickerActivity extends Activity {
 	public void onBackPressed() {
 		setResult(RESULT_CANCELED);
 		super.onBackPressed();
+	}
+	
+	public void cancel(View view) {
+		setResult(RESULT_CANCELED);
+		finish();
 	}
 }

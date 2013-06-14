@@ -5,7 +5,7 @@
     android:versionName="1.0" >
 
     <uses-sdk
-        android:minSdkVersion="12"
+        android:minSdkVersion="14"
         android:targetSdkVersion="17" />
 
     <!-- can read contacts -->
@@ -98,12 +98,10 @@
         <uses-library android:name="com.google.android.maps" />
 
         <activity
-            android:name="com.bergerlavy.bolepo.GPSActivity"
-            android:label="@string/title_activity_gps" >
+            android:name="com.bergerlavy.bolepo.GPSActivity"  >
         </activity>
         <activity
             android:name="com.bergerlavy.bolepo.TimePickerActivity"
-            android:label="@string/title_activity_time_picker"
             android:theme="@android:style/Theme.Dialog" >
         </activity>
 
@@ -114,12 +112,10 @@
         <service android:name="com.bergerlavy.bolepo.services.ContactsService" />
 
         <activity
-            android:name="com.bergerlavy.bolepo.forms.BolePoContactsActivity"
-            android:label="@string/title_activity_bole_po_contacts" >
+            android:name="com.bergerlavy.bolepo.forms.BolePoContactsActivity" >
         </activity>
         <activity
             android:name="com.bergerlavy.bolepo.forms.RemoveMeetingActivity"
-            android:label="@string/title_activity_remove_meeting"
             android:theme="@android:style/Theme.Dialog" >
         </activity>
 
@@ -132,7 +128,6 @@
 
         <activity
             android:name="com.bergerlavy.bolepo.DatePickerActivity"
-            android:label="@string/title_activity_date_picker"
             android:theme="@android:style/Theme.Dialog" >
         </activity>
         <activity
@@ -142,8 +137,12 @@
         </activity>
         <activity
             android:name="com.bergerlavy.bolepo.maps.GeocodeActivity"
-            android:label="@string/title_activity_geocode"
             android:theme="@style/DialogWithNoTitleBar" >
+        </activity>
+        <activity
+            android:name="com.bergerlavy.bolepo.forms.ErrorDialogActivity"
+            android:label="@string/title_activity_error"
+            android:theme="@android:style/Theme.Dialog" >
         </activity>
     </application>
 

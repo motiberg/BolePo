@@ -12,6 +12,7 @@ import android.database.sqlite.SQLiteOpenHelper;
 import com.bergerlavy.bolepo.BolePoConstants.Credentials;
 import com.bergerlavy.bolepo.BolePoConstants.RSVP;
 import com.bergerlavy.bolepo.BolePoMisc;
+import com.bergerlavy.bolepo.forms.BolePoContact;
 import com.bergerlavy.db.DbContract;
 
 public class MeetingsDbAdapter {
@@ -495,6 +496,24 @@ public class MeetingsDbAdapter {
 			c.close();
 		}
 		return participantsPhones;
+	}
+	
+	public List<BolePoContact> getParticipantsAsBolePoContacts(long meetingId) {
+		List<BolePoContact> participants = new ArrayList<BolePoContact>();
+		Cursor c = mDb.query(DbContract.Participants.TABLE_NAME,
+				null,
+				DbContract.Participants.COLUMN_NAME_PARTICIPANT_MEETING_ID + " = " + meetingId,
+				null, null, null, null);
+		if (c != null) {
+			if (c.moveToFirst()) {
+				while (!c.isAfterLast()) {
+					participants.add(new BolePoContact.Builder(c.getString(c.getColumnIndex(DbContract.Participants.COLUMN_NAME_PARTICIPANT_NAME)), c.getString(c.getColumnIndex(DbContract.Participants.COLUMN_NAME_PARTICIPANT_PHONE))).build());
+					c.moveToNext();
+				}
+			}
+			c.close();
+		}
+		return participants;
 	}
 
 	public String[] getParticipantsPhonesAsArray(long meetingId) {

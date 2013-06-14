@@ -1,7 +1,13 @@
 package com.bergerlavy.bolepo.forms;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -10,8 +16,14 @@ import android.os.Bundle;
 import android.view.Menu;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemClickListener;
+import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ListView;
+import android.widget.SimpleAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -35,15 +47,19 @@ import com.bergerlavy.bolepo.shareddata.Misc;
 public class MeetingManagementActivity extends Activity {
 
 	private MeetingsDbAdapter mDbAdapter;
-	
+
 	private EditText mName;
 	private TextView mDate;
 	private TextView mTime;
 	private TextView mLocation;
 	private TextView mShareLocationTime;
-	private List<String> mParticipants;
+	private AutoCompleteTextView mParticipantsSearch;
+	private List<BolePoContact> mParticipants;
 	private Button mCommitActionButton;
+	private ListView mParticipantsListView;
 
+
+	private BolePoContactsAdapter mParticipantsListAdapter;
 	private Action mAction;
 	private String mModifiedMeetingHash;
 	private long mModifiedMeetingID;
@@ -75,7 +91,6 @@ public class MeetingManagementActivity extends Activity {
 	/***********************************************************/
 	private static final int RQ_MEETING_LOCATION = 1;
 	private static final int RQ_MEETING_TIME = 2;
-	private static final int RQ_MEETING_PARTICIPANTS = 3;
 	private static final int RQ_MEETING_SHARETIME = 4;
 	private static final int RQ_MEETING_DATE = 5;
 
@@ -91,8 +106,8 @@ public class MeetingManagementActivity extends Activity {
 
 		mDbAdapter = new MeetingsDbAdapter(this);
 		mDbAdapter.open();
-		
-		mParticipants = new ArrayList<String>();
+
+		mParticipants = new ArrayList<BolePoContact>();
 
 		mName = (EditText) findViewById(R.id.meeting_management_purpose_edittext);
 		mDate = (TextView) findViewById(R.id.meeting_management_date_edittext);
@@ -100,6 +115,8 @@ public class MeetingManagementActivity extends Activity {
 		mLocation = (TextView) findViewById(R.id.meeting_management_location_edittext);
 		mShareLocationTime = (TextView) findViewById(R.id.meeting_management_share_locations_time_edittext);
 		mCommitActionButton = (Button) findViewById(R.id.meeting_managment_commit_action_button);
+		mParticipantsSearch = (AutoCompleteTextView) findViewById(R.id.meeting_management_contact_search);
+		mParticipantsListView = (ListView) findViewById(R.id.meeting_management_participants_list);
 
 		mTime.setOnClickListener(new OnClickListener() {
 
@@ -139,6 +156,63 @@ public class MeetingManagementActivity extends Activity {
 			}
 		});
 
+		HashMap<Long, String> contacts = BolePoMisc.readContacts(this);
+		List<HashMap<String,String>> aList = new ArrayList<HashMap<String,String>>();
+
+		for(Map.Entry<Long, String> entry : contacts.entrySet()){
+			HashMap<String, String> hm = new HashMap<String,String>();
+			String s = BolePoMisc.getBolePoContactName(this, entry.getKey());
+
+			hm.put("name", s);
+			hm.put("phone", entry.getValue());
+			hm.put("image", Integer.toString(android.R.drawable.ic_dialog_email));
+			hm.put("id", String.valueOf(entry.getKey()));
+			aList.add(hm);
+		}
+
+		// Keys used in Hashmap
+		String[] from = { "name", "phone", "image"};
+
+		// Ids of views in listview_layout
+		int[] to = { R.id.name, R.id.phone, R.id.picture};
+
+		// Instantiating an adapter to store each items
+		// R.layout.listview_layout defines the layout of each item
+		SimpleAdapter adapter = new SimpleAdapter(getBaseContext(), aList, R.layout.item_bolepo_contact, from, to);
+
+		mParticipantsSearch.setAdapter(adapter);        
+
+		mParticipantsSearch.setOnItemClickListener(new OnItemClickListener() {
+
+			@SuppressWarnings("unchecked")
+			@Override
+			public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+				HashMap<String, String> hm = (HashMap<String, String>) parent.getAdapter().getItem(position);
+				BolePoContact newContact = new BolePoContact.Builder(hm.get("name"), hm.get("phone")).setId(Long.parseLong(hm.get("id"))).build();
+				mParticipants.add(newContact);
+				mParticipantsListAdapter.add(newContact);
+				mParticipantsListAdapter.notifyDataSetChanged();
+				adjustParticipantsListViewHeight();
+				mParticipantsSearch.setText("");
+			}
+
+		});
+
+		mParticipantsListAdapter = new BolePoContactsAdapter(this, R.layout.item_bolepo_contact, new ArrayList<BolePoContact>());
+		mParticipantsListView.setAdapter(mParticipantsListAdapter);
+
+
+		//		mParticipantsListView.setOnTouchListener(new OnTouchListener() {
+		//
+		//			@Override
+		//			public boolean onTouch(View v, MotionEvent event) {
+		//				if (event.getAction() == MotionEvent.ACTION_MOVE) {
+		//					return true;
+		//				}
+		//				return false;
+		//			}
+		//		});
+
 		Bundle extras = getIntent().getExtras();
 
 		/* extracting the which operation the user intending to make */
@@ -165,7 +239,7 @@ public class MeetingManagementActivity extends Activity {
 			mShareLocationTime.setText(meeting.getShareLocationTime());
 			mModifiedMeetingHash = meeting.getHash();
 
-			mParticipants = mDbAdapter.getParticipantsPhonesAsList(mModifiedMeetingID);
+			mParticipants = mDbAdapter.getParticipantsAsBolePoContacts(mModifiedMeetingID);
 		}
 		if (mAction == Action.CREATE) {
 
@@ -173,7 +247,13 @@ public class MeetingManagementActivity extends Activity {
 			mCommitActionButton.setText(getResources().getString(R.string.meeting_managment_create_button_text));
 
 			/* adding the meeting's creator to the participants list */
-			mParticipants.add(BolePoMisc.getDevicePhoneNumber(this));
+			BolePoContact newContact = BolePoMisc.getDeviceUserAsBolePoContact(this);
+			mParticipants.add(newContact);
+			
+			DateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy", Locale.FRENCH);
+			mDate.setText(dateFormat.format(new Date()));
+			
+			mShareLocationTime.setText("01:00");
 		}
 	}
 
@@ -187,19 +267,6 @@ public class MeetingManagementActivity extends Activity {
 		}
 		if (requestCode == RQ_MEETING_LOCATION) {
 			//TODO
-		}
-		if (requestCode == RQ_MEETING_PARTICIPANTS) {
-			if (resultCode == RESULT_OK) {
-				if (data.hasExtra(AddParticipantsActivity.EXTRA_PARTICIPANTS)) {
-					String[] participants = data.getStringArrayExtra(AddParticipantsActivity.EXTRA_PARTICIPANTS);
-					if (participants != null) {
-						mParticipants.clear();
-						for (String s : participants)
-							mParticipants.add(s);
-
-					}
-				}
-			}
 		}
 		if (requestCode == RQ_MEETING_SHARETIME) {
 			if (resultCode == RESULT_OK) {
@@ -224,6 +291,10 @@ public class MeetingManagementActivity extends Activity {
 	 * @param view
 	 */
 	public void commitAction(View view) {
+		List<String> participantsPhones = new ArrayList<String>();
+		for (BolePoContact contact : mParticipants) {
+			participantsPhones.add(contact.getPhone());
+		}
 		final Meeting meeting = new Meeting(
 				mName.getText().toString(), 
 				mDate.getText().toString(), 
@@ -232,7 +303,7 @@ public class MeetingManagementActivity extends Activity {
 				//				mLocation.getText().toString(),
 				"dfdfdf",
 				mShareLocationTime.getText().toString(),
-				mParticipants
+				participantsPhones
 				);
 
 		/* checking if the input is valid according to decided rules */
@@ -247,9 +318,9 @@ public class MeetingManagementActivity extends Activity {
 			new ManageMeetingOnServer().execute(meeting);
 
 
-//			Intent intent = new Intent(this, ShareLocationsService.class);
-//			stopService(intent);
-//			startService(intent);
+			//			Intent intent = new Intent(this, ShareLocationsService.class);
+			//			stopService(intent);
+			//			startService(intent);
 			finish();
 
 
@@ -260,14 +331,6 @@ public class MeetingManagementActivity extends Activity {
 
 		}
 
-	}
-
-	public void setParticipants(View view) {
-		Intent intent = new Intent(this, AddParticipantsActivity.class);
-		String[] strs = new String[mParticipants.size()];
-		strs = mParticipants.toArray(strs);
-		intent.putExtra(EXTRA_PARTICIPANTS, strs);
-		startActivityForResult(intent, RQ_MEETING_PARTICIPANTS);
 	}
 
 	public void setLocation(View view) {
@@ -282,6 +345,19 @@ public class MeetingManagementActivity extends Activity {
 		return true;
 	}
 
+	private void adjustParticipantsListViewHeight() {
+		int totalHeight = 0;
+		for (int size = 0; size < mParticipantsListAdapter.getCount(); size++) {
+			View listItem = mParticipantsListAdapter.getView(size, null, mParticipantsListView);
+			listItem.measure(0, 0);
+			totalHeight += listItem.getMeasuredHeight();
+		}
+		//setting listview item in adapter
+		ViewGroup.LayoutParams params = mParticipantsListView.getLayoutParams();
+		params.height = totalHeight + (mParticipantsListView.getDividerHeight() * (mParticipantsListAdapter.getCount() - 1));
+		mParticipantsListView.setLayoutParams(params);
+	}
+
 	public class ManageMeetingOnServer extends AsyncTask<Meeting, Void, Boolean> {
 
 		ServerResponse servResp = null;
@@ -292,8 +368,17 @@ public class MeetingManagementActivity extends Activity {
 		protected Boolean doInBackground(Meeting... params) {
 			boolean shouldUpdate = false;
 			Meeting meeting = params[0];
-			if (mAction == Action.CREATE)
-				servResp = SDAL.createMeeting(meeting);
+			if (mAction == Action.CREATE) {
+				try {
+					servResp = SDAL.createMeeting(meeting);
+				}
+				catch (ClassCastException e) {
+					Intent intent = new Intent(MeetingManagementActivity.this, ErrorDialogActivity.class);
+					intent.putExtra(ErrorDialogActivity.EXTRA_ERROR_MESSAGE, getResources().getString(R.string.server_error_create_meeting));
+					startActivity(intent);
+					return shouldUpdate;
+				}
+			}
 			if (mAction == Action.MODIFY) {
 				meeting.setHash(mModifiedMeetingHash);
 				servResp = SDAL.editMeeting(meeting);
@@ -335,4 +420,6 @@ public class MeetingManagementActivity extends Activity {
 		}
 
 	}
+
+
 }

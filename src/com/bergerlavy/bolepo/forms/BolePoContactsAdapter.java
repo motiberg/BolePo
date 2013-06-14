@@ -1,30 +1,44 @@
 package com.bergerlavy.bolepo.forms;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
 import android.content.Context;
-import android.graphics.Color;
+import android.graphics.Bitmap;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
+import android.widget.Filterable;
+import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.bergerlavy.bolepo.BolePoMisc;
 import com.bergerlavy.bolepo.R;
 
-public class BolePoContactsAdapter extends ArrayAdapter<BolePoContact> {
+public class BolePoContactsAdapter extends ArrayAdapter<BolePoContact> implements Filterable {
 
-	private List<BolePoContact> mContacts;
+	private Context mContext;
+	private List<BolePoContact> mAllContacts;
 
 	public BolePoContactsAdapter(Context context, int textViewResourceId,
 			List<BolePoContact> objects) {
 		super(context, textViewResourceId, objects);
-		mContacts = new ArrayList<BolePoContact>();
-		mContacts.addAll(objects);
+		mContext = context;
+		mAllContacts = new ArrayList<BolePoContact>();
+		mAllContacts.addAll(objects);
 	}
+
+
+
+	@Override
+	public void add(BolePoContact contact) {
+		mAllContacts.add(contact);
+		super.add(contact);
+	}
+
+
 
 	public View getView(int position, View convertView, ViewGroup parent){
 		View v = convertView;
@@ -33,49 +47,39 @@ public class BolePoContactsAdapter extends ArrayAdapter<BolePoContact> {
 			v = inflater.inflate(R.layout.item_bolepo_contact, null);
 		}
 
-		BolePoContact contact = mContacts.get(position);
+		BolePoContact contact = mAllContacts.get(position);
 		if (contact != null) {
+			TextView contactName = (TextView) v.findViewById(R.id.name);
+			TextView contactPhone = (TextView) v.findViewById(R.id.phone);
+			ImageView contactImage = (ImageView) v.findViewById(R.id.picture);
 
-			TextView contactName = (TextView) v.findViewById(R.id.item_bolepo_contact_name);
-			TextView contactPhone = (TextView) v.findViewById(R.id.item_bolepo_contact_phone);
+			contactName.setTextColor(mContext.getResources().getColor(android.R.color.white));
+			contactPhone.setTextColor(mContext.getResources().getColor(android.R.color.white));
 
-			if (contact.isSelected()) {
-				contactName.setTextColor(Color.RED);
-				contactPhone.setTextColor(Color.RED);
+			contactName.setText(contact.getName());
+			contactPhone.setText(contact.getPhone());
+			Bitmap b = BolePoMisc.getBolePoContactPhoto(mContext, contact.getId());
+			
+			if (b != null) {
+				Bitmap c = Bitmap.createScaledBitmap(b, 192, 192, true);
+				contactImage.setImageBitmap(c);
 			}
 			else {
-				contactName.setTextColor(Color.BLACK);
-				contactPhone.setTextColor(Color.BLACK);
+				contactImage.setImageDrawable(mContext.getResources().getDrawable(R.drawable.ic_contact_picture));
 			}
-
-			if (contactPhone != null){
-				contactPhone.setText(contact.getPhone());
-			}
-
 		}
 		return v;
 
 	}
-	
-	@Override
-	public void notifyDataSetChanged() {
-	    Collections.sort(mContacts, new BolePoContactsComparator());
-	    super.notifyDataSetChanged();
-	}
-	
-	public static class BolePoContactsComparator implements Comparator<BolePoContact> {
 
-		@Override
-		public int compare(BolePoContact lhs, BolePoContact rhs) {
-			if (lhs.isSelected() && !rhs.isSelected())
-				return -1;
-			if (!lhs.isSelected() && rhs.isSelected())
-				return 1;
-			if (lhs.getName().equals(rhs.getName()))
-				return lhs.getPhone().compareTo(rhs.getPhone());
-			return lhs.getName().compareTo(rhs.getName());
+
+
+	@Override
+	public int getCount() {
+		if (mAllContacts != null) {
+			return mAllContacts.size();
 		}
-		
+		return 0;
 	}
 
 }

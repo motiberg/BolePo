@@ -3,7 +3,6 @@
 
     <string name="app_name">BolePo</string>
     <string name="main_menu_settings">Settings</string>
-    <string name="title_activity_create_meeting">CreateMeetingActivity</string>
     <string name="meeting_management_name">Name:</string>
     <string name="meeting_management_date">Date:</string>
     <string name="meeting_management_time">Time:</string>
@@ -13,9 +12,6 @@
     <string name="meeting_management_participants">Participants:</string>
     <string name="meeting_management_share_locations_time">Sharing:</string>
     <string name="meeting_management_create_button">Create !</string>
-    <string name="hello_world">Hello world!</string>
-    <string name="title_activity_date_picker">DatePickerActivity</string>
-    <string name="title_activity_main">MainActivity</string>
     <string name="main_no_scheduled_meeting">אין פגישה מתוכננת</string>
     <string name="item_wfa_meeting_name_label">Name:</string>
     <string name="menu_settings">bla</string>
@@ -28,11 +24,7 @@
     <string name="accepted_meetings_root_participant_cm_item_delete_title">Delete</string>
     <string name="meeting_managment_create_button_text">Create !</string>
     <string name="meeting_managment_modify_button_text">Modify !</string>
-    <string name="title_activity_gps">GPSActivity</string>
     <string name="main_menu_gps">GPS</string>
-    <string name="title_activity_time_picker">TimePickerActivity</string>
-    <string name="time_picker_save_and_close_button">Save &amp; Close</string>
-    <string name="title_activity_bole_po_contacts">BolePoContactsActivity</string>
     <string name="bolepo_contacts_no_contacts">None of your contacts are using BolePo.</string>
     <string name="bolepo_contacts_number_of_contacts_label">Contacts:</string>
     <string name="login_phone_number_label">Phone Number:</string>
@@ -41,13 +33,11 @@
     <string name="main_menu_register">Register GCM</string>
     <string name="main_menu_unregister">Unregister GCM</string>
     <string name="meeting_management_no_participants">No Participants</string>
-    <string name="title_activity_remove_meeting">RemoveMeetingActivity</string>
     <string name="remove_meeting_confirm_removal">Remove</string>
     <string name="remove_meeting_cancel_removal">Cancel</string>
     <string name="remove_meeting_pass_ownship">Pass Ownship</string>
     <string name="main_not_approved_yet_header_label">Waiting For Approval</string>
     <string name="main_accepted_header_label">Accepted Meetings</string>
-    <string name="date_picker_save_and_close_button">Save And Close</string>
     <string name="accepted_meetings_regular_participant_cm_item_view_title">View</string>
     <string name="accepted_meetings_regular_participant_cm_item_delete_title">Delete</string>
     <string name="accepted_meetings_root_participant_cm_item_view_title">View</string>
@@ -64,6 +54,10 @@
     <string name="main_menu_map">Map</string>
     <string name="title_activity_meeting_location_selection">MeetingLocationSelectionActivity</string>
     <string name="action_settings">Settings</string>
-    <string name="title_activity_geocode">GeocodeActivity</string>
+    <string name="title_activity_error">BolePo Error</string>
+    <string name="server_error_create_meeting">Server encounter problems during meeting creation.</string>
+    <string name="error_dialog_button_close_dialog_text">Close</string>
+    <string name="button_save">Save</string>
+    <string name="button_cancel">Cancel</string>
 
 </resources>

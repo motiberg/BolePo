@@ -4,12 +4,12 @@ public class BolePoContact {
 
 	private String mName;
 	private String mPhone;
-	private boolean mSelected;
+	private long mId;
 	
 	private BolePoContact(Builder builder) {
 		mName = builder.mName;
 		mPhone = builder.mPhone;
-		mSelected = builder.mSelected;
+		mId = builder.mId;
 	}
 
 	public String getName() {
@@ -20,16 +20,8 @@ public class BolePoContact {
 		return mPhone;
 	}
 	
-	public void select() {
-		mSelected = true;
-	}
-	
-	public void unselect() {
-		mSelected = false;
-	}
-	
-	public boolean isSelected() {
-		return mSelected;
+	public long getId() {
+		return mId;
 	}
 	
 	public static class Builder {
@@ -38,15 +30,15 @@ public class BolePoContact {
 		private final String mPhone;
 		
 		/* optional */
-		private boolean mSelected;
+		private long mId;
 		
 		public Builder(String name, String phone) {
 			mName = name;
 			mPhone = phone;
 		}
 		
-		public Builder select() {
-			mSelected = true;
+		public Builder setId(long id) {
+			mId = id;
 			return this;
 		}
 		
