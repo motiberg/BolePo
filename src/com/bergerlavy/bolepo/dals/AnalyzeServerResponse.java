@@ -14,14 +14,11 @@ import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
-import com.bergerlavy.bolepo.BolePoConstants.ServerResponseStatus;
-
 public class AnalyzeServerResponse {
 
 	private Action mActionAnalyzed;
 
 	private String mAction;
-	private String mState;
 	private String mDescription;
 	private String mHash;
 	private String mCreator;
@@ -41,6 +38,7 @@ public class AnalyzeServerResponse {
 	protected String mPhone;
 	protected String mOldParticipantHash;
 	protected String mNewParticipantHash;
+	protected int mFailureCode;
 	
 	protected List<Participant> mParticipants;
 	protected List<String> mPhones;
@@ -53,8 +51,8 @@ public class AnalyzeServerResponse {
 		DefaultHandler handlerForStatusOnly = new DefaultHandler() {
 
 			boolean action = false;
-			boolean state = false;
 			boolean desc = false;
+			boolean failurecode = false;
 
 			public void startElement(String uri, String localName,String qName, 
 					Attributes attributes) throws SAXException {
@@ -65,12 +63,12 @@ public class AnalyzeServerResponse {
 					action = true;
 				}
 
-				if (qName.equalsIgnoreCase("state")) {
-					state = true;
-				}
-
 				if (qName.equalsIgnoreCase("desc")) {
 					desc = true;
+				}
+				
+				if (qName.equalsIgnoreCase("failurecode")) {
+					failurecode = true;
 				}
 			}
 
@@ -86,15 +84,15 @@ public class AnalyzeServerResponse {
 					action = false;
 				}
 
-				if (state) {
-					mState = new String(ch, start, length);
-					state = false;
-				}
-
 				if (desc) {
 					mDescription = new String(ch, start, length);
 					System.out.println("Description = " + mDescription);
 					desc = false;
+				}
+				
+				if (failurecode) {
+					mFailureCode = Integer.parseInt(new String(ch, start, length));
+					failurecode = false;
 				}
 			}
 		};
@@ -113,8 +111,8 @@ public class AnalyzeServerResponse {
 				handler = new DefaultHandler() {
 
 					boolean action = false;
-					boolean state = false;
 					boolean desc = false;
+					boolean failurecode = false;
 					boolean meetinghash = false;
 					boolean participantphone = false;
 					boolean participantname = false;
@@ -134,12 +132,12 @@ public class AnalyzeServerResponse {
 							action = true;
 						}
 
-						if (qName.equalsIgnoreCase("state")) {
-							state = true;
-						}
-
 						if (qName.equalsIgnoreCase("desc")) {
 							desc = true;
+						}
+						
+						if (qName.equalsIgnoreCase("failurecode")) {
+							failurecode = true;
 						}
 
 						if (qName.equalsIgnoreCase("mhash")) {
@@ -206,14 +204,14 @@ public class AnalyzeServerResponse {
 							action = false;
 						}
 
-						if (state) {
-							mState = new String(ch, start, length);
-							state = false;
-						}
-
 						if (desc) {
 							mDescription = new String(ch, start, length);
 							desc = false;
+						}
+						
+						if (failurecode) {
+							mFailureCode = Integer.parseInt(new String(ch, start, length));
+							failurecode = false;
 						}
 
 						if (meetinghash) {
@@ -281,8 +279,8 @@ public class AnalyzeServerResponse {
 				handler = new DefaultHandler() {
 
 					boolean action = false;
-					boolean state = false;
 					boolean desc = false;
+					boolean failurecode = false;
 					boolean hash = false;
 					boolean participantphone = false;
 					boolean participantname = false;
@@ -301,12 +299,12 @@ public class AnalyzeServerResponse {
 							action = true;
 						}
 
-						if (qName.equalsIgnoreCase("state")) {
-							state = true;
-						}
-
 						if (qName.equalsIgnoreCase("desc")) {
 							desc = true;
+						}
+						
+						if (qName.equalsIgnoreCase("failurecode")) {
+							failurecode = true;
 						}
 
 						if (qName.equalsIgnoreCase("hash")) {
@@ -369,14 +367,14 @@ public class AnalyzeServerResponse {
 							action = false;
 						}
 
-						if (state) {
-							mState = new String(ch, start, length);
-							state = false;
-						}
-
 						if (desc) {
 							mDescription = new String(ch, start, length);
 							desc = false;
+						}
+						
+						if (failurecode) {
+							mFailureCode = Integer.parseInt(new String(ch, start, length));
+							failurecode = false;
 						}
 
 						if (hash) {
@@ -442,8 +440,8 @@ public class AnalyzeServerResponse {
 				handler = new DefaultHandler() {
 
 					boolean action = false;
-					boolean state = false;
 					boolean desc = false;
+					boolean failurecode = false;
 					boolean creator = false;
 					boolean name = false;
 					boolean date = false;
@@ -467,12 +465,12 @@ public class AnalyzeServerResponse {
 							action = true;
 						}
 
-						if (qName.equalsIgnoreCase("state")) {
-							state = true;
-						}
-
 						if (qName.equalsIgnoreCase("desc")) {
 							desc = true;
+						}
+						
+						if (qName.equalsIgnoreCase("failurecode")) {
+							failurecode = true;
 						}
 
 						if (qName.equalsIgnoreCase("creator")) {
@@ -544,14 +542,14 @@ public class AnalyzeServerResponse {
 							action = false;
 						}
 
-						if (state) {
-							mState = new String(ch, start, length);
-							state = false;
-						}
-
 						if (desc) {
 							mDescription = new String(ch, start, length);
 							desc = false;
+						}
+						
+						if (failurecode) {
+							mFailureCode = Integer.parseInt(new String(ch, start, length));
+							failurecode = false;
 						}
 
 						if (creator) {
@@ -623,8 +621,8 @@ public class AnalyzeServerResponse {
 				handler = new DefaultHandler() {
 
 					boolean action = false;
-					boolean state = false;
 					boolean desc = false;
+					boolean failurecode = false;
 					boolean phone = false;
 
 					public void startElement(String uri, String localName,String qName, 
@@ -636,12 +634,12 @@ public class AnalyzeServerResponse {
 							action = true;
 						}
 
-						if (qName.equalsIgnoreCase("state")) {
-							state = true;
-						}
-
 						if (qName.equalsIgnoreCase("desc")) {
 							desc = true;
+						}
+						
+						if (qName.equalsIgnoreCase("failurecode")) {
+							failurecode = true;
 						}
 
 						if (qName.equalsIgnoreCase("phone")) {
@@ -666,14 +664,14 @@ public class AnalyzeServerResponse {
 							action = false;
 						}
 
-						if (state) {
-							mState = new String(ch, start, length);
-							state = false;
-						}
-
 						if (desc) {
 							mDescription = new String(ch, start, length);
 							desc = false;
+						}
+						
+						if (failurecode) {
+							mFailureCode = Integer.parseInt(new String(ch, start, length));
+							failurecode = false;
 						}
 
 						if (phone) {
@@ -695,8 +693,8 @@ public class AnalyzeServerResponse {
 				handler = new DefaultHandler() {
 
 					boolean action = false;
-					boolean state = false;
 					boolean desc = false;
+					boolean failurecode = false;
 					boolean meetingHash = false;
 					boolean oldParticipantHash = false;
 					boolean newParticipantHash = false;
@@ -710,12 +708,12 @@ public class AnalyzeServerResponse {
 							action = true;
 						}
 
-						if (qName.equalsIgnoreCase("state")) {
-							state = true;
-						}
-
 						if (qName.equalsIgnoreCase("desc")) {
 							desc = true;
+						}
+						
+						if (qName.equalsIgnoreCase("failurecode")) {
+							failurecode = true;
 						}
 
 						if (qName.equalsIgnoreCase("meetingnewhash")) {
@@ -741,14 +739,14 @@ public class AnalyzeServerResponse {
 							action = false;
 						}
 
-						if (state) {
-							mState = new String(ch, start, length);
-							state = false;
-						}
-
 						if (desc) {
 							mDescription = new String(ch, start, length);
 							desc = false;
+						}
+						
+						if (failurecode) {
+							mFailureCode = Integer.parseInt(new String(ch, start, length));
+							failurecode = false;
 						}
 
 						if (meetingHash) {
@@ -775,69 +773,67 @@ public class AnalyzeServerResponse {
 
 			saxParser.parse(inputStream, handler);
 
-			ServerResponseStatus status = ServerResponseStatus.getEnum(mState);
-
 			if (isActionConsistent(mAction)) {
 				switch (action) {
 				case CREATE:
-					serverResponse = new SRMeetingCreation.Builder(status, mDescription)
+					serverResponse = new SRMeetingCreation.Builder(mFailureCode, mDescription)
 					.setMeetingHash(mHash)
 					.setParticipants(mParticipants)
 					.build();
 					break;
 				case MODIFY:
-					serverResponse = new SRMeetingModification.Builder(status, mDescription)
+					serverResponse = new SRMeetingModification.Builder(mFailureCode, mDescription)
 					.setMeetingHash(mHash)
 					.setParticipants(mParticipants)
 					.build();
 					break;
 				case REMOVE:
-					serverResponse = new SRMeetingRemoval.Builder(status, mDescription)
+					serverResponse = new SRMeetingRemoval.Builder(mFailureCode, mDescription)
 					.build();
 					break;
 				case RETRIEVE:
-					serverResponse = new SRMeetingRetrieval.Builder(status, mDescription)
+					serverResponse = new SRMeetingRetrieval.Builder(mFailureCode, mDescription)
 					.setMeeting(new Meeting(mName, mDate, mTime, mCreator, mLocation, mShareLocationTime, null))
 					.setParticipants(mParticipants)
 					.build();
 					break;
 				case GCM_REGISTRATION:
-					serverResponse = new SRGcmRegistration.Builder(status, mDescription)
+					serverResponse = new SRGcmRegistration.Builder(mFailureCode, mDescription)
 					.build();
 					break;
 				case GCM_UNREGISTRATION:
-					serverResponse = new SRGcmUnregistration.Builder(status, mDescription)
+					serverResponse = new SRGcmUnregistration.Builder(mFailureCode, mDescription)
 					.build();
 					break;
 				case GCM_CHECK_REGISTRATION:
-					serverResponse = new SRGcmRegistrationCheck.Builder(status, mDescription)
+					serverResponse = new SRGcmRegistrationCheck.Builder(mFailureCode, mDescription)
 					.setRegisteredContactsPhones(mPhones)
 					.build();
 					break;
 				case ATTEND:
-					serverResponse = new SRMeetingAttendance.Builder(status, mDescription)
+					serverResponse = new SRMeetingAttendance.Builder(mFailureCode, mDescription)
 					.build();
 					break;
 				case DECLINE:
-					serverResponse = new SRMeetingDeclining.Builder(status, mDescription)
+					serverResponse = new SRMeetingDeclining.Builder(mFailureCode, mDescription)
 					.build();
 					break;
 				case REPLACE_MANAGER:
-					serverResponse = new SRMeetingManagerReplacement.Builder(status, mDescription)
+					serverResponse = new SRMeetingManagerReplacement.Builder(mFailureCode, mDescription)
 					.setMeetingNewHash(mHash)
 					.setOldManagerNewHash(mOldParticipantHash)
 					.setNewManagerNewHash(mNewParticipantHash)
 					.build();
 					break;
 				case REPLACE_AND_REMOVE_MANAGER:
-					serverResponse = new SRMeetingManagerReplacementAndRemoval.Builder(status, mDescription)
+					serverResponse = new SRMeetingManagerReplacementAndRemoval.Builder(mFailureCode, mDescription)
 					.setMeetingNewHash(mHash)
 					.setOldManagerNewHash(mOldParticipantHash)
 					.setNewManagerNewHash(mNewParticipantHash)
 					.build();
 					break;
 				case REMOVE_PARTICIPANT:
-					serverResponse = new SRParticipantRemoval.Builder(status, mDescription)
+					serverResponse = new SRParticipantRemoval.Builder(mFailureCode, mDescription)
 					.build();
 					break;
 				default:

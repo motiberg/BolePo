@@ -1,6 +1,5 @@
 package com.bergerlavy.bolepo.dals;
 
-import com.bergerlavy.bolepo.BolePoConstants.ServerResponseStatus;
 
 public class SRMeetingManagerReplacement extends ServerResponse {
 
@@ -14,7 +13,8 @@ private String mDescription;
 		mMeetingNewHash = builder.mMeetingNewHash;
 		mOldManagerNewHash = builder.mOldManagerNewHash;
 		mNewManagerNewHash = builder.mNewManagerNewHash;
-		setStatus(builder.mStatus);
+
+		setFailureCode(builder.mFailureCode);
 	}
 	
 	@Override
@@ -40,7 +40,7 @@ private String mDescription;
 	
 	public static class Builder {
 		/* required */
-		private final ServerResponseStatus mStatus;
+		private final int mFailureCode;
 		private final String mDescription;
 		
 		/* optional */
@@ -48,8 +48,8 @@ private String mDescription;
 		private String mOldManagerNewHash;
 		private String mNewManagerNewHash;
 		
-		public Builder(ServerResponseStatus status, String description) {
-			this.mStatus = status;
+		public Builder(int failureCode, String description) {
+			this.mFailureCode = failureCode;
 			this.mDescription = description;
 		}
 		

@@ -202,6 +202,7 @@ public class SDAL {
 			HttpResponse response = null;
 			if (BolePoMisc.isDeviceOnline(mContext)) {
 				/* Execute HTTP Post Request */
+				mHttpClient.getConnectionManager().closeExpiredConnections();
 				response = mHttpClient.execute(httppost);
 			}
 			else throw new NoInternetConnectionBolePoException();
@@ -209,8 +210,7 @@ public class SDAL {
 				/* analyzing the server response to the meeting retrieval request */
 				serverResponse = new AnalyzeServerResponse().analyze(response, action);
 				response.getEntity().consumeContent();
-				//TODO check if necessary
-				mHttpClient = new DefaultHttpClient();
+
 			}
 			else {
 				response.getEntity().consumeContent();

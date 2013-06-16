@@ -3,8 +3,6 @@ package com.bergerlavy.bolepo.dals;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.bergerlavy.bolepo.BolePoConstants.ServerResponseStatus;
-
 public class SRMeetingCreation extends ServerResponse {
 
 	private String mDescription;
@@ -16,7 +14,8 @@ public class SRMeetingCreation extends ServerResponse {
 		mMeetingHash = builder.mMeetingHash;
 		mParticipants = builder.mParticipants;
 		mDescription = builder.mDescription;
-		setStatus(builder.mStatus);
+		
+		setFailureCode(builder.mFailureCode);
 	}
 
 	@Override
@@ -38,15 +37,15 @@ public class SRMeetingCreation extends ServerResponse {
 	
 	public static class Builder {
 		/* required */
-		private final ServerResponseStatus mStatus;
 		private final String mDescription;
+		private final int mFailureCode;
 		
 		/* optional */
 		private String mMeetingHash;
 		private List<Participant> mParticipants = new ArrayList<Participant>();
 		
-		public Builder(ServerResponseStatus status, String description) {
-			this.mStatus = status;
+		public Builder(int failureCode, String description) {
+			this.mFailureCode = failureCode;
 			this.mDescription = description;
 		}
 		

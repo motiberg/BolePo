@@ -1,13 +1,13 @@
 package com.bergerlavy.bolepo.dals;
 
-import com.bergerlavy.bolepo.BolePoConstants.ServerResponseStatus;
 
 public class SRMeetingDeclining extends ServerResponse {
 	private String mDescription;
 	
 	private SRMeetingDeclining(Builder builder) {
 		mDescription = builder.mDescription;
-		setStatus(builder.mStatus);
+
+		setFailureCode(builder.mFailureCode);
 	}
 
 	@Override
@@ -21,11 +21,11 @@ public class SRMeetingDeclining extends ServerResponse {
 	
 	public static class Builder {
 		/* required */
-		private final ServerResponseStatus mStatus;
+		private final int mFailureCode;
 		private final String mDescription;
 		
-		public Builder(ServerResponseStatus status, String description) {
-			this.mStatus = status;
+		public Builder(int failureCode, String description) {
+			this.mFailureCode = failureCode;
 			this.mDescription = description;
 		}
 

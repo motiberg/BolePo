@@ -7,6 +7,9 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Color;
+import android.media.RingtoneManager;
+import android.net.Uri;
 import android.os.PowerManager;
 import android.support.v4.app.NotificationCompat;
 import android.widget.Toast;
@@ -99,6 +102,8 @@ public class GCMIntentService extends com.google.android.gcm.GCMBaseIntentServic
 			List<Participant> participants = new ArrayList<Participant>();
 			NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 			NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this).setContentTitle("Bolepo");
+			notificationBuilder.setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION))
+			.setLights(Color.BLUE, 100, 100);
 
 			switch (BolePoConstants.GCM_NOTIFICATION.getEnum(messageType)) {
 			case MEETING_CANCLED:

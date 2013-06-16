@@ -54,7 +54,7 @@ public class MeetingManagementActivity extends Activity {
 	private TextView mLocation;
 	private TextView mShareLocationTime;
 	private AutoCompleteTextView mParticipantsSearch;
-	private List<BolePoContact> mParticipants;
+	private ArrayList<BolePoContact> mParticipants;
 	private Button mCommitActionButton;
 	private ListView mParticipantsListView;
 
@@ -99,6 +99,11 @@ public class MeetingManagementActivity extends Activity {
 	/***********************************************************/
 	public static final String EXTRA_PARTICIPANTS = "EXTRA_PARTICIPANTS";
 
+	/***********************************************************/
+	/********************* SAVED INSTANCES *********************/
+	/***********************************************************/
+	public static final String SAVED_INSTANCE_PARTICIPANTS = "SAVED_INSTANCE_PARTICIPANTS";
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -107,8 +112,14 @@ public class MeetingManagementActivity extends Activity {
 		mDbAdapter = new MeetingsDbAdapter(this);
 		mDbAdapter.open();
 
-		mParticipants = new ArrayList<BolePoContact>();
-
+		if (savedInstanceState != null) {
+			ArrayList<BolePoContact> participants = savedInstanceState.getParcelableArrayList(SAVED_INSTANCE_PARTICIPANTS);
+			mParticipants = new ArrayList<BolePoContact>(participants);
+			mParticipants.remove(removeSelfDeviceFromParticipants(mParticipants));
+		}
+		else {
+			mParticipants = new ArrayList<BolePoContact>();
+		}
 		mName = (EditText) findViewById(R.id.meeting_management_purpose_edittext);
 		mDate = (TextView) findViewById(R.id.meeting_management_date_edittext);
 		mTime = (TextView) findViewById(R.id.meeting_management_time_edittext);
@@ -198,7 +209,7 @@ public class MeetingManagementActivity extends Activity {
 
 		});
 
-		mParticipantsListAdapter = new BolePoContactsAdapter(this, R.layout.item_bolepo_contact, new ArrayList<BolePoContact>());
+		mParticipantsListAdapter = new BolePoContactsAdapter(this, R.layout.item_bolepo_contact, mParticipants);
 		mParticipantsListView.setAdapter(mParticipantsListAdapter);
 
 
@@ -249,10 +260,10 @@ public class MeetingManagementActivity extends Activity {
 			/* adding the meeting's creator to the participants list */
 			BolePoContact newContact = BolePoMisc.getDeviceUserAsBolePoContact(this);
 			mParticipants.add(newContact);
-			
+
 			DateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy", Locale.FRENCH);
 			mDate.setText(dateFormat.format(new Date()));
-			
+
 			mShareLocationTime.setText("01:00");
 		}
 	}
@@ -421,5 +432,19 @@ public class MeetingManagementActivity extends Activity {
 
 	}
 
+	@Override
+	protected void onSaveInstanceState(Bundle outState) {
+		outState.putParcelableArrayList(SAVED_INSTANCE_PARTICIPANTS, mParticipants);
+		super.onSaveInstanceState(outState);
+	}	
+	
+	private BolePoContact removeSelfDeviceFromParticipants(ArrayList<BolePoContact> participants) {
+		for (BolePoContact contact : participants) {
+			if (contact.getPhone().equals(BolePoMisc.getDeviceUserAsBolePoContact(this).getPhone())) {
+				return contact;
+			}
+		}
+		return null;
+	}
 
 }

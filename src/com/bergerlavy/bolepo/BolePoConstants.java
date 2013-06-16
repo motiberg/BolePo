@@ -24,6 +24,15 @@ public class BolePoConstants {
 
 	public static final String ACTION_BOLEPO_REFRESH_LISTS = "com.bergerlavy.bolepo.refresh";
 	public static final String ACTION_BOLEPO_INFORM_NO_INTERNET_CONNECTION = "com.bergerlavy.bolepo.inform_no_internet_connection";
+	public static final String ACTION_BOLEPO_NOTIFY_INTERNAL_ERROR_OCCUR = "com.bergerlavy.bolepo.notify_internal_error_occur";
+	
+	/* Server-Side failure codes */
+	public static final int FAILURE_CODE_MEETING_HASH_DOESNT_EXIST = 1;
+	public static final int FAILURE_CODE_PARTICIPANT_HASH_DOESNT_EXIST = 2;
+	public static final int FAILURE_CODE_UNKNOWN_ACTION = 3;
+	public static final int FAILURE_CODE_PARAMETER_PARTICIPANTS_NUMBER_ISNT_NUMERIC = 4;
+	public static final int FAILURE_CODE_INVALID_PARAMETERS_COUNT = 5;
+	public static final int FAILURE_CODE_CONTACT_PHONE_IS_MISSING = 6;
 
 	public static final String CONTACTS_FILE_NAME = "contacts_file";
 

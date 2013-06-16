@@ -1,17 +1,16 @@
 package com.bergerlavy.bolepo.dals;
 
-import com.bergerlavy.bolepo.BolePoConstants.ServerResponseStatus;
 
 public abstract class ServerResponse {
 
-	private ServerResponseStatus mStatus;
+	private int mFailureCode;
 	
 	/**
 	 * checks if the request has succeeded
 	 * @return <code>true</code> if it does, otherwise <code>false</code>
 	 */
 	public boolean isOK() {
-		return mStatus == ServerResponseStatus.OK;
+		return mFailureCode == 0;
 	}
 	
 	/**
@@ -21,11 +20,15 @@ public abstract class ServerResponse {
 	public abstract boolean hasData();
 	
 	/**
-	 * Sets the status of the server response.
-	 * @param status the status the server returned. This value will affect the return value of <code>isOK</code> function.
+	 * Sets the failure code of the server response.
+	 * @param failureCode the failure code the server returned. This value will affect the return value of <code>isOK</code> function.
 	 * @see #isOK()
 	 */
-	protected void setStatus(ServerResponseStatus status) {
-		mStatus = status;
+	protected void setFailureCode(int failureCode) {
+		mFailureCode = failureCode;
+	}
+	
+	public int getFailureCode() {
+		return mFailureCode;
 	}
 }

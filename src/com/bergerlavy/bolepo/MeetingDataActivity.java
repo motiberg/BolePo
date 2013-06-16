@@ -2,6 +2,7 @@ package com.bergerlavy.bolepo;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.View;
@@ -9,6 +10,7 @@ import android.widget.Button;
 import android.widget.TextView;
 
 import com.bergerlavy.bolepo.BolePoConstants.RSVP;
+import com.bergerlavy.bolepo.dals.Action;
 import com.bergerlavy.bolepo.dals.Meeting;
 import com.bergerlavy.bolepo.dals.MeetingsDbAdapter;
 import com.bergerlavy.bolepo.dals.SDAL;
@@ -25,11 +27,11 @@ public class MeetingDataActivity extends Activity {
 	private TextView mTime;
 	private TextView mLocation;
 	private TextView mSharingTime;
-	private TextView mParticipants;
 
 	private boolean mIsManager;
 	private long mId;
 	private String mHash;
+	private Action mAction;
 
 	public static final String EXTRA_MEETING_ID = "EXTRA_MEETING_ID";
 	public static final String EXTRA_MEETING_CREATOR_REMOVAL = "EXTRA_MEETING_CREATOR_REMOVAL";
@@ -49,7 +51,6 @@ public class MeetingDataActivity extends Activity {
 		mTime = (TextView) findViewById(R.id.meeting_data_time);
 		mLocation = (TextView) findViewById(R.id.meeting_data_location);
 		mSharingTime = (TextView) findViewById(R.id.meeting_data_share_locations_time);
-		mParticipants = (TextView) findViewById(R.id.meeting_data_participants);
 
 		String meetingManager = null;
 
@@ -97,43 +98,20 @@ public class MeetingDataActivity extends Activity {
 	}
 
 	public void commitAction(View view) {
-		boolean toRefresh = false;
 
 		/* if the attend button has been pressed */
 		if (view.getId() == R.id.meeting_data_attend_button) {
-			SRMeetingAttendance servResp = SDAL.attendAMeeting(mHash);
-			if (servResp.isOK()) {
-				if (mDbAdapter.attendAMeeting(mId)) {
-					toRefresh = true;
-				}
-			}
+			mAction = Action.ATTEND;
+			new MeetingAttendanceTast().execute(mHash);
 		}
 
 		/* if the decline button as been pressed */
 		else if (view.getId() == R.id.meeting_data_decline_button) {
+			mAction = Action.DECLINE;
 			/* if the user card is being watched by the manager of the meeting, navigating to the meeting removal activity */
-			if (mIsManager) {
-				Intent intent = new Intent(this, RemoveMeetingActivity.class);
-				intent.putExtra(EXTRA_MEETING_ID, mId);
-				intent.putExtra(EXTRA_MEETING_CREATOR_REMOVAL, true);
-				startActivityForResult(intent, RQ_LEAVE_MEETING);
-			}
-			else {
-				SRMeetingDeclining servResp = SDAL.declineAMeeting(mHash);
-				if (servResp.isOK()) {
-					if (mDbAdapter.declineAMeeting(mId)) {
-						toRefresh = true;
-					}
-				}
-			}
+			new MeetingAttendanceTast().execute(mHash);
 		}
 
-		if (toRefresh) {
-			Intent intent = new Intent();
-			intent.setAction(BolePoConstants.ACTION_BOLEPO_REFRESH_LISTS);
-			sendBroadcast(intent);
-		}
-		
 		/* in case the user is the meeting manager we don't want to close the activity because a 
 		 * dialog box is shown to him, and until he doesn't make his choice, he should remain 
 		 * in the activity */
@@ -151,6 +129,59 @@ public class MeetingDataActivity extends Activity {
 		super.onActivityResult(requestCode, resultCode, data);
 	}
 	
-	
+	private class MeetingAttendanceTast extends AsyncTask<String, Void, Boolean> {
+
+		private boolean toUpdate = false;
+		
+		@Override
+		protected Boolean doInBackground(String... params) {
+			if (mAction == Action.ATTEND) {
+				SRMeetingAttendance servResp = SDAL.attendAMeeting(mHash);
+				if (servResp.isOK()) {
+					if (mDbAdapter.attendAMeeting(mId)) {
+						toUpdate = true;
+					}
+				}
+				else {
+					Intent intent = new Intent();
+					intent.putExtra(MainActivity.EXTRA_SERVER_FAILURE_CODE, servResp.getFailureCode());
+					intent.putExtra(MainActivity.EXTRA_MEETING_ID, mId);
+					intent.setAction(BolePoConstants.ACTION_BOLEPO_NOTIFY_INTERNAL_ERROR_OCCUR);
+					sendBroadcast(intent);
+					return false;
+				}
+			}
+			else if (mAction == Action.DECLINE) {
+				if (mIsManager) {
+					Intent intent = new Intent(MeetingDataActivity.this, RemoveMeetingActivity.class);
+					intent.putExtra(EXTRA_MEETING_ID, mId);
+					intent.putExtra(EXTRA_MEETING_CREATOR_REMOVAL, true);
+					startActivityForResult(intent, RQ_LEAVE_MEETING);
+				}
+				else {
+					SRMeetingDeclining servResp = SDAL.declineAMeeting(mHash);
+					if (servResp.isOK()) {
+						if (mDbAdapter.declineAMeeting(mId)) {
+							toUpdate = true;
+						}
+					}
+				}
+			}
+			return toUpdate;
+		}
+
+		@Override
+		protected void onPostExecute(Boolean result) {
+			if (result) {
+				Intent intent = new Intent();
+				intent.setAction(BolePoConstants.ACTION_BOLEPO_REFRESH_LISTS);
+				sendBroadcast(intent);
+			}
+			super.onPostExecute(result);
+		}
+		
+		
+		
+	}
 
 }

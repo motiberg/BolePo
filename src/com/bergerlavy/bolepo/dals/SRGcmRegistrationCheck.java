@@ -2,8 +2,6 @@ package com.bergerlavy.bolepo.dals;
 
 import java.util.List;
 
-import com.bergerlavy.bolepo.BolePoConstants.ServerResponseStatus;
-
 public class SRGcmRegistrationCheck extends ServerResponse {
 	private String mDescription;
 	
@@ -12,7 +10,8 @@ public class SRGcmRegistrationCheck extends ServerResponse {
 	private SRGcmRegistrationCheck(Builder builder) {
 		mDescription = builder.mDescription;
 		mPhones = builder.mPhones;
-		setStatus(builder.mStatus);
+
+		setFailureCode(builder.mFailureCode);
 	}
 
 	@Override
@@ -30,14 +29,14 @@ public class SRGcmRegistrationCheck extends ServerResponse {
 	
 	public static class Builder {
 		/* required */
-		private final ServerResponseStatus mStatus;
+		private final int mFailureCode;
 		private final String mDescription;
 		
 		/* optional */
 		private List<String> mPhones;
 		
-		public Builder(ServerResponseStatus status, String description) {
-			this.mStatus = status;
+		public Builder(int failureCode, String description) {
+			this.mFailureCode = failureCode;
 			this.mDescription = description;
 		}
 		

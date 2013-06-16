@@ -24,6 +24,7 @@ import android.widget.Toast;
 import com.bergerlavy.bolepo.BolePoConstants.Credentials;
 import com.bergerlavy.bolepo.dals.MeetingsDbAdapter;
 import com.bergerlavy.bolepo.dals.SDAL;
+import com.bergerlavy.bolepo.forms.ErrorDialogActivity;
 import com.bergerlavy.bolepo.forms.MeetingManagementActivity;
 import com.bergerlavy.bolepo.forms.RemoveMeetingActivity;
 import com.bergerlavy.bolepo.maps.UsersLocationsMapActivity;
@@ -46,12 +47,13 @@ public class MainActivity extends Activity {
 
 	private refreshListsReceiver mRefreshListsReceiver;
 	private internetConnectionLostBroadcastReceiver mInternetConnectionLostReceiver;
-
+	private internalErrorOccurBroadcasrReceiver mInternalErrorOccurReceiver;
 
 	public static final String EXTRA_MEETING_ID = "EXTRA_MEETING_ID";
 	public static final String EXTRA_MEETING_CREATION = "EXTRA_MEETING_CREATION";
 	public static final String EXTRA_MEETING_MODIFYING = "EXTRA_MEETING_MODIFYING";
 	public static final String EXTRA_MEETING_CREATOR_REMOVAL = "EXTRA_MEETING_CREATOR_REMOVAL";
+	public static final String EXTRA_SERVER_FAILURE_CODE = "EXTRA_SERVER_FAILURE_CODE";
 
 	private static final int RQ_NETWORK_SETTINGS_DIALOG = 1;
 
@@ -92,7 +94,7 @@ public class MainActivity extends Activity {
 		mAcceptedAdapter = new AcceptedMeetingsAdapter(this, c);
 		mAcceptedList.setAdapter(mAcceptedAdapter);
 		registerForContextMenu(mAcceptedList);
-		
+
 
 		c = mDbAdapter.createWaitingForApprovalMeetingsCursor();
 		if (c.getCount() == 0) {
@@ -161,21 +163,33 @@ public class MainActivity extends Activity {
 			mInternetConnectionLostReceiver = new internetConnectionLostBroadcastReceiver();
 			registerReceiver(mInternetConnectionLostReceiver, noInternetConnectionIntentFilter);
 
+			/* defining the Broadcast Receiver for internal error occurrence */
+			IntentFilter internalErrorOccurIntentFilter = new IntentFilter();
+			internalErrorOccurIntentFilter.addAction(BolePoConstants.ACTION_BOLEPO_NOTIFY_INTERNAL_ERROR_OCCUR);
+			mInternalErrorOccurReceiver = new internalErrorOccurBroadcasrReceiver();
+			registerReceiver(mInternalErrorOccurReceiver, internalErrorOccurIntentFilter);
+			
 		}
 	}
 
 	@Override
 	protected void onPause() {
-		/* unregistering the broadcast receiver of refreshing lists */
+		/* unregistering the Broadcast Receiver of refreshing lists */
 		if (mRefreshListsReceiver != null) {
 			unregisterReceiver(mRefreshListsReceiver);
 			mRefreshListsReceiver = null;
 		}
 
-		/* unregistering the broadcast receiver of internet connection loss */
+		/* unregistering the Broadcast Receiver of internet connection loss */
 		if (mInternetConnectionLostReceiver != null) {
 			unregisterReceiver(mInternetConnectionLostReceiver);
 			mInternetConnectionLostReceiver = null;
+		}
+		
+		/* unregistering the Broadcast Receiver of internal error occurrence */
+		if (mInternalErrorOccurReceiver != null) {
+			unregisterReceiver(mInternalErrorOccurReceiver);
+			mInternalErrorOccurReceiver = null;
 		}
 		super.onPause();
 	}
@@ -310,36 +324,7 @@ public class MainActivity extends Activity {
 	private class refreshListsReceiver extends BroadcastReceiver {
 		@Override
 		public void onReceive(Context context, Intent intent) {
-
-			Cursor c = mDbAdapter.createAcceptedMeetingsCursor();
-			if (c.getCount() == 0) {
-				mAcceptedList.setVisibility(View.GONE);
-				mAcceptedListHeader.setVisibility(View.GONE);
-			}
-			else {
-				mAcceptedList.setVisibility(View.VISIBLE);
-				mAcceptedListHeader.setVisibility(View.VISIBLE);
-			}
-			
-			/* changing the current cursor that populates the "Accepted Meetings" list by a new one. 
-			 * the function "changeCursor" closes the old cursor */
-			mAcceptedAdapter.changeCursor(c);
-
-			c = mDbAdapter.createWaitingForApprovalMeetingsCursor();
-			if (c.getCount() == 0) {
-				mNotApprovedYetList.setVisibility(View.GONE);
-				mNotApprovedYetListHeader.setVisibility(View.GONE);
-			}
-			else {
-				mNotApprovedYetList.setVisibility(View.VISIBLE);
-				mNotApprovedYetListHeader.setVisibility(View.VISIBLE);
-			}
-			
-			/* changing the current cursor that populates the "Waiting For Approval Meetings" list by a new one. 
-			 * the function "changeCursor" closes the old cursor */
-			mNotApprovedYetAdapter.changeCursor(c);
-			
-			
+			refreshLists();
 		}
 	} 
 
@@ -348,6 +333,70 @@ public class MainActivity extends Activity {
 		public void onReceive(Context context, Intent intent) {
 			notifyInternetConnectionLost();
 		}
+	}
+
+	private class internalErrorOccurBroadcasrReceiver extends BroadcastReceiver {
+
+		@Override
+		public void onReceive(Context context, Intent intent) {
+			if (intent.hasExtra(EXTRA_SERVER_FAILURE_CODE)) {
+				Intent errorDialogIntent = new Intent(MainActivity.this, ErrorDialogActivity.class);
+				switch (intent.getIntExtra(EXTRA_SERVER_FAILURE_CODE, 0)) {
+				case BolePoConstants.FAILURE_CODE_MEETING_HASH_DOESNT_EXIST: {
+					Long meetingId = intent.getLongExtra(EXTRA_MEETING_ID, -1);
+					errorDialogIntent.putExtra(ErrorDialogActivity.EXTRA_ERROR_MESSAGE, "The meeting " + mDbAdapter.getMeetingName(meetingId) + " seems not to be exist.");
+					mDbAdapter.removeMeeting(meetingId);
+					refreshLists();
+					break;
+				}
+				case BolePoConstants.FAILURE_CODE_PARTICIPANT_HASH_DOESNT_EXIST:
+					break;
+				case BolePoConstants.FAILURE_CODE_PARAMETER_PARTICIPANTS_NUMBER_ISNT_NUMERIC:
+					break;
+				case BolePoConstants.FAILURE_CODE_INVALID_PARAMETERS_COUNT:
+					break;
+				case BolePoConstants.FAILURE_CODE_UNKNOWN_ACTION:
+					break;
+				case BolePoConstants.FAILURE_CODE_CONTACT_PHONE_IS_MISSING:
+					break;
+				default:
+				}
+				startActivity(errorDialogIntent);
+			}
+
+		}
+
+	}
+
+	public void refreshLists() {
+		Cursor c = mDbAdapter.createAcceptedMeetingsCursor();
+		if (c.getCount() == 0) {
+			mAcceptedList.setVisibility(View.GONE);
+			mAcceptedListHeader.setVisibility(View.GONE);
+		}
+		else {
+			mAcceptedList.setVisibility(View.VISIBLE);
+			mAcceptedListHeader.setVisibility(View.VISIBLE);
+		}
+
+		/* changing the current cursor that populates the "Accepted Meetings" list by a new one. 
+		 * the function "changeCursor" closes the old cursor */
+		mAcceptedAdapter.changeCursor(c);
+
+		c = mDbAdapter.createWaitingForApprovalMeetingsCursor();
+		if (c.getCount() == 0) {
+			mNotApprovedYetList.setVisibility(View.GONE);
+			mNotApprovedYetListHeader.setVisibility(View.GONE);
+		}
+		else {
+			mNotApprovedYetList.setVisibility(View.VISIBLE);
+			mNotApprovedYetListHeader.setVisibility(View.VISIBLE);
+		}
+
+		/* changing the current cursor that populates the "Waiting For Approval Meetings" list by a new one. 
+		 * the function "changeCursor" closes the old cursor */
+		mNotApprovedYetAdapter.changeCursor(c);
+		
 	}
 
 

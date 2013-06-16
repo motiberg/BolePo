@@ -232,6 +232,18 @@ public class MeetingsDbAdapter {
 		return meetings;
 	}
 
+	public String getMeetingName(long meetingId) {
+		String meetingName = null;
+		Cursor c = mDb.query(DbContract.Meetings.TABLE_NAME, new String[] { DbContract.Meetings.COLUMN_NAME_MEETING_NAME }, DbContract.Meetings._ID + " = " + meetingId, null, null, null, null);
+		if (c != null) {
+			if (c.moveToFirst()) {
+				meetingName = c.getString(c.getColumnIndex(DbContract.Meetings.COLUMN_NAME_MEETING_NAME));
+			}
+			c.close();
+		}
+		return meetingName;
+	}
+	
 	private long getMeetingIdByHash(String meetingHash) {
 		long meetingId = -1;
 		Cursor c = mDb.query(DbContract.Meetings.TABLE_NAME,
@@ -498,8 +510,8 @@ public class MeetingsDbAdapter {
 		return participantsPhones;
 	}
 	
-	public List<BolePoContact> getParticipantsAsBolePoContacts(long meetingId) {
-		List<BolePoContact> participants = new ArrayList<BolePoContact>();
+	public ArrayList<BolePoContact> getParticipantsAsBolePoContacts(long meetingId) {
+		ArrayList<BolePoContact> participants = new ArrayList<BolePoContact>();
 		Cursor c = mDb.query(DbContract.Participants.TABLE_NAME,
 				null,
 				DbContract.Participants.COLUMN_NAME_PARTICIPANT_MEETING_ID + " = " + meetingId,
